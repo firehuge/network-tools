@@ -1,0 +1,22 @@
+requester: fwtest-operator
+ticket: TST-005
+target:
+  type: firewall
+  firewall: fw-1
+  vsys: vsys1
+rule:
+  name: TST-bad-cidr
+  from_zones:
+    - trust
+  to_zones:
+    - dmz
+  source_addresses:
+    - 10.10.10.0/24
+  destination_addresses:
+    - 10.20.20.300/32
+  applications:
+    - ssl
+  services:
+    - application-default
+  action: allow
+  description: "Synthetic invalid CIDR"

@@ -1,0 +1,9 @@
+# Extends the default gitleaks rules. The only exception: obviously fake passwords in PAAT's unit tests
+# (for example "pw-synthetic-1234"). Everything else, including the rest of paat/, is scanned.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "synthetic test passwords in unit tests"
+targetRules = ["generic-api-key"]
+paths = ['''^paat/tests/.*\.py$''']

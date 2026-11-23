@@ -1,0 +1,28 @@
+# Synthetic example request (documentation-range addresses only).
+requester: fwtest-operator
+ticket: TST-001
+target:
+  type: firewall
+  firewall: fw-1
+  vsys: vsys1
+rule:
+  name: TST-allow-trust-to-app
+  from_zones:
+    - trust
+  to_zones:
+    - dmz
+  source_addresses:
+    - fwtest-user-subnet
+  destination_addresses:
+    - name: fwtest-app-server
+      type: ip-netmask
+      value: 10.20.20.11/32
+      description: Synthetic app server
+  applications:
+    - ssl
+    - web-browsing
+  services:
+    - application-default
+  action: allow
+  log_end: true
+  description: "TST-001: allow trust users to the synthetic app server"

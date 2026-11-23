@@ -1,0 +1,15 @@
+{
+  "name": "pan-tsf-triage",
+  "version": "1.0.0",
+  "description": "Playwright test runner for the local PAN TSF triage HTML tool",
+  "scripts": {
+    "test": "node tests/test_tool.mjs"
+  },
+  "author": "PAAT maintainers",
+  "license": "SEE LICENSE IN ../LICENSE",
+  "type": "commonjs",
+  "private": true,
+  "devDependencies": {
+    "playwright-core": "^1.65.0"
+  }
+}

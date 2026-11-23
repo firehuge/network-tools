@@ -1,0 +1,8 @@
+pan-os-python>=1.12.0
+pan-python>=0.17.0
+pyyaml>=6.0
+jsonschema>=4.18.0
+python-dotenv>=1.0.0
+pytest>=8.0.0
+openpyxl>=3.1.0
+tzdata>=2024.1

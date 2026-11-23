@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC Panorama export for the "rule needed in 2 places" tests. Every
+     name, serial and address is invented (RFC 1918). Not derived from any real
+     config. One single-vsys firewall, three virtual routers (VR-A, VR-B,
+     VR-C) with no next-vr between them: each VR sends the other tenants'
+     LANs out of its WAN unit to an outside router, and the flow comes back in
+     on the other VR's WAN unit. The firewall checks policy on both passes.
+     DG-HP has egress allows for tcp/443 only, an explicit second-hop deny
+     for A -> C, and a catch-all deny in the pre-rulebase. -->
+<config version="11.1.0">
+  <mgt-config>
+    <devices>
+      <entry name="000000000901"><hostname>FW-HAIRPIN</hostname></entry>
+      <entry name="000000000902"><hostname>FW-NO-NET</hostname></entry>
+    </devices>
+  </mgt-config>
+  <shared/>
+  <readonly>
+    <devices><entry name="localhost.localdomain"><device-group>
+      <entry name="DG-HP"><id>21</id></entry>
+    </device-group></entry></devices>
+  </readonly>
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>PANO-HP</hostname></system></deviceconfig>
+      <device-group>
+        <entry name="DG-HP">
+          <devices><entry name="000000000901"/><entry name="000000000902"/></devices>
+          <address>
+            <entry name="NET-A-LAN"><ip-netmask>10.66.1.0/24</ip-netmask></entry>
+            <entry name="NET-B-LAN"><ip-netmask>10.66.2.0/24</ip-netmask></entry>
+            <entry name="NET-C-LAN"><ip-netmask>10.66.3.0/24</ip-netmask></entry>
+          </address>
+          <service>
+            <entry name="SVC-TCP-443"><protocol><tcp><port>443</port></tcp></protocol></entry>
+          </service>
+          <pre-rulebase><security><rules>
+            <entry name="A-EGRESS"><from><member>Z-A-LAN</member></from><to><member>Z-A-WAN</member></to>
+              <source><member>any</member></source><destination><member>any</member></destination>
+              <application><member>any</member></application><service><member>SVC-TCP-443</member></service><action>allow</action></entry>
+            <entry name="B-EGRESS"><from><member>Z-B-LAN</member></from><to><member>Z-B-WAN</member></to>
+              <source><member>any</member></source><destination><member>any</member></destination>
+              <application><member>any</member></application><service><member>SVC-TCP-443</member></service><action>allow</action></entry>
+            <entry name="C-EGRESS"><from><member>Z-C-LAN</member></from><to><member>Z-C-WAN</member></to>
+              <source><member>any</member></source><destination><member>any</member></destination>
+              <application><member>any</member></application><service><member>SVC-TCP-443</member></service><action>allow</action></entry>
+            <entry name="ALLOW-A-B-IN"><from><member>Z-B-WAN</member></from><to><member>Z-B-LAN</member></to>
+              <source><member>NET-A-LAN</member></source><destination><member>NET-B-LAN</member></destination>
+              <application><member>any</member></application><service><member>SVC-TCP-443</member></service><action>allow</action></entry>
+            <entry name="DENY-A-C-IN"><from><member>Z-C-WAN</member></from><to><member>Z-C-LAN</member></to>
+              <source><member>NET-A-LAN</member></source><destination><member>NET-C-LAN</member></destination>
+              <application><member>any</member></application><service><member>SVC-TCP-443</member></service><action>deny</action></entry>
+            <entry name="HP-DENY-ALL"><from><member>any</member></from><to><member>any</member></to>
+              <source><member>any</member></source><destination><member>any</member></destination>
+              <application><member>any</member></application><service><member>any</member></service><action>deny</action></entry>
+          </rules></security></pre-rulebase>
+        </entry>
+      </device-group>
+      <template>
+        <entry name="TPL-HP">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/3"><layer3><units>
+                  <entry name="ethernet1/3.101"><tag>101</tag><ip><entry name="10.66.1.1/24"/></ip></entry>
+                  <entry name="ethernet1/3.102"><tag>102</tag><ip><entry name="10.66.2.1/24"/></ip></entry>
+                  <entry name="ethernet1/3.103"><tag>103</tag><ip><entry name="10.66.3.1/24"/></ip></entry>
+                  <entry name="ethernet1/3.201"><tag>201</tag><ip><entry name="10.66.0.2/29"/></ip></entry>
+                  <entry name="ethernet1/3.202"><tag>202</tag><ip><entry name="10.66.0.10/29"/></ip></entry>
+                  <entry name="ethernet1/3.203"><tag>203</tag><ip><entry name="10.66.0.18/29"/></ip></entry>
+                </units></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="VR-A">
+                  <interface><member>ethernet1/3.101</member><member>ethernet1/3.201</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="to-B"><destination>10.66.2.0/24</destination><nexthop><ip-address>10.66.0.1</ip-address></nexthop><interface>ethernet1/3.201</interface></entry>
+                    <entry name="to-C"><destination>10.66.3.0/24</destination><nexthop><ip-address>10.66.0.1</ip-address></nexthop><interface>ethernet1/3.201</interface></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+                <entry name="VR-B">
+                  <interface><member>ethernet1/3.102</member><member>ethernet1/3.202</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="to-A"><destination>10.66.1.0/24</destination><nexthop><ip-address>10.66.0.9</ip-address></nexthop><interface>ethernet1/3.202</interface></entry>
+                    <entry name="to-C"><destination>10.66.3.0/24</destination><nexthop><ip-address>10.66.0.9</ip-address></nexthop><interface>ethernet1/3.202</interface></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+                <entry name="VR-C">
+                  <interface><member>ethernet1/3.103</member><member>ethernet1/3.203</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="to-A"><destination>10.66.1.0/24</destination><nexthop><ip-address>10.66.0.17</ip-address></nexthop><interface>ethernet1/3.203</interface></entry>
+                    <entry name="to-B"><destination>10.66.2.0/24</destination><nexthop><ip-address>10.66.0.17</ip-address></nexthop><interface>ethernet1/3.203</interface></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="vsys1"><zone>
+              <entry name="Z-A-LAN"><network><layer3><member>ethernet1/3.101</member></layer3></network></entry>
+              <entry name="Z-B-LAN"><network><layer3><member>ethernet1/3.102</member></layer3></network></entry>
+              <entry name="Z-C-LAN"><network><layer3><member>ethernet1/3.103</member></layer3></network></entry>
+              <entry name="Z-A-WAN"><network><layer3><member>ethernet1/3.201</member></layer3></network></entry>
+              <entry name="Z-B-WAN"><network><layer3><member>ethernet1/3.202</member></layer3></network></entry>
+              <entry name="Z-C-WAN"><network><layer3><member>ethernet1/3.203</member></layer3></network></entry>
+            </zone></entry></vsys>
+          </entry></devices></config>
+        </entry>
+      </template>
+      <template-stack>
+        <entry name="ST-HP-SPARE">
+          <!-- a spare stack with the same template and no devices (the fwtest has one: TS-TST-MVSYS) -->
+          <templates><member>TPL-HP</member></templates>
+        </entry>
+        <entry name="ST-HP">
+          <templates><member>TPL-HP</member></templates>
+          <devices><entry name="000000000901"/></devices>
+        </entry>
+      </template-stack>
+    </entry>
+  </devices>
+</config>

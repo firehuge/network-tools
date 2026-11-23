@@ -1,0 +1,30 @@
+# Template for one customer profile. Copy to <customers dir>/<name>/profile.yaml and edit.
+# No secrets here: host and API key values come from the environment variables named below
+# (put them in the file named by env_file, mode 600).
+name: example
+display_name: Example customer
+env_file: /etc/paat/customers/example.env
+targets:
+  - name: pano-1                 # a label you choose
+    type: panorama               # panorama | firewall
+    host_env: EXAMPLE_PANO_HOST
+    api_key_env: EXAMPLE_PANO_API_KEY
+    api_key_ro_env: EXAMPLE_PANO_API_KEY_RO   # optional read-only key for live pulls
+  - name: fw-1
+    type: firewall
+    host_env: EXAMPLE_FW_HOST
+    api_key_env: EXAMPLE_FW_API_KEY
+default_tags: [paat]
+object_scope: local
+naming:
+  rule: "{project}-{dst}-{port}"
+# Live push to Panorama is OFF unless you set this to true for a customer you trust:
+# allow_live_panorama_push: false
+change_plan:
+  log_forwarding: LOG-FWD-DEFAULT
+  profile_group: PROFILE-GROUP-DEFAULT
+  profile_type: Group
+  log_at_session_start: "No"
+  log_at_session_end: "Yes"
+  url_category: any
+  team_name: the network team

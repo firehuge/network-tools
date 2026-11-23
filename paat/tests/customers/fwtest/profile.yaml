@@ -1,0 +1,32 @@
+# SYNTHETIC test customer. No real devices; secrets come from env var names only.
+name: fwtest
+display_name: Standalone firewall (synthetic test customer)
+env_file: ~/paat-test.env
+targets:
+  - name: fw-1
+    type: firewall
+    host_env: PANOS_HOST
+    api_key_env: PANOS_API_KEY
+    user_env: PANOS_USER
+    password_env: PANOS_PASSWORD
+vpn_landing_zones: [Tunnel]
+default_tags: [TST-panlab]
+naming:
+  rule: "TST-{project}-{dst}-{port}"
+  address_host: "TST-H-{ip}"
+  address_net: "TST-N-{ip}_{len}"
+  address_range: "TST-R-{start}-{end}"
+  fqdn: "TST-FQDN-{fqdn}"
+  service: "TST-{proto}-{port}"
+  ticket_tag: "TST-{ticket}"
+  address_group: "TST-{project}-{dst}-SRV-GRP"
+  address_group_source: "TST-{project}-{src}-SRC-GRP"
+
+change_plan:
+  log_forwarding: LOG-FWD-DEFAULT
+  profile_group: PROFILE-GROUP-DEFAULT
+  profile_type: Group
+  log_at_session_start: "No"
+  log_at_session_end: "Yes"
+  url_category: any
+  team_name: the network team

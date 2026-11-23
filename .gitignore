@@ -1,0 +1,50 @@
+# --- Never commit real data -------------------------------------------------
+# Firewall / Panorama configs and exports
+*.xml
+# Tech-support files and archives (real ones contain secrets and customer data)
+*.tsf
+*.tgz
+*.tar.gz
+*.tar
+*.zip
+# Credentials and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+mapping.csv
+docker/secrets/
+docker/tls/
+paat/customers/*/
+!paat/customers/README.md
+**/profile.local.yaml
+**/INITIAL_ADMIN_PASSWORD
+**/users.yaml
+**/session.key
+
+# --- Explicit exceptions: SYNTHETIC test data kept in the repo ---------------
+!paat/tests/fixtures/*.xml
+!paat/tests/customers/**
+!flowmapper/samples/fw-multi-circuit.xml
+!flowmapper/samples/scope-conflict/*.xml
+!gp-log-viewer/samples/*.tgz
+!gp-log-viewer/samples/*.zip
+!tsf-reader/samples/*.tgz
+
+# --- Build / tool output -------------------------------------------------------
+node_modules/
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+dist/
+build-out/
+**/tests/_out*
+.DS_Store

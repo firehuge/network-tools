@@ -1,0 +1,13 @@
+flags: A:active, E:ecmp, R:recursive, Oi:ospf intra-area, Oo:ospf inter-area, O1:ospf ext 1, O2:ospf ext 2
+
+destination                protocol    nexthop          distance  metric  flag  tag   age        interface
+-------------------------------------------------------------------------------------------------------------
+Logical Router: LR-CORE
+==========================
+10.10.0.0/22               bgp         10.200.0.1       20        0       A           01:02:03   ethernet1/1
+10.10.9.0/24               bgp         10.200.0.1       20        0       A           01:02:03   ethernet1/1
+10.10.50.0/24              bgp         10.200.0.1       20        0       A           01:02:03   ethernet1/1
+10.20.1.0/24               connected   0.0.0.0          0         0       A           5d:01:02   ethernet1/2
+10.20.200.0/24             connected   0.0.0.0          0         0       A           5d:01:02   ethernet1/3
+10.200.0.0/30              connected   0.0.0.0          0         0       A           5d:01:02   ethernet1/1
+total routes shown: 6

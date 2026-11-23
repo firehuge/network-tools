@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC standalone firewall for decommission tests. All names and
+     addresses are invented (TST-AUTO-TEST-*, documentation-range IPs). -->
+<config version="11.1.0">
+  <shared>
+    <address><entry name="SH-NTP"><ip-netmask>192.0.2.123/32</ip-netmask></entry></address>
+  </shared>
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>fw-1-synth</hostname></system></deviceconfig>
+      <network>
+        <interface>
+          <ethernet>
+            <entry name="ethernet1/1"><layer3><ip><entry name="198.51.100.2/29"/></ip></layer3></entry>
+            <entry name="ethernet1/2"><layer3><ip><entry name="10.1.10.1/24"/></ip></layer3></entry>
+            <entry name="ethernet1/3"><layer3><ip><entry name="10.1.20.1/24"/></ip></layer3></entry>
+          </ethernet>
+        </interface>
+        <virtual-router>
+          <entry name="default">
+            <interface><member>ethernet1/1</member><member>ethernet1/2</member><member>ethernet1/3</member></interface>
+            <routing-table><ip><static-route>
+              <entry name="default"><destination>0.0.0.0/0</destination><nexthop><ip-address>198.51.100.1</ip-address></nexthop></entry>
+            </static-route></ip></routing-table>
+          </entry>
+        </virtual-router>
+      </network>
+      <vsys>
+        <entry name="vsys1">
+          <zone>
+            <entry name="untrust"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+            <entry name="trust"><network><layer3><member>ethernet1/2</member></layer3></network></entry>
+            <entry name="LAN"><network><layer3><member>ethernet1/3</member></layer3></network></entry>
+          </zone>
+          <address>
+            <entry name="TST-AUTO-TEST-HOST"><ip-netmask>203.0.113.50/32</ip-netmask><description>decom host</description></entry>
+            <entry name="TST-AUTO-TEST-NET"><ip-netmask>203.0.113.0/24</ip-netmask><description>contains the host</description></entry>
+            <entry name="TST-AUTO-TEST-FQDN"><fqdn>decom-host.example.test</fqdn></entry>
+            <entry name="TST-AUTO-TEST-ONLY"><ip-netmask>198.51.100.50/32</ip-netmask></entry>
+            <entry name="TST-AUTO-TEST-SHARED-USE"><ip-netmask>198.51.100.60/32</ip-netmask></entry>
+            <entry name="TST-AUTO-TEST-KEEP"><ip-netmask>198.51.100.70/32</ip-netmask></entry>
+            <entry name="TST-AUTO-TEST-TAGGED"><ip-netmask>198.51.100.80/32</ip-netmask>
+              <tag><member>decom-tag</member></tag></entry>
+          </address>
+          <address-group>
+            <entry name="TST-AUTO-TEST-GRP">
+              <static><member>TST-AUTO-TEST-HOST</member><member>TST-AUTO-TEST-KEEP</member></static>
+            </entry>
+            <entry name="TST-AUTO-TEST-EMPTY-GRP">
+              <static><member>TST-AUTO-TEST-HOST</member></static>
+            </entry>
+            <entry name="TST-AUTO-TEST-DYN">
+              <dynamic><filter>'decom-tag'</filter></dynamic>
+            </entry>
+          </address-group>
+          <tag><entry name="fwtest"/><entry name="decom-tag"/></tag>
+          <rulebase>
+            <security><rules>
+              <entry name="TST-AUTO-TEST-MULTI">
+                <from><member>LAN</member></from><to><member>untrust</member></to>
+                <source><member>TST-AUTO-TEST-HOST</member><member>TST-AUTO-TEST-KEEP</member></source>
+                <destination><member>any</member></destination>
+                <application><member>any</member></application>
+                <service><member>application-default</member></service>
+                <action>allow</action>
+                <description>keep this rule; drop one source</description>
+              </entry>
+              <entry name="TST-AUTO-TEST-SOLE">
+                <from><member>LAN</member></from><to><member>untrust</member></to>
+                <source><member>TST-AUTO-TEST-HOST</member></source>
+                <destination><member>any</member></destination>
+                <application><member>any</member></application>
+                <service><member>application-default</member></service>
+                <action>allow</action>
+                <description>would become any if source were emptied</description>
+              </entry>
+              <entry name="TST-AUTO-TEST-NAMED">
+                <from><member>LAN</member></from><to><member>untrust</member></to>
+                <source><member>TST-AUTO-TEST-ONLY</member></source>
+                <destination><member>any</member></destination>
+                <application><member>any</member></application>
+                <service><member>service-https</member></service>
+                <action>allow</action>
+                <log-end>yes</log-end>
+                <description>delete this named rule</description>
+              </entry>
+              <entry name="TST-AUTO-TEST-OTHER">
+                <from><member>trust</member></from><to><member>untrust</member></to>
+                <source><member>TST-AUTO-TEST-SHARED-USE</member></source>
+                <destination><member>any</member></destination>
+                <application><member>any</member></application>
+                <service><member>application-default</member></service>
+                <action>allow</action>
+              </entry>
+              <entry name="TST-AUTO-TEST-OTHER2">
+                <from><member>untrust</member></from><to><member>LAN</member></to>
+                <source><member>any</member></source>
+                <destination><member>TST-AUTO-TEST-SHARED-USE</member></destination>
+                <application><member>any</member></application>
+                <service><member>application-default</member></service>
+                <action>allow</action>
+              </entry>
+            </rules></security>
+            <nat><rules>
+              <entry name="TST-AUTO-TEST-NAT">
+                <from><member>LAN</member></from><to><member>untrust</member></to>
+                <source><member>TST-AUTO-TEST-HOST</member></source>
+                <destination><member>any</member></destination>
+                <service>any</service>
+                <source-translation><dynamic-ip-and-port><interface-address><interface>ethernet1/1</interface></interface-address></dynamic-ip-and-port></source-translation>
+              </entry>
+            </rules></nat>
+            <pbf><rules>
+              <entry name="TST-AUTO-TEST-PBF">
+                <from><member>LAN</member></from>
+                <source><member>TST-AUTO-TEST-HOST</member></source>
+                <destination><member>any</member></destination>
+                <action><forward><nexthop><ip-address>198.51.100.1</ip-address></nexthop></forward></action>
+              </entry>
+            </rules></pbf>
+          </rulebase>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

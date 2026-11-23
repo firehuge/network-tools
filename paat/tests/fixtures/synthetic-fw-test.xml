@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC standalone firewall running config shaped like the fwtest PA-440
+     (vsys1; zones trust, untrust, LAN, Tunnel). Addresses are invented. -->
+<config version="11.1.0">
+  <shared>
+    <address><entry name="SH-NTP"><ip-netmask>192.0.2.123/32</ip-netmask></entry></address>
+  </shared>
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>fw-1-synth</hostname></system></deviceconfig>
+      <network>
+        <interface>
+          <ethernet>
+            <entry name="ethernet1/1"><layer3><ip><entry name="198.51.100.2/29"/></ip></layer3></entry>
+            <entry name="ethernet1/2"><layer3><ip><entry name="10.1.10.1/24"/></ip></layer3></entry>
+            <entry name="ethernet1/3"><layer3><ip><entry name="10.1.20.1/24"/></ip></layer3></entry>
+          </ethernet>
+          <tunnel><units><entry name="tunnel.1"><ip><entry name="10.255.0.1/30"/></ip></entry></units></tunnel>
+        </interface>
+        <virtual-router>
+          <entry name="default">
+            <interface><member>ethernet1/1</member><member>ethernet1/2</member><member>ethernet1/3</member><member>tunnel.1</member></interface>
+            <routing-table><ip><static-route>
+              <entry name="default"><destination>0.0.0.0/0</destination><nexthop><ip-address>198.51.100.1</ip-address></nexthop></entry>
+              <entry name="remote-site"><destination>10.200.0.0/16</destination><interface>tunnel.1</interface><nexthop><none/></nexthop></entry>
+            </static-route></ip></routing-table>
+          </entry>
+        </virtual-router>
+      </network>
+      <vsys>
+        <entry name="vsys1">
+          <zone>
+            <entry name="untrust"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+            <entry name="trust"><network><layer3><member>ethernet1/2</member></layer3></network></entry>
+            <entry name="LAN"><network><layer3><member>ethernet1/3</member></layer3></network></entry>
+            <entry name="Tunnel"><network><layer3><member>tunnel.1</member></layer3></network></entry>
+          </zone>
+          <address>
+            <entry name="LAN-PRINTER"><ip-netmask>10.1.20.50/32</ip-netmask></entry>
+          </address>
+          <service>
+            <entry name="tcp-8443"><protocol><tcp><port>8443</port></tcp></protocol></entry>
+          </service>
+          <tag><entry name="fwtest"/></tag>
+          <rulebase><security><rules>
+            <entry name="LAN-to-internet"><from><member>LAN</member></from><to><member>untrust</member></to>
+              <source><member>any</member></source><destination><member>any</member></destination>
+              <application><member>any</member></application><service><member>application-default</member></service><action>allow</action></entry>
+          </rules></security></rulebase>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

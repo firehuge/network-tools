@@ -1,0 +1,31 @@
+{
+  "private_ok_paths": [
+    "paat/",
+    "flowmapper/",
+    "tsf-reader/",
+    "gp-log-viewer/"
+  ],
+  "allow_192_168_paths": [
+    "paat/tests/test_fallback_placement.py"
+  ],
+  "allow_email_paths": [
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "allow_public_ips": [
+    "8.8.8.8",
+    "8.8.4.4",
+    "1.1.1.1",
+    "9.9.9.9",
+    "45.33.32.77",
+    "151.101.1.77",
+    "93.184.216.77"
+  ],
+  "allow_emails": [],
+  "skip_paths": [
+    ".public-guard.json",
+    "scripts/public_guard.py"
+  ],
+  "skip_terms_paths": [
+    "THIRD_PARTY_NOTICES.md"
+  ]
+}

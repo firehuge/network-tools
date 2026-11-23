@@ -1,0 +1,29 @@
+# SYNTHETIC example customer managed by Panorama, used by the tests.
+# offline_config points at the synthetic fixture; a real customer would set
+# host/api-key env var names and use --live or a cached export instead.
+name: example-pano
+display_name: Example Panorama customer (synthetic)
+env_file: ~/paat-test.env
+targets:
+  - name: pano-synth
+    type: panorama
+    host_env: EXAMPLE_PANO_HOST
+    api_key_env: EXAMPLE_PANO_API_KEY
+    offline_config: ../../fixtures/synthetic-panorama.xml
+vpn_landing_zones: [VPN-LANDING]
+default_tags: [panlab]
+object_scope: local
+naming:
+  rule: "{project}-{dst}-{port}"
+
+# Generic change-plan defaults for the CR template. Override real customer
+# values in the gitignored profile.local.yaml or in
+# /etc/paat/customers/<name>.yaml (change_plan: block only).
+change_plan:
+  log_forwarding: LOG-FWD-DEFAULT
+  profile_group: PROFILE-GROUP-DEFAULT
+  profile_type: Group
+  log_at_session_start: "No"
+  log_at_session_end: "Yes"
+  url_category: any
+  team_name: the network team

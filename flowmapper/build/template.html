@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAN-OS FlowMapper</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="description" content="Offline tool: load a Palo Alto Networks firewall or Panorama config XML, trace a traffic flow across zones, virtual routers and vsys, and list the rules and routes you need. Nothing is uploaded.">
+<style>
+</style>
+</head>
+<body>
+<header>
+  <h1>PAN-OS FlowMapper <span class="muted" id="ver"></span></h1>
+  <label class="btn primary" for="fi">Load config XML</label>
+  <input type="file" id="fi" accept=".xml,text/xml" multiple hidden>
+  <button id="btn-demo" title="Load the built-in synthetic multi-vsys example">Load demo</button>
+  <button id="btn-diag" title="Download a JSON with structure only (counts, interfaces, routes, subnets). Names and IPs are pseudonymized; no rules, objects or secrets. Optional - share only if your policy allows.">Export redacted diagnostics</button>
+  <button id="btn-help" title="How to use FlowMapper: plain-language and technical guide">Help</button>
+  <button id="btn-dark" title="Toggle dark mode">Dark</button>
+</header>
+<main>
+  <div id="drop" class="card">Drop one or more PAN-OS config XML files here (firewall running-config / saved snapshot, or Panorama export).<br><span class="muted">Everything stays in this browser. Nothing is uploaded.</span></div>
+  <section id="help" class="card" hidden>
+    <div class="ctl"><h2 style="margin:0">How to use FlowMapper</h2><button type="button" class="sm" id="help-close">Close help</button></div>
+    <p class="muted">Each topic has two parts: <b>In plain words</b> for anyone, and <b>Technical detail</b> for engineers. Everything runs in this browser; nothing is uploaded.</p>
+    <details open><summary><b>1. Start here: trace a flow in five steps</b></summary>
+      <ol>
+        <li><b>Load the config.</b> Click <i>Load config XML</i> (or drop files). Use a Panorama export, firewall backups, or both together.</li>
+        <li><b>Type the flow.</b> Source, destination, protocol and port, for example <code>10.20.1.50</code> to <code>10.10.1.20</code>, tcp, 443.</li>
+        <li><b>Click Trace.</b> The tool walks the path firewall by firewall: zones, routes, NAT and the rule that matches at each hop.</li>
+        <li><b>Read the coloured box at the top.</b> Green: <i>Complete</i>. Yellow: <i>Suggested</i> (some hop is a well-founded guess). Red: <i>Incomplete</i> or <i>Needs your choice</i>.</li>
+        <li><b>Act on it.</b> The box says what to confirm, or which firewall to pick. The <i>Changes</i> list says which rules or routes to add.</li>
+      </ol>
+    </details>
+    <details><summary><b>2. What the path labels mean</b></summary>
+      <p><b>In plain words:</b> the label tells you how much to trust the path.</p>
+      <ul>
+        <li><b>Complete</b>: every hop comes straight from the configs, your links or the public-space map.</li>
+        <li><b>Complete (pasted route table)</b>: as above, and at least one hop used a route you pasted from a real firewall.</li>
+        <li><b>Suggested (BGP-inferred)</b>: a hop relies on a BGP route the tool worked out from the BGP settings. Probably right, not proven. Paste that firewall's route table to make it certain.</li>
+        <li><b>Suggested</b>: another kind of educated guess (a router not in the export, a default route to the unknown).</li>
+        <li><b>Needs your choice</b>: the same address is configured on more than one firewall, so the tool will not guess. Pick one (see topic 5).</li>
+        <li><b>Incomplete</b>: the trace stopped. The box says where, why and how to fix it.</li>
+      </ul>
+      <p><b>Technical detail:</b> each hop lists its assumptions with a confirm step. Pins you make are shown as "pinned by your choice" and do not lower the label.</p>
+    </details>
+    <details><summary><b>3. BGP: what the tool can and cannot know offline</b></summary>
+      <p><b>In plain words:</b> a firewall config shows who talks BGP with whom and what each side is allowed to announce. It does not show what was actually learned. So the tool plays BGP forward: "firewall A announces network X to its neighbour B, so B can reach X through A". Those hops are labelled <i>Suggested (BGP-inferred)</i> and each one explains why.</p>
+      <p><b>Technical detail.</b> Read from Panorama templates / template stacks and from local backups:</p>
+      <ul>
+        <li>Legacy virtual routers (<code>network/virtual-router/.../protocol/bgp</code>): local AS, router ID, peer groups (iBGP / eBGP), peers, redistribution rules and redistribution profiles, import / export policy rules (used-by, address-prefix, exact), aggregation (summary or not), conditional advertisement (non-exist and advertise filters).</li>
+        <li>Advanced routing, PAN-OS 10.2+ (<code>network/logical-router/.../vrf/.../bgp</code> with <code>network/routing-profile</code>): peer groups and peers (with per-peer <i>inherit no</i> overrides), redistribution profiles (static / connected / OSPF / RIP, with route maps), <code>advertise-network</code> network statements, aggregate routes (summary-only), BGP filtering profiles (inbound / outbound prefix lists, distribute lists and route maps) and conditional advertisement (exist / non-exist maps).</li>
+        <li>Legacy import / export rules are read top to bottom per peer group (first match wins). Once any rule applies to a peer group, a route that matches none of them is <b>not</b> exchanged. This is how PAN-OS behaves, so a list with only a deny rule blocks everything unless it ends with an allow-everything rule.</li>
+        <li>Peers are matched to loaded firewalls by address. A peer that is not a loaded firewall (MPLS PE, ISP) becomes a provider "fabric": firewalls peering into the same AS learn each other's announcements.</li>
+        <li>Conditional advertisement is decided against what the config says is in the table; at runtime it can differ, so those routes have low confidence and say so.</li>
+        <li>When a route is missing, the change list says what BGP setting withheld it (prefix list, export rule, conditional advertisement).</li>
+        <li>Not modelled: AS-path / community matching, MED, local preference and other best-path tie-breaks, route reflector clusters, BFD / timers, IPv6, OSPF on advanced routing. Paste the route table when these matter.</li>
+      </ul>
+    </details>
+    <details><summary><b>4. Pasting a real route table (makes BGP hops certain)</b></summary>
+      <p><b>In plain words:</b> run one command on the firewall, copy the output, paste it under <i>Route tables</i> on the Trace tab, pick which firewall it came from, and click <i>Apply</i>. That firewall's BGP hops then use real routes instead of guesses.</p>
+      <p><b>Technical detail:</b> accepted inputs are <code>show routing route</code> (legacy), <code>show advanced-routing route</code> (advanced routing), the XML API response to <code>&lt;show&gt;&lt;routing&gt;&lt;route/&gt;&lt;/routing&gt;&lt;/show&gt;</code>, or a CSV <code>router,destination,nexthop,interface,protocol[,distance,metric]</code>. Only active IPv4 routes are used. Connected / host routes are skipped (the config has them); static routes are added only if the config lacks them. A router with a pasted table gets no inferred routes. Tables live in memory only; reload the page and they are gone.</p>
+    </details>
+    <details><summary><b>5. Same IP on several firewalls (cloned builds, overlapping space)</b></summary>
+      <p><b>In plain words:</b> sometimes two data centers are built from one template, so both firewalls have exactly the same addresses. Or two sites reuse the same private range. The tool never guesses which one traffic reaches. It shows <i>Needs your choice</i> with one row per candidate firewall (hostname, serial, template stack, site, and why it fits). Click <i>Use for this trace</i> to decide for this trace only, or <i>Save as link</i> so every trace from that interface goes there.</p>
+      <p><b>Technical detail:</b></p>
+      <ul>
+        <li>HA pairs are merged first. Firewalls are paired as HA only when their HA config names each other, or (when no HA config is loaded) they share the same template stack, nearly identical interface addresses, and the same site in their hostnames. Different stacks never pair; different sites (for example dc1 vs dc2) never pair without HA config.</li>
+        <li>The <i>Overlapping address space</i> callout under the loaded files lists every address configured on more than one firewall, overlapping subnets, and look-alike firewalls with the reason they were kept apart.</li>
+        <li>Decision points: a next hop owned by several firewalls; a source or destination inside a subnet whose gateway address is the same on several firewalls. One subnet shared by several firewalls with different addresses is a normal shared segment and is not flagged.</li>
+        <li>Pins: <i>Use for this trace</i> sets the branch choice (next hop) or the source / destination firewall. <i>Save as link</i> adds a link (from firewall + egress interface to the chosen firewall), stored in this browser with your other links.</li>
+        <li>A BGP peer address owned by several firewalls is only matched when exactly one is at the same site; otherwise it is left out of inference and counted as an ambiguous peer.</li>
+      </ul>
+    </details>
+    <details><summary><b>6. Links, public-space map and hostnames</b></summary>
+      <p><b>In plain words:</b> when routers between firewalls are not in the configs, tell the tool where traffic goes with a <i>link</i>. The <i>public-space map</i> says which circuit each public range arrives on. <i>Device hostnames</i> names firewalls that only show a serial.</p>
+      <p><b>Technical detail:</b> links have the highest weight in path finding and make hops explicit (Complete). All three are stored in this browser's localStorage and can be exported as JSON.</p>
+    </details>
+    <details id="help-scope"><summary><b>7. Production only: leave DR out</b></summary>
+      <p><b>In plain words:</b> many networks have a production site and a disaster-recovery (DR) site built almost alike. If you only care about production, switch the <b>Scope</b> bar (above the tabs) to <i>Production only</i>. DR, Lab and Test firewalls then stay out of traces, next-hop choices, pickers, alternate paths, diagrams, batch runs and plans. <i>All sites</i> brings everything back. A chip always tells you what is hidden, for example <i>Scope: Production only, 12 DR firewalls hidden</i>.</p>
+      <ul>
+        <li><b>How it knows:</b> it looks for plain words such as <code>prod</code>, <code>dr</code>, <code>backup</code>, <code>lab</code> or <code>test</code> in a firewall's hostname, template-stack and device-group names. Each guess shows its reason under <i>Site roles</i>. If there is no clue, the firewall stays <i>Other</i> and is kept.</li>
+        <li><b>You decide:</b> under <i>Site roles</i>, add matching rules (for example: template stack <i>contains</i> a word you type &rarr; DR). First match wins. You can still set one site or one firewall by hand. Export the settings as a JSON file to reuse them.</li>
+        <li><b>If DR is needed to finish a path:</b> the trace says so and offers <i>Show all sites</i>, instead of failing silently.</li>
+        <li><b>DR copy advice:</b> when a plan adds rules on production firewalls, the tool lists DR firewalls that probably need the same rule (same stack pattern, device group, hostname pattern and zones). It never traces DR for this; it is advice. If a DR firewall shares the device group, a rule pushed there already reaches it.</li>
+        <li><b>Panorama HA:</b> Panorama itself can be an HA pair with one peer at each site. Roles are for firewalls only. The Panorama pair has its own Role and Active/Passive on the Environment tab (Panorama view) and never changes which firewalls are in scope. Loading either peer's export gives the same result.</li>
+      </ul>
+      <p><b>Technical detail:</b> evidence weights are hostname 3, template stack 2, device group 2; weak words (<code>primary</code>, <code>secondary</code>, <code>standby</code>) only count from stack and device-group names. Authority order: your firewall setting, your site setting, the firewall's own clue, the site's majority clue, then Other. HA secondaries follow their primary. HA pairs are decided on the full list first, so hiding a firewall never creates a pair. Inferred BGP/OSPF routes are recomputed for the scoped list, so a route that only a DR peer would advertise is not used.</p>
+      <p><b>FAQ: How do I look at production only?</b> Click <b>Production only</b> in the Scope bar. If nothing is hidden, open <b>Site roles</b> and add a rule (template stack or hostname contains the word that marks your backup site) set to DR, or mark the site by hand.</p>
+      <p><b>FAQ: Why did the routing/rules conflict count jump when I chose Production only?</b> Usually because the routed path went through a DR firewall that is now hidden. The Validate summary splits conflicts that only appear because the scope hid the routed next hop (or the address's owner) from conflicts that also exist with All sites. Those first ones are not, by themselves, stale rules; switch to All sites to see the routed path.</p>
+      <p><b>FAQ: My Panorama is HA across production and DR, so why do I see both sites and how does Production only work?</b> A Panorama export lists every firewall that Panorama manages, production and DR alike, and both Panorama peers hold the same list, so you see both sites whichever peer you exported from. Production only does not look at Panorama at all: it hides the firewalls whose site is marked DR (or Lab or Test). The two Panoramas are not firewalls, so they are never hidden and never change the scope; they have their own Role and Active/Passive on the Environment tab.</p>
+    </details>
+    <details><summary><b>8. Before you push a change</b></summary>
+      <p>FlowMapper reads configuration only. Always confirm on the firewall with <code>test security-policy-match</code>, <code>test nat-policy-match</code> and <code>test routing fib-lookup</code> (legacy) or <code>test advanced-routing fib-lookup</code> (advanced routing).</p>
+    </details>
+  </section>
+
+  <section id="files" class="card" hidden></section>
+  <nav class="tabs" id="tabs" hidden>
+    <button data-tab="trace" class="on">Trace a flow</button>
+    <button data-tab="config">Config browser</button>
+    <button data-tab="env">Environment</button>
+    <button data-tab="map">Network map</button>
+    <button data-tab="topo">Device topology</button>
+    <button data-tab="raw">Raw XML</button>
+  </nav>
+  <section id="scopebar" class="card scopebar" hidden aria-label="Which sites take part in traces">
+    <div class="ctl" id="scope-line"></div>
+  </section>
+  <details id="roles-box" class="card" hidden>
+    <summary><b>Site roles</b> — matching rules, and which firewalls are Production, DR, Lab or Test</summary>
+    <div id="roles-body"></div>
+  </details>
+  <section id="tab-trace" class="tab" hidden>
+    <div class="card">
+      <form id="qform" class="qgrid" autocomplete="off">
+        <label>Source<input id="q-src" list="addrlist" placeholder="10.1.1.10, 10.1.1.0/24 or object name" required></label>
+        <label>Destination<input id="q-dst" list="addrlist" placeholder="10.2.2.20 or object name" required></label>
+        <label>Protocol<select id="q-proto"><option>tcp</option><option>udp</option><option>icmp</option><option value="any">any</option></select></label>
+        <label>Port<input id="q-port" type="number" min="0" max="65535" placeholder="443"></label>
+        <label>Source firewall<select id="q-dev"><option value="">Auto</option></select></label>
+        <label>Ingress interface<select id="q-ing"><option value="">Auto (by route lookup)</option></select></label>
+        <label>Destination firewall<select id="q-ddev"><option value="">Auto</option></select></label>
+        <label>Must pass through<input id="q-via" list="devlist" placeholder="optional: fw-core, fw-dmz"></label>
+        <label class="qchk" title="Treat same-zone traffic that only the predefined intrazone-default rule allows as needing an explicit rule. Explicit rules (including rule-type intrazone) still count."><span><input type="checkbox" id="q-nointra"> Ignore intrazone-default allow</span><small class="muted">same-zone traffic needs an explicit rule</small></label>
+        <div class="qbtns"><button class="primary" id="btn-trace" type="submit">Trace</button><button type="button" id="btn-swap" title="Swap source and destination">Swap</button></div>
+      </form>
+      <datalist id="addrlist"></datalist><datalist id="devlist"></datalist>
+      <details id="fcr-box"><summary><b>Firewall change request (FCR)</b> <span class="muted" id="fcr-count"></span> — paste a flow or a CSV, then get every hop, one change plan, a pre-push checklist and traffic-log filters</summary>
+        <p class="muted">Paste one flow (<code>10.1.1.10 -&gt; 10.2.2.20 tcp/443</code>), several lines, or a CSV with columns such as source, destination, protocol, port, application, ticket. The tool traces every vsys the packet crosses so you can write one change set instead of pushing a rule, finding the next deny, and pushing again. Nothing is uploaded.</p>
+        <textarea id="fcr-text" rows="5" style="width:100%" placeholder="10.1.1.10 -> 10.2.2.20 tcp/443&#10;source,destination,protocol,port,ticket&#10;10.10.1.50,10.20.1.50,tcp,443,FCR-12"></textarea>
+        <div class="ctl"><button type="button" class="primary" id="fcr-run">Parse and trace</button><label class="btn sm" for="fcr-file">Load CSV</label><input type="file" id="fcr-file" accept=".csv,.txt,text/csv,text/plain" hidden><span class="muted" id="fcr-status"></span></div>
+        <div id="fcr-batch"></div>
+      </details>
+      <details id="links-box"><summary><b>Links between firewalls</b> <span class="muted" id="links-count"></span> - tell the tool which firewall is behind a router/MPLS hop that is not in the config</summary>
+        <div class="linkform">
+          <label>From firewall<select id="lk-fdev"><option value="">(any)</option></select></label>
+          <label>Egress interface<input id="lk-fif" placeholder="ethernet1/3" list="lk-iflist"></label>
+          <label>or next hop IP<input id="lk-fnh" placeholder="10.250.1.2"></label>
+          <label>To firewall<select id="lk-tdev"></select></label>
+          <label>Ingress interface<input id="lk-tif" placeholder="auto (reverse route)" list="lk-iflist2"></label>
+          <label>Label<input id="lk-label" placeholder="MPLS"></label>
+          <div class="qbtns"><button type="button" id="lk-add">Add link</button></div>
+        </div>
+        <datalist id="lk-iflist"></datalist><datalist id="lk-iflist2"></datalist>
+        <div id="lk-list"></div>
+        <div class="ctl"><button type="button" id="lk-export" class="sm">Export links JSON</button><label class="btn sm" for="lk-import-file">Import links JSON</label><input type="file" id="lk-import-file" accept=".json,application/json" hidden><span class="muted">Saved in this browser (localStorage), keyed by firewall name.</span></div>
+      </details>
+      <details id="rt-box"><summary><b>Route tables (actual learned routes)</b> <span class="muted" id="rt-count"></span> - paste what a firewall really has, so BGP/OSPF hops stop being guesses</summary>
+        <p class="muted">The config says who peers with whom, not what was learned. Paste the output of <code>show routing route</code> (legacy virtual routers), <code>show advanced-routing route</code> (advanced routing / logical routers), the XML API answer, or a CSV of <code>router,destination,nexthop,interface,protocol</code> (for example from a tech-support file). Pasted routes win over inferred ones: that router gets no inferred routes, and hops that use a pasted route count as explicit. Kept in memory only; nothing is saved or uploaded.</p>
+        <div class="linkform"><label>Firewall<select id="rt-dev"></select></label><label>Label<input id="rt-label" placeholder="dc2 show routing route, 22 Nov"></label><div class="qbtns"><button type="button" id="rt-add">Apply pasted table</button><label class="btn sm" for="rt-file">Load file</label><input type="file" id="rt-file" accept=".txt,.xml,.csv,text/plain" hidden></div></div>
+        <textarea id="rt-text" rows="5" style="width:100%" placeholder="VIRTUAL ROUTER: default (id 1)&#10;destination        nexthop       metric flags  age  interface&#10;10.10.0.0/22       10.200.0.1    0      A B    120  ethernet1/1"></textarea>
+        <div id="rt-list"></div>
+      </details>
+      <details id="hn-box"><summary><b>Device hostnames</b> <span class="muted" id="hn-count"></span> - for firewalls shown only by serial (Panorama exports often leave out managed-device hostnames)</summary>
+        <p class="muted">Paste <code>serial,hostname</code> lines, or a CSV export of Panorama &gt; Managed Devices (columns named like <i>Device Name</i> and <i>Serial Number</i>). Hostnames from the config always win; these fill the gaps. Saved in this browser.</p>
+        <textarea id="hn-text" rows="4" style="width:100%" placeholder="013100000001,fw-inet-a"></textarea>
+        <div class="ctl"><button type="button" id="hn-save">Save hostnames</button><label><input type="checkbox" id="hn-replace"> replace the saved list</label><span class="muted" id="hn-status"></span></div>
+      </details>
+      <details id="circ-box"><summary><b>Public-space map</b> <span class="muted" id="circ-count"></span> - which circuit / upstream router each public prefix arrives on, and where it lands</summary>
+        <p class="muted">Public space is often routed by provider or upstream routers that are not in the firewall configs. For each public prefix, say which circuit it arrives on and which firewall (and interface or zone) it lands on. Traces of inbound flows whose source or destination is in a mapped prefix enter there (longest prefix wins; HA peers count as one firewall) and flag disagreements with routing.</p>
+        <div class="linkform">
+          <label>Public prefix<input id="ck-prefix" placeholder="198.51.100.0/27"></label>
+          <label>Circuit / provider<input id="ck-circuit" placeholder="ISP-B (Telco 2)"></label>
+          <label>Lands on firewall<select id="ck-dev"></select></label>
+          <label>Interface<input id="ck-if" placeholder="ethernet1/2 (or zone)" list="ck-iflist"></label>
+          <label>or zone<input id="ck-zone" placeholder="untrust-b" list="ck-zlist"></label>
+          <div class="qbtns"><button type="button" id="ck-add">Add to map</button></div>
+        </div>
+        <datalist id="ck-iflist"></datalist><datalist id="ck-zlist"></datalist>
+        <div id="ck-list"></div>
+        <div id="ck-sug"></div>
+        <div class="ctl"><button type="button" id="ck-export" class="sm">Export map JSON</button><label class="btn sm" for="ck-import-file">Import map JSON</label><input type="file" id="ck-import-file" accept=".json,application/json" hidden><span class="muted">Saved in this browser (localStorage), keyed by firewall name.</span></div>
+      </details>
+    </div>
+    <details id="val-box" class="card"><summary><b>Validate with existing rules</b> <span class="muted" id="val-sum">- replay the allow rules in this config and check the tool finds a path through each rule's own firewall and zones</span></summary>
+      <div class="ctl"><label>Rules to replay <select id="val-cap"><option value="300">300 (quick)</option><option value="2000" selected>2000</option><option value="0">all</option></select></label>
+        <label title="Ignore the replayed rule itself as evidence of the path (stricter: shows what routing and the other rules alone predict)"><input type="checkbox" id="val-loo"> Leave the replayed rule out</label>
+        <button type="button" class="primary" id="val-run">Run validation</button><button type="button" id="val-stop" hidden>Stop</button><span class="muted" id="val-prog"></span> <button type="button" id="find-run" title="Allow rules whose source/destination objects never route to the rule's zones on the firewalls that carry the rule">Zone findings (cleanup list)</button></div>
+      <div id="val-out"></div>
+      <div id="find-out"></div>
+    </details>
+    <div id="result"></div>
+  </section>
+  <section id="tab-config" class="tab" hidden><div class="card"><div class="ctl"><label>Device <select id="cfg-dev"></select></label><input type="search" id="cfg-q" placeholder="Filter tables (name, IP, zone...)"><label><input type="checkbox" id="cfg-inf" checked> Show inferred BGP/OSPF routes</label></div><div id="cfg-body"></div></div></section>
+  <section id="tab-map" class="tab" hidden><div class="card">
+    <div class="ctl"><input type="search" id="map-q" placeholder="Filter: firewall name, subnet or router IP (shows 2 hops around matches)"><label><input type="checkbox" id="map-stub"> Show LAN-only subnets</label><label><input type="checkbox" id="map-inet"> Show internet/ISP uplinks</label><label><input type="checkbox" id="map-hl" checked> Highlight last trace</label><label>Zoom <select id="map-zoom"><option value="0.6">60%</option><option value="0.8">80%</option><option value="1" selected>100%</option><option value="1.4">140%</option></select></label><button id="map-svg">Export SVG</button><button id="map-png">Export PNG</button></div>
+    <p class="muted" id="map-sum"></p>
+    <div id="map-body" class="svgwrap"></div>
+    <details id="map-tables"><summary><b>Inference details</b> - inferred routers and shared subnets (sanity-check what the tool assumed)</summary><div id="map-detail"></div></details>
+  </div></section>
+  <section id="tab-env" class="tab" hidden><div class="card">
+    <div class="ctl"><select id="env-mode" title="Group firewalls by inferred site, show a vsys-level map, or show how Panorama manages them"><option value="site">By site</option><option value="vsys">By vsys</option><option value="pano">Panorama</option></select><label class="env-pano-only" hidden><input type="checkbox" id="env-net"> Network (WAN, internet, BGP)</label><label class="env-pano-only" hidden><input type="checkbox" id="env-stk"> Template-stack links</label><label class="env-pano-only" hidden><input type="checkbox" id="env-empty"> Empty groups, unused stacks/templates</label><input type="search" id="env-q" placeholder="Filter: firewall, site, device group, stack, zone, subnet or IP"><button id="env-exp">Expand all</button><button id="env-col">Collapse all</button><button id="env-svg">Export SVG</button><button id="env-png">Export PNG</button><button id="env-drawio" title="Opens in diagrams.net / draw.io; Visio via draw.io export">Export draw.io</button></div>
+    <p class="muted" id="env-sum"></p>
+    <div id="pano-box"></div>
+    <div id="env-body" class="svgwrap"></div>
+    <p class="muted">Sites are inferred: HA groups, firewalls sharing a LAN subnet (not point-to-point, tunnel or WAN-core subnets), the same hostname site token (firewall words and unit numbers removed), or a device group used by exactly two firewalls. Hover a site for the reason. Click a firewall to expand its vsys, zones and interfaces; double-click for its detail diagram. <b>By vsys</b> groups every vsys on a firewall (HA pairs folded), pulls the vsys of the last trace out, collapses the rest into an &ldquo;other vsys&rdquo; pool, and draws an unknown-network cloud for next hops no loaded firewall owns. Export draw.io from any mode.</p>
+  </div></section>
+  <section id="tab-topo" class="tab" hidden><div class="card"><div class="ctl"><label>Device <select id="topo-dev"></select></label><button id="topo-svg">Export SVG</button><button id="topo-png">Export PNG</button></div><div id="topo-body" class="svgwrap"></div></div></section>
+  <section id="tab-raw" class="tab" hidden><div class="card"><div class="ctl"><label>File <select id="raw-file"></select></label><label><input type="checkbox" id="raw-mask" checked> Hide secrets (hashes, keys, PSKs)</label><input type="search" id="raw-q" placeholder="Find text"></div><pre id="rawview"></pre></div></section>
+  <p class="muted foot">PAN-OS FlowMapper works offline. It reads the configuration only; it cannot see dynamic routes, FQDN resolution, User-ID, or App-ID at runtime. Always confirm with <code>test security-policy-match</code>, <code>test nat-policy-match</code> and <code>test routing fib-lookup</code> on the firewall.</p>
+</main>
+<script>
+</script>
+</body>
+</html>

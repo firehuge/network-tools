@@ -1,0 +1,22 @@
+requester: fwtest-operator
+ticket: TST-007
+target:
+  type: panorama
+  panorama: pano-1rama
+  device_group: fwtest-dg
+rule:
+  name: TST-panorama-stub
+  from_zones:
+    - trust
+  to_zones:
+    - dmz
+  source_addresses:
+    - 10.10.10.0/24
+  destination_addresses:
+    - 10.20.20.11/32
+  applications:
+    - ssl
+  services:
+    - application-default
+  action: allow
+  description: "Synthetic Panorama request used to assert the phase-4 stub"

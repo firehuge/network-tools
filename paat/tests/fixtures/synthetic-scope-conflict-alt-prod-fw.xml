@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config version="11.1.0"><devices><entry name="localhost.localdomain">
+<deviceconfig><system><hostname>alt-prod-fw</hostname></system></deviceconfig>
+<network><interface><ethernet><entry name="ethernet1/1"><layer3><ip><entry name="10.9.0.2/30"/></ip></layer3></entry><entry name="ethernet1/2"><layer3><ip><entry name="10.40.1.1/30"/></ip></layer3></entry></ethernet></interface>
+<virtual-router><entry name="default"><interface><member>ethernet1/1</member><member>ethernet1/2</member></interface>
+<routing-table><ip><static-route><entry name="to-dest"><destination>10.30.0.0/16</destination><nexthop><ip-address>10.40.1.2</ip-address></nexthop><metric>10</metric></entry><entry name="to-lan"><destination>10.10.0.0/16</destination><nexthop><ip-address>10.9.0.1</ip-address></nexthop><metric>10</metric></entry></static-route></ip></routing-table></entry></virtual-router></network>
+<vsys><entry name="vsys1"><import><network><interface><member>ethernet1/1</member><member>ethernet1/2</member></interface></network></import>
+<zone><entry name="core"><network><layer3><member>ethernet1/1</member></layer3></network></entry><entry name="core2"><network><layer3><member>ethernet1/2</member></layer3></network></entry></zone>
+<rulebase><security><rules><entry name="stale-allow"><from><member>core</member></from><to><member>core2</member></to><source><member>10.10.1.0/24</member></source><destination><member>10.30.1.0/24</member></destination><source-user><member>any</member></source-user><category><member>any</member></category><application><member>any</member></application><service><member>any</member></service><action>allow</action></entry></rules></security><nat><rules/></nat></rulebase>
+</entry></vsys>
+</entry></devices></config>

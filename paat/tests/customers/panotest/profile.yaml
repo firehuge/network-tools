@@ -1,0 +1,45 @@
+# SYNTHETIC test customer. No real devices; secrets come from env var names only.
+name: panotest
+display_name: Panorama and firewall (synthetic test customer)
+env_file: ~/paat-test.env
+targets:
+  - name: pano-1
+    type: panorama
+    host_env: PANOTEST_PANO_HOST
+    api_key_env: PANOTEST_PANO_API_KEY
+    api_key_ro_env: PANOTEST_PANO_API_KEY_RO
+  - name: fw-2
+    type: firewall
+    host_env: PANOTEST_PALO_HOST
+    api_key_env: PANOTEST_PALO_API_KEY
+    api_key_ro_env: PANOTEST_PALO_API_KEY_RO
+default_tags: [VM-panlab]
+naming:
+  rule: "VM-{project}-{dst}-{port}"
+  address_host: "VM-H-{ip}"
+  address_net: "VM-N-{ip}_{len}"
+  address_range: "VM-R-{start}-{end}"
+  fqdn: "VM-FQDN-{fqdn}"
+  service: "VM-{proto}-{port}"
+  ticket_tag: "VM-{ticket}"
+  address_group: "VM-{project}-{dst}-SRV-GRP"
+  address_group_source: "VM-{project}-{src}-SRC-GRP"
+object_scope: local
+# Controlled fwtest only. Dry-run stays the default for every other customer.
+allow_live_panorama_push: true
+
+change_plan:
+  log_forwarding: LOG-FWD-DEFAULT
+  profile_group: PROFILE-GROUP-DEFAULT
+  profile_type: Group
+  log_at_session_start: "No"
+  log_at_session_end: "Yes"
+  url_category: any
+  team_name: the network team
+
+# customer in its device group, plus an allow list and a block list (custom URL categories).
+url_filter:
+  target: pano-1
+  device_group: DG-EXAMPLE
+  profile: URL-panotest
+  verify_targets: [fw-2]

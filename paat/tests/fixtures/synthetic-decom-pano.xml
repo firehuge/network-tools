@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC Panorama export for decommission tests. Invented names and IPs only. -->
+<config version="11.1.0">
+  <shared>
+    <address>
+      <entry name="SH-DECOM-HOST"><ip-netmask>203.0.113.80/32</ip-netmask></entry>
+    </address>
+  </shared>
+  <readonly>
+    <devices><entry name="localhost.localdomain">
+      <device-group>
+        <entry name="DG-DC"><id>11</id></entry>
+        <entry name="DG-EDGE"><id>12</id><parent-dg>DG-DC</parent-dg></entry>
+      </device-group>
+    </entry></devices>
+    <dg-meta-data><dg-info>
+      <entry name="DG-DC"><dg-id>11</dg-id></entry>
+      <entry name="DG-EDGE"><dg-id>12</dg-id><parent-dg>DG-DC</parent-dg></entry>
+    </dg-info></dg-meta-data>
+  </readonly>
+  <devices>
+    <entry name="localhost.localdomain">
+      <device-group>
+        <entry name="DG-DC">
+          <devices>
+            <entry name="000000000101"><vsys><entry name="vsys1"/></vsys></entry>
+          </devices>
+          <address>
+            <entry name="DC-DECOM-PARENT"><ip-netmask>203.0.113.90/32</ip-netmask></entry>
+          </address>
+          <pre-rulebase><security><rules>
+            <entry name="DC-allow-shared">
+              <from><member>any</member></from><to><member>any</member></to>
+              <source><member>SH-DECOM-HOST</member><member>DC-DECOM-PARENT</member></source>
+              <destination><member>any</member></destination>
+              <application><member>any</member></application>
+              <service><member>application-default</member></service>
+              <action>allow</action>
+            </entry>
+          </rules></security></pre-rulebase>
+        </entry>
+        <entry name="DG-EDGE">
+          <devices>
+            <entry name="000000000201"/>
+          </devices>
+          <pre-rulebase><security><rules>
+            <entry name="EDGE-allow-shared">
+              <from><member>any</member></from><to><member>any</member></to>
+              <source><member>SH-DECOM-HOST</member></source>
+              <destination><member>DC-DECOM-PARENT</member></destination>
+              <application><member>any</member></application>
+              <service><member>application-default</member></service>
+              <action>allow</action>
+            </entry>
+          </rules></security></pre-rulebase>
+        </entry>
+      </device-group>
+    </entry>
+  </devices>
+</config>

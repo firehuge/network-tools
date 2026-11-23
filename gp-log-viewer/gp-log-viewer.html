@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>GlobalProtect Log Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#1b2430;--mu:#5c6b7a;--bd:#d8dee4;--g:#1f9d55;--y:#d89b00;--r:#d64545;--b:#2f6fd6;--gb:#e7f6ee;--yb:#fff6dc;--rb:#fdeaea}
+.dark{--bg:#12161c;--card:#1b222b;--tx:#e6edf3;--mu:#97a4b1;--bd:#2c3642;--gb:#15301f;--yb:#332a0d;--rb:#3a1a1a}
+*{box-sizing:border-box}body{margin:0;font:16px/1.45 system-ui,Segoe UI,Arial;background:var(--bg);color:var(--tx)}
+header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--bd)}
+header h1{font-size:22px;margin:0;flex:1}button,select,input{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+main{max-width:1300px;margin:auto;padding:20px}.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:18px}
+#drop{border:3px dashed var(--b);text-align:center;padding:40px;font-size:20px;cursor:pointer}#drop.over{background:var(--gb)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.f{padding:10px 12px;border-radius:8px;background:var(--bg)}
+.f b{display:block;font-size:13px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}.f span{font-size:18px;word-break:break-all}.nf{color:var(--mu);font-style:italic}
+.status{font-size:20px;font-weight:600;padding:10px 14px;border-radius:8px;margin-bottom:12px}.s-g{background:var(--gb);color:var(--g)}.s-y{background:var(--yb);color:var(--y)}.s-r{background:var(--rb);color:var(--r)}
+.issue{border-left:6px solid;border-radius:8px;padding:12px 14px;margin:10px 0;cursor:pointer;background:var(--bg)}.issue.r{border-color:var(--r)}.issue.y{border-color:var(--y)}.issue.g{border-color:var(--g)}
+.issue h3{margin:0 0 4px;font-size:18px}.tip{color:var(--mu)}.cnt{float:right;font-size:13px;color:var(--mu)}
+#log{font:13px/1.4 Consolas,monospace;max-height:600px;overflow:auto;border:1px solid var(--bd);border-radius:8px}
+.row{display:grid;grid-template-columns:170px 140px 1fr;gap:8px;padding:2px 8px;border-bottom:1px solid var(--bd);white-space:pre-wrap;word-break:break-all}
+.row.err{background:var(--rb)}.row.warn{background:var(--yb)}.row.hit{outline:3px solid var(--b)}.row .fn{color:var(--mu)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.ctl input{flex:1;min-width:200px}
+@media print{header button,#drop,#logcard,.ctl{display:none!important}body{background:#fff}}
+</style></head><body>
+<header><h1>🛡️ GlobalProtect Log Viewer</h1><span class="tip">Files stay on this computer. Nothing is uploaded.</span>
+<button onclick="document.body.classList.toggle('dark')">🌓 Dark/Light</button><button onclick="window.print()">🖨️ Report / PDF</button></header>
+<main>
+<div id="drop" class="card">📂 Drop the GlobalProtect log file here (.zip, .tgz, .tar.gz, .tar, .gz, .log, .txt)<br><small>or click to browse</small><input id="fi" type="file" multiple hidden></div>
+<div id="out" hidden>
+<div class="card"><div id="stat" class="status"></div><div class="grid" id="sum"></div><p class="tip" id="files"></p></div>
+<div class="card"><h2 style="margin-top:0">Problems found</h2><div id="issues"></div></div>
+<div class="card" id="logcard"><h2 style="margin-top:0">All log lines</h2><div class="ctl">
+<select id="ff"><option value="">All files</option></select><select id="sf"><option value="">All severities</option><option value="err">Errors only</option><option value="warn">Errors + warnings</option></select>
+<input id="q" placeholder="Search logs…"></div><div id="cn" class="tip"></div><div id="log"></div></div></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);const dec=new TextDecoder('utf-8');
+async function inflate(u8,fmt){const s=new Blob([u8]).stream().pipeThrough(new DecompressionStream(fmt));return new Uint8Array(await new Response(s).arrayBuffer())}
+function untar(u8){const out=[];let o=0;while(o+512<=u8.length){const h=u8.subarray(o,o+512);if(h.every(b=>!b))break;let n=dec.decode(h.subarray(0,100)).replace(/\0.*$/s,'');const pre=dec.decode(h.subarray(345,500)).replace(/\0.*$/s,'');if(pre)n=pre+'/'+n;const sz=parseInt(dec.decode(h.subarray(124,136)).replace(/\0/g,'').trim()||'0',8);const t=String.fromCharCode(h[156]);o+=512;if(t==='0'||t==='\0')out.push({name:n,data:u8.slice(o,o+sz)});o+=Math.ceil(sz/512)*512}return out}
+async function unzip(u8){const v=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);let e=u8.length-22;while(e>=0&&v.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw Error('Not a valid zip');
+let n=v.getUint16(e+10,true),p=v.getUint32(e+16,true);const out=[];for(let i=0;i<n;i++){const m=v.getUint16(p+10,true),cs=v.getUint32(p+20,true),fl=v.getUint16(p+28,true),xl=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),lo=v.getUint32(p+42,true);const name=dec.decode(u8.subarray(p+46,p+46+fl));p+=46+fl+xl+cl;if(name.endsWith('/'))continue;
+const ds=lo+30+v.getUint16(lo+26,true)+v.getUint16(lo+28,true);const raw=u8.subarray(ds,ds+cs);if(v.getUint16(lo+6,true)&1){out.push({name,data:new Uint8Array(),enc:1});continue}out.push({name,data:m===0?raw.slice():m===8?await inflate(raw,'deflate-raw'):new Uint8Array()})}return out}
+async function expand(name,u8){const l=name.toLowerCase();
+if(u8[0]===0x50&&u8[1]===0x4b){let r=[];for(const f of await unzip(u8))r=r.concat(await expand(f.name,f.data));return r}
+if(u8[0]===0x1f&&u8[1]===0x8b)return expand(name.replace(/\.(tgz)$/i,'.tar').replace(/\.gz$/i,''),await inflate(u8,'gzip'));
+if(u8.length>262&&dec.decode(u8.subarray(257,262))==='ustar'){let r=[];for(const f of untar(u8))r=r.concat(await expand(f.name,f.data));return r}
+if(l.endsWith('.7z'))return [{name,text:'',skip:'7z not supported - please re-save as .zip'}];
+let t=(u8[0]===0xff&&u8[1]===0xfe)?new TextDecoder('utf-16le').decode(u8):dec.decode(u8);if(/[\0]/.test(t.slice(0,2000))&&!/\.(log|txt)$/i.test(l))return [{name,text:'',skip:'binary'}];return [{name,text:t}]}
+// timestamps: (T1234) 11/03/26 09:15:22:123 Debug( 12): msg | 2026-11-03 09:15:22.123 | Nov  3 09:15:22
+const MON={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function ts(line){let m=line.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})[ T]+(\d{1,2}):(\d\d):(\d\d)(?:[:.](\d{1,3}))?/);if(m){let y=+m[3];if(y<100)y+=2000;return new Date(y,m[1]-1,+m[2],+m[4],+m[5],+m[6],+(m[7]||0))}
+m=line.match(/(\d{4})-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)(?:[.,:](\d{1,3}))?/);if(m)return new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6],+(m[7]||0));
+m=line.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d\d):(\d\d):(\d\d)/i);if(m)return new Date(new Date().getFullYear(),MON[m[1].toLowerCase()],+m[2],+m[3],+m[4],+m[5]);return null}
+const RULES=[
+['r','Wrong username or password','The sign-in was rejected. Usually a mistyped password, an expired password, or a locked account.','Have the user retype their password carefully (check Caps Lock). Confirm the account is not locked or expired in Active Directory.',/auth(entication)? failed|invalid (user ?name|credential|password)|login failed|wrong password|bad credential|password (is )?(expired|incorrect)|account (is )?(locked|disabled)|status=401|error code ?-?401/i],
+['r','Single sign-on (SAML/SSO) failed','The company sign-in page (Okta/Azure/etc.) did not finish correctly.','Have the user sign in to the SSO page in a normal browser. Try again; if it repeats, the SSO admin should check the SAML app for this user.',/saml.*(fail|error|timeout|timed out|invalid|denied)|(sso|idp).*(fail|error|timeout)|embedded browser.*(fail|error|crash)|webview.*(fail|error)|saml (response|assertion).*not|default browser.*(fail|timeout)|samlauthtimeout is yes|saml-auth-error is \S/i],
+['r','Cannot reach the VPN portal','The computer could not talk to the VPN portal address. Could be no internet, wrong address, DNS problem, or a blocked network.','Check the internet works (open a website). Check the portal address is spelled correctly. Try a different network such as a phone hotspot.',/(portal).*(unreachable|not reachable|timed? ?out|could not connect|failed to connect|connect(ion)? failed|refused)|could not resolve|dns.*(fail|error)|name or service not known|getaddrinfo|resolve host|connection refused|network is unreachable|error ?12002|error ?12007|error ?12029|no route to host/i],
+['r','Security certificate problem','The VPN server\'s certificate was not trusted, is expired, or does not match the name.','Make sure the computer date/time is correct. Use the exact portal name (not an IP). If it continues, the firewall team must fix or renew the certificate.',/cert(ificate)?.*(untrusted|not trusted|expired|mismatch|invalid|verify failed|verification failed|error)|ssl.*(handshake|verify).*(fail|error)|unable to get local issuer|self.signed|cn mismatch|certification verification failed|server certificate is invalid/i],
+['r','Client certificate missing','The VPN wants a machine/user certificate that was not found on this computer.','Ask IT to install (or renew) the company certificate on this computer, then reconnect.',/client cert(ificate)?.*(not found|missing|required|no valid|absent)|no (valid )?client certificate|failed to (find|get) (client|machine) cert/i],
+['r','Gateway connection failed','The portal worked, but connecting to the VPN gateway did not.','Try reconnecting or picking a different gateway. If all fail, the firewall team should check the gateway.',/gateway.*(fail|error|timed? ?out|refused|unreachable|rejected)|failed to (connect|login) to gateway|no (available|valid) gateway/i],
+['r','HIP (device health) check failed','The computer did not pass the security check (antivirus, patches, disk encryption, etc.), so access was limited or blocked.','Make sure antivirus is on, Windows/macOS updates are installed and disk encryption is enabled, then reconnect.',/hip.*(fail|not match|non.?compliant|error|quarantin)|hip report.*not|hip check.*fail/i],
+['y','Tunnel problem / fallback to SSL','The fast IPSec tunnel did not work so the client fell back to SSL, or the tunnel failed. Usually a network blocking UDP 4501.','Usually OK to ignore if it connects. If slow or dropping, try another network; network team should allow UDP 4501.',/ipsec.*(fail|error|timed? ?out|not)|fall(ing)? ?back to ssl|switch(ing)? to ssl|ssl tunnel.*(fail|error)|ssl tunnel.*fail/i],
+['r','MFA / one-time code failed','The second sign-in step (code, push, token) failed or timed out.','Have the user approve the push quickly or enter a fresh code. Check the phone time is correct and the MFA app is enrolled.',/(mfa|otp|one.time|2fa|two.factor|passcode|token|duo|push).*(fail|invalid|timeout|timed out|denied|reject|expired)|challenge (failed|timed out)/i],
+['y','License / disconnected by server','The VPN session ended from the server side, or a license limit was hit.','Reconnect. If it keeps happening, the firewall team should check GlobalProtect licenses and session timeouts.',/licen[cs]e|session (expired|timeout|timed out)|logged out by (admin|server)|disconnected by|max(imum)? (user|session)s? (reached|exceeded)|login lifetime/i],
+['y','Saved sign-in expired','The remembered login (auth cookie) was no longer valid, so the user had to sign in again.','Normal after a while or a password change. Just sign in again. If it happens every time, ask the firewall team about cookie lifetime.',/invalid user auth cookie|auth cookie.*(expired|invalid)/i],
+['r','Could not connect to any gateway','GlobalProtect tried every gateway and could not build the VPN tunnel.','Check internet works, then click Connect again. Try another network (hotspot). If it keeps failing, send this log to the firewall team.',/tunnel creation failed|failed to create tunnel|could not create tunnel/i],
+['r','Portal address invalid','GlobalProtect says the portal address is invalid or not answering.','Check the portal address in GlobalProtect settings is the one IT gave you, then reconnect.',/portal status is invalid portal|invalid portal/i],
+['y','No internet / name lookup failed','The computer could not look up web names or reach the internet (no Wi-Fi, hotel login page, or DNS problem).','Open a web site in the browser. If a hotel/airport login page appears, finish it, then reconnect the VPN.',/gethostbyname\(.*failed|no such host is known|failed to resolve captive portal|failed to discover external network|unreachable network/i],
+['y','VPN tunnel went down','The VPN tunnel dropped or the user was logged out of the gateway.','Reconnect. If it drops often, note the times and check Wi-Fi / sleep settings.',/tunnel is down due to|user was logged out of gateway|user could not be logged out/i],
+['y','Network changed','The Wi-Fi/network changed or dropped, which makes the VPN reconnect.','Normal when moving networks. If it happens a lot, check the Wi-Fi signal or try a wired connection.',/network (change|changed|is down|disconnected|interface (change|down))|interface.*(down|changed)|wifi.*(disconnect|change)|ip address change|route change|media disconnected/i],
+];
+const SUCC=/portal login completed|gateway login finished|ipsec tunnel creation finished|ssl tunnel creation finished|tunnel is (up|created)|change from \w[\w ]* to connected\.|(login|auth\w*|connect\w*|log ?in) (to )?(portal|gateway)?.*(succe|successful)|(portal|gateway) (login|auth\w*) (succe|ok)|tunnel is up|connected to gateway|connection (is )?established|status (is )?connected|successfully (connected|logged)/i;
+const FAIL=new RegExp(RULES.filter(r=>r[0]==='r').map(r=>r[4].source).join('|'),'i');
+const NOISE=/^\s*<|connect timeout \d+, received timeout|RetrieveSsoCred|no saml-auth-error tag|saml-auth-error is\s*$|saml request timeout|certificateerroractions|CheckServerCert return|can-continue-if-portal-cert-invalid|ignore SSL certificate error|HandleDnsCallback|getaddrinfo host\.GetString|CheckCachedPortalForPrelogon|SaveDnsSuffix|SelectInternalGateways|Command = <|handleSamlModel|pan_obj_get_value|Hip report is not +needed|Skip sending the HIP|failed to check hd encryption|Tunnel downtime is|tunnel statistics|Gateway license yes|route change|DLSA|hip status changed|failed to logout from gateway|m_\w+|AuthFail\(|IsPrelogonRenameAuthFail|krb-auth-fail-fallback|saml-request-timeout|setupapi/i;
+let LINES=[],FILES=[];
+function grab(re,arr,last=true){let v=null;for(const l of (last?[...arr].reverse():arr)){const m=l.t.match(re);if(m){v=(m[m.length-1]||m[1]).trim().replace(/[,;'"\]\)]+$/,'');if(v&&!/^(null|none|\(null\)|0\.0\.0\.0)$/i.test(v))return v}}return null}
+function fmt(d){return d?d.toLocaleString():''}
+async function load(files){LINES=[];FILES=[];let all=[];for(const f of files)all=all.concat(await expand(f.name,new Uint8Array(await f.arrayBuffer())));
+for(const f of all){const short=f.name.split(/[\\/]/).pop();if(f.enc||f.skip){FILES.push(short+' (skipped'+(f.enc?': password protected':': '+f.skip)+')');continue}if(!f.text)continue;FILES.push(short);let last=null;
+f.text.split(/\r?\n/).forEach((t,i)=>{if(!t.trim())return;const d=ts(t);if(d)last=d;LINES.push({f:short,t,d:d||last,n:i})})}
+LINES.sort((a,b)=>(a.d||0)-(b.d||0));LINES.forEach((l,i)=>{l.id=i;l.sev=NOISE.test(l.t)?'':/\)\s*(Error|Critical)\s*\(|\[(Error|Critical)\s*\]|\b(fatal|failed)\b/i.test(l.t)?'err':/\)\s*Warn\w*\s*\(|\[Warn\w*\s*\]|\b(timeout|timed out)\b/i.test(l.t)?'warn':''});analyze()}
+function analyze(){const L=LINES;const IL=L.filter(l=>!NOISE.test(l.t)&&!/^setupapi/i.test(l.f));const ip4='(\\d{1,3}(?:\\.\\d{1,3}){3})';
+const IP='(\\d{1,3}(?:\\.\\d{1,3}){3})',HOST='([\\w.-]+\\.[a-z]{2,}|\\d{1,3}(?:\\.\\d{1,3}){3})';
+const G=(res,arr=L)=>{for(const r of res){const v=grab(r,arr);if(v)return v.replace(/%40/g,'@')}return null};
+const sys=L.filter(l=>/^(systeminfo|ipconfig)/i.test(l.f));
+const os=G([/^\s*OS Name:\s*(.+)/i],sys);const osv=G([/^\s*OS Version:\s*(.+)/i],sys);
+const S={
+'Username':G([/<user-name>([^<]+)<\/user-name>/i,/and user ([\w.%@-]+@[\w.-]+|[\w.%-]+%40[\w.-]+)/i,/(?:user ?name|login user|username)\s*[:=]\s*['"]?([\w.\\@%-]+)/i]),
+'Local (client) IP':G([new RegExp('IPv4 Address[ .]*:\\s*'+IP,'i')],sys)||G([new RegExp('client IP:\\s*'+IP,'i'),new RegExp('(?:local ip|local address|interface ip)\\D{0,15}'+IP,'i')]),
+'Public IP':G([new RegExp('(?:public ip|external ip|public address)\\D{0,15}'+IP,'i')]),
+'VPN tunnel IP':G([new RegExp('use virtual IP '+IP,'i'),new RegExp('(?:tunnel ip|assigned (?:vpn )?ip|ip assigned)\\D{0,15}'+IP,'i')]),
+'Portal':G([new RegExp('portal login completed with address '+HOST,'i'),new RegExp('<portal>'+HOST,'i'),new RegExp('portal(?: address| url| name)?\\s*(?:is|[:=])\\s*[\'"]?(?:https?://)?'+HOST,'i')]),
+'Gateway':G([new RegExp('gateway login finished with address '+HOST,'i'),new RegExp('create tunnel with gateway '+HOST,'i'),new RegExp('(?:connected to gateway|gateway(?: address| name)?\\s*(?:is|[:=]))\\s*[\'"]?(?:https?://)?'+HOST,'i')]),
+'GP client version':G([/client version:\s*(\d+\.\d+[\w.-]*)/i,/<product-version>([^<]+)</i,/(?:globalprotect|gp|agent|app)\s*version\s*(?:is|[:=])?\s*['"]?(\d+\.\d+[\w.-]*)/i]),
+'Operating system':os?(os+(osv?' ('+osv.replace(/\s+N\/A\s+/,' ')+')':'')):G([/OS version:\s*([^,;)]{3,60})/i]),
+'Computer name':G([/^\s*Host Name[ .]*:\s*([\w.-]+)/i],sys)||G([/(?:host ?name|computer ?name|machine ?name)\s*[:=]\s*['"]?([\w.-]+)/i])};
+const succ=[...IL].reverse().find(l=>SUCC.test(l.t)),fail=[...IL].reverse().find(l=>FAIL.test(l.t)&&!/invalid user auth cookie/i.test(l.t));
+const iss=RULES.map(r=>({r,hits:IL.filter(l=>r[4].test(l.t))})).filter(x=>x.hits.length);
+const lastConn=[...IL].reverse().find(l=>/(change from \w[\w ]* to (connected|disconnecting|not connected)\.|tunnel creation finished|tunnel is down due|user was logged out of gateway|status (is )?(connected|disconnected)|tunnel is (up|down)|connected to gateway|disconnect(ed)? (from|by)|state.*(connected|disconnected))/i.test(l.t));
+let st='y',stt='⚠️ Connection status unclear from logs';if(lastConn){if(/disconnect|down|logged out|to not connected/i.test(lastConn.t)){st='r';stt='🔴 Last status: DISCONNECTED ('+fmt(lastConn.d)+')'}else{st='g';stt='🟢 Last status: CONNECTED ('+fmt(lastConn.d)+')'}}
+if(!lastConn&&succ&&(!fail||succ.d>=fail.d)){st='g';stt='🟢 Last sign-in succeeded'}
+$('#stat').className='status s-'+st;$('#stat').textContent=stt;
+const rows=Object.entries(S);rows.push(['Last successful login',succ?fmt(succ.d):null]);rows.push(['Last failure',fail?fmt(fail.d)+' — '+(RULES.find(r=>r[4].test(fail.t))||['','Error'])[1]:null]);
+$('#sum').innerHTML='';rows.forEach(([k,v])=>{const d=document.createElement('div');d.className='f';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=k;const sp=d.querySelector('span');if(v)sp.textContent=v;else{sp.textContent='Not found in logs';sp.className='nf'}
+if(k==='Last failure'&&fail){sp.style.color='var(--r)';d.style.cursor='pointer';d.onclick=()=>jump([fail.id])}if(k==='Last successful login'&&succ){sp.style.color='var(--g)';d.style.cursor='pointer';d.onclick=()=>jump([succ.id])}$('#sum').appendChild(d)});
+$('#files').textContent='Files read ('+FILES.length+'): '+FILES.join(', ')+' — '+L.length+' log lines.';
+const ib=$('#issues');ib.innerHTML='';if(!iss.length)ib.innerHTML='<div class="issue g"><h3>✅ No known problems detected</h3><div class="tip">Look at the log lines below if the user still has trouble.</div></div>';
+iss.sort((a,b)=>(a.r[0]==='r'?0:1)-(b.r[0]==='r'?0:1)).forEach(x=>{const d=document.createElement('div');d.className='issue '+x.r[0];const last=x.hits[x.hits.length-1];
+d.innerHTML='<span class="cnt"></span><h3></h3><div class="what"></div><div class="tip"></div><div class="ex tip" style="font-family:monospace;font-size:12px;margin-top:4px"></div>';
+d.querySelector('.cnt').textContent=x.hits.length+' line(s) · last '+fmt(last.d)+' · click to view';d.querySelector('h3').textContent=(x.r[0]==='r'?'🔴 ':'🟡 ')+x.r[1];d.querySelector('.what').textContent=x.r[2];d.querySelector('.tip').textContent='👉 What to try: '+x.r[3];d.querySelector('.ex').textContent=last.f+': '+last.t.slice(0,220);
+d.onclick=()=>jump(x.hits.map(h=>h.id));ib.appendChild(d)});
+const ff=$('#ff');ff.length=1;[...new Set(L.map(l=>l.f))].forEach(f=>ff.add(new Option(f,f)));$('#out').hidden=false;render()}
+let HIT=new Set();
+function render(){const f=$('#ff').value,s=$('#sf').value,q=$('#q').value.toLowerCase();const v=LINES.filter(l=>(!f||l.f===f)&&(!s||(s==='err'?l.sev==='err':l.sev))&&(!q||l.t.toLowerCase().includes(q))&&(!HIT.size||HIT.has(l.id)));
+$('#cn').textContent='Showing '+Math.min(v.length,5000)+' of '+v.length+' matching lines'+(HIT.size?' (issue filter on — ':'')+(HIT.size?'':'');if(HIT.size){const b=document.createElement('button');b.textContent='Show all lines';b.onclick=()=>{HIT=new Set();render()};$('#cn').append(' ',b)}
+const fr=document.createDocumentFragment();v.slice(0,5000).forEach(l=>{const r=document.createElement('div');r.className='row '+l.sev;r.innerHTML='<span></span><span class="fn"></span><span></span>';r.children[0].textContent=fmt(l.d);r.children[1].textContent=l.f;r.children[2].textContent=l.t;fr.appendChild(r)});$('#log').replaceChildren(fr)}
+function jump(ids){HIT=new Set(ids);$('#ff').value='';$('#sf').value='';$('#q').value='';render();$('#logcard').scrollIntoView({behavior:'smooth'})}
+['#ff','#sf'].forEach(s=>$(s).onchange=render);$('#q').oninput=render;
+const dr=$('#drop');dr.onclick=()=>$('#fi').click();$('#fi').onchange=e=>run(e.target.files);
+dr.ondragover=e=>{e.preventDefault();dr.classList.add('over')};dr.ondragleave=()=>dr.classList.remove('over');dr.ondrop=e=>{e.preventDefault();dr.classList.remove('over');run(e.dataTransfer.files)};
+async function run(fs){try{dr.textContent='⏳ Reading…';await load([...fs]);dr.innerHTML='📂 Loaded: '+[...fs].map(f=>f.name).join(', ')+' — drop another file to replace'}catch(e){dr.textContent='❌ Could not read this file: '+e.message}}
+</script></body></html>

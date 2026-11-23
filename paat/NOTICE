@@ -1,0 +1,12 @@
+PAAT (Policy Automation and Analysis Tool)
+Copyright (c) PAAT maintainers
+
+DRAFT: pending legal review. See ../LEGAL.md and ../THIRD_PARTY_NOTICES.md.
+
+PAAT includes code adapted from the FlowMapper tool in this repository (../flowmapper):
+
+- src/panlab/netmodel.py: Python port of FlowMapper build/core.js config loading.
+- src/panlab/placement.py: routing-first lookup adapted from FlowMapper.
+- vendor/flowmapper/: verbatim copies of FlowMapper build/core.js, render.js and decom.js.
+
+No customer or real configuration is included.

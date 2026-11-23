@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC standalone firewall: two vsys with no shared gateway or external
+     zone. A flow from 10.10.1.50 to 10.20.1.50 leaves vsys "left" toward an
+     unseen router and is assumed to re-enter vsys "right". No customer data. -->
+<config version="11.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>fwtest-flow-fw</hostname></system></deviceconfig>
+      <network>
+        <interface>
+          <ethernet>
+            <entry name="ethernet1/1.10"><layer3><ip><entry name="10.10.1.1/24"/></ip></layer3></entry>
+            <entry name="ethernet1/1.11"><layer3><ip><entry name="10.0.0.1/30"/></ip></layer3></entry>
+            <entry name="ethernet1/1.20"><layer3><ip><entry name="10.20.1.1/24"/></ip></layer3></entry>
+            <entry name="ethernet1/1.21"><layer3><ip><entry name="10.0.1.1/30"/></ip></layer3></entry>
+          </ethernet>
+        </interface>
+        <virtual-router>
+          <entry name="vr-left">
+            <interface><member>ethernet1/1.10</member><member>ethernet1/1.11</member></interface>
+            <routing-table><ip><static-route>
+              <entry name="default"><destination>0.0.0.0/0</destination><nexthop><ip-address>10.0.0.2</ip-address></nexthop><metric>10</metric></entry>
+            </static-route></ip></routing-table>
+          </entry>
+          <entry name="vr-right">
+            <interface><member>ethernet1/1.20</member><member>ethernet1/1.21</member></interface>
+          </entry>
+        </virtual-router>
+      </network>
+      <vsys>
+        <entry name="left">
+          <display-name>Left</display-name>
+          <import><network>
+            <interface><member>ethernet1/1.10</member><member>ethernet1/1.11</member></interface>
+            <virtual-router><member>vr-left</member></virtual-router>
+          </network></import>
+          <zone>
+            <entry name="lan-a"><network><layer3><member>ethernet1/1.10</member></layer3></network></entry>
+            <entry name="wan-a"><network><layer3><member>ethernet1/1.11</member></layer3></network></entry>
+          </zone>
+        </entry>
+        <entry name="right">
+          <display-name>Right</display-name>
+          <import><network>
+            <interface><member>ethernet1/1.20</member><member>ethernet1/1.21</member></interface>
+            <virtual-router><member>vr-right</member></virtual-router>
+          </network></import>
+          <zone>
+            <entry name="lan-b"><network><layer3><member>ethernet1/1.20</member></layer3></network></entry>
+            <entry name="wan-b"><network><layer3><member>ethernet1/1.21</member></layer3></network></entry>
+          </zone>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

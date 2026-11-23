@@ -1,0 +1,19 @@
+# Keep the image small and free of anything private.
+.git
+.github
+**/__pycache__
+**/*.pyc
+*.egg-info
+.pytest_cache
+venv
+.venv
+.env
+.env.*
+backups
+data
+docker/secrets
+docker/tls
+customers/*/profile.local.yaml
+docker/secrets
+tests
+docs/user-manual/img/*.psd

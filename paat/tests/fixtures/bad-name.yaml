@@ -1,0 +1,22 @@
+requester: fwtest-operator
+ticket: TST-006
+target:
+  type: firewall
+  firewall: fw-1
+  vsys: vsys1
+rule:
+  name: "1-starts-with-a-digit"
+  from_zones:
+    - trust
+  to_zones:
+    - dmz
+  source_addresses:
+    - 10.10.10.0/24
+  destination_addresses:
+    - 10.20.20.11/32
+  applications:
+    - ssl
+  services:
+    - application-default
+  action: allow
+  description: "Synthetic invalid rule name"

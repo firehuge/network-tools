@@ -1,0 +1,24 @@
+requester: fwtest-operator
+ticket: TST-004
+target:
+  type: firewall
+  firewall: fw-1
+  vsys: vsys1
+rule:
+  name: TST-allow-conflict-object
+  from_zones:
+    - trust
+  to_zones:
+    - untrust
+  source_addresses:
+    - fwtest-user-subnet
+  destination_addresses:
+    - name: fwtest-web-server
+      type: ip-netmask
+      value: 10.20.20.99/32
+  applications:
+    - ssl
+  services:
+    - application-default
+  action: allow
+  description: "Synthetic request that redefines fwtest-web-server with a different value"

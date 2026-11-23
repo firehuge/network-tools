@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<config version="11.1.0" urldb="paloaltonetworks">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <zone>
+            <entry name="trust">
+              <network>
+                <layer3>
+                  <member>ethernet1/1</member>
+                </layer3>
+              </network>
+            </entry>
+            <entry name="untrust">
+              <network>
+                <layer3>
+                  <member>ethernet1/2</member>
+                </layer3>
+              </network>
+            </entry>
+            <entry name="dmz">
+              <network>
+                <layer3>
+                  <member>ethernet1/3</member>
+                </layer3>
+              </network>
+            </entry>
+          </zone>
+          <address>
+            <entry name="fwtest-web-server">
+              <ip-netmask>10.20.20.10/32</ip-netmask>
+              <description>Synthetic fwtest web server</description>
+            </entry>
+            <entry name="fwtest-user-subnet">
+              <ip-netmask>10.10.10.0/24</ip-netmask>
+              <description>Synthetic fwtest user subnet</description>
+            </entry>
+            <entry name="fwtest-mgmt-host">
+              <ip-netmask>192.0.2.50/32</ip-netmask>
+              <description>Documentation-range synthetic host</description>
+            </entry>
+            <entry name="fwtest-app-range">
+              <ip-range>10.20.20.10-10.20.20.20</ip-range>
+              <description>Synthetic app range</description>
+            </entry>
+          </address>
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="TST-allow-users-to-web">
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <to>
+                    <member>dmz</member>
+                  </to>
+                  <source>
+                    <member>fwtest-user-subnet</member>
+                  </source>
+                  <destination>
+                    <member>fwtest-web-server</member>
+                  </destination>
+                  <application>
+                    <member>ssl</member>
+                    <member>web-browsing</member>
+                  </application>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <log-end>yes</log-end>
+                  <description>Synthetic existing allow to the fwtest web server</description>
+                </entry>
+                <entry name="TST-allow-mgmt-to-dns">
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <source>
+                    <member>fwtest-mgmt-host</member>
+                  </source>
+                  <destination>
+                    <member>192.0.2.53/32</member>
+                  </destination>
+                  <application>
+                    <member>dns</member>
+                  </application>
+                  <service>
+                    <member>application-default</member>
+                  </service>
+                  <action>allow</action>
+                  <log-end>yes</log-end>
+                  <description>Synthetic existing allow for fwtest DNS</description>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

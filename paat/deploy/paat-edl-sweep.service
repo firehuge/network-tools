@@ -1,0 +1,12 @@
+# Optional: expire EDL entries on a schedule. Install with:
+#   sudo cp deploy/paat-edl-sweep.* /etc/systemd/system/ && sudo systemctl daemon-reload
+#   sudo systemctl enable --now paat-edl-sweep.timer
+[Unit]
+Description=PAAT EDL expiry sweep
+
+[Service]
+Type=oneshot
+User=paat
+Group=paat
+EnvironmentFile=/etc/paat/paat.env
+ExecStart=/opt/paat/venv/bin/python -m panlab.edl sweep

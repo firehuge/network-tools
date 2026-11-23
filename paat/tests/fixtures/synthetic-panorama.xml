@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC Panorama export for tests. Every name, serial, and address here
+     is invented (RFC 1918 / RFC 5737). Not derived from any real config.
+     2 device groups (DG-EDGE is a child of DG-DC), 2 template stacks,
+     3 firewalls: FW-CORE-1 (multi-vsys: vsys1 users, vsys2 servers,
+     vsys3 edge) and two single-vsys branches using per-device variables. -->
+<config version="11.1.0">
+  <mgt-config>
+    <devices>
+      <entry name="000000000101"><hostname>FW-CORE-1</hostname><vsys><entry name="vsys1"/><entry name="vsys2"/><entry name="vsys3"/></vsys></entry>
+      <entry name="000000000201"><hostname>FW-BR-A</hostname></entry>
+      <entry name="000000000202"><hostname>FW-BR-B</hostname></entry>
+    </devices>
+  </mgt-config>
+  <shared>
+    <address>
+      <entry name="SH-DNS-1"><ip-netmask>10.99.0.53/32</ip-netmask></entry>
+    </address>
+    <service>
+      <entry name="SH-tcp-8080"><protocol><tcp><port>8080</port></tcp></protocol></entry>
+    </service>
+    <tag><entry name="shared-existing"/></tag>
+  </shared>
+  <readonly>
+    <devices><entry name="localhost.localdomain"><device-group>
+      <entry name="DG-DC"><id>11</id></entry>
+      <entry name="DG-EDGE"><id>12</id><parent-dg>DG-DC</parent-dg></entry>
+    </device-group></entry></devices>
+  </readonly>
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>PANO-SYNTH</hostname></system></deviceconfig>
+      <device-group>
+        <entry name="DG-DC">
+          <devices>
+            <entry name="000000000101"><vsys><entry name="vsys1"/><entry name="vsys2"/></vsys></entry>
+          </devices>
+          <address>
+            <entry name="DC-WEB-01"><ip-netmask>10.20.1.10/32</ip-netmask></entry>
+            <entry name="DC-USERS"><ip-netmask>10.10.0.0/16</ip-netmask></entry>
+          </address>
+          <service>
+            <entry name="svc-tcp-8443"><protocol><tcp><port>8443</port></tcp></protocol></entry>
+          </service>
+          <pre-rulebase><security><rules>
+            <entry name="allow-users-web">
+              <from><member>USERS</member></from><to><member>TO-VSYS2</member></to>
+              <source><member>DC-USERS</member></source><destination><member>DC-WEB-01</member></destination>
+              <application><member>ssl</member></application><service><member>application-default</member></service>
+              <action>allow</action>
+            </entry>
+          </rules></security></pre-rulebase>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>allow</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+        <entry name="DG-EDGE">
+          <devices>
+            <entry name="000000000101"><vsys><entry name="vsys3"/></vsys></entry>
+            <entry name="000000000201"/>
+            <entry name="000000000202"/>
+          </devices>
+          <address>
+            <entry name="BR-A-PRINTERS"><ip-netmask>10.101.5.0/24</ip-netmask></entry>
+          </address>
+        </entry>
+      </device-group>
+      <template>
+        <entry name="TPL-COMMON">
+          <variable>
+            <entry name="$mgmt-ip"><type><ip-netmask>203.0.113.1/24</ip-netmask></type></entry>
+          </variable>
+          <config><devices><entry name="localhost.localdomain">
+            <network><interface><ethernet>
+              <entry name="ethernet1/8"><layer3><ip><entry name="$mgmt-ip"/></ip></layer3></entry>
+            </ethernet></interface></network>
+            <vsys><entry name="vsys1"><zone>
+              <entry name="MGMT"><network><layer3><member>ethernet1/8</member></layer3></network></entry>
+            </zone></entry></vsys>
+          </entry></devices></config>
+        </entry>
+        <entry name="TPL-DC-NET">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/1"><layer3><ip><entry name="10.10.0.1/16"/></ip></layer3></entry>
+                <entry name="ethernet1/2"><layer3><ip><entry name="10.20.0.1/16"/></ip></layer3></entry>
+                <entry name="ethernet1/3"><layer3><ip><entry name="172.16.30.1/24"/></ip></layer3></entry>
+                <entry name="ethernet1/4"><layer3><ip><entry name="203.0.113.2/29"/></ip></layer3></entry>
+                <entry name="ethernet1/5"><layer3><ip><entry name="10.250.0.1/30"/></ip></layer3></entry>
+                <entry name="ethernet1/6"><layer3><ip><entry name="10.250.0.5/30"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="VR-USERS">
+                  <interface><member>ethernet1/1</member><member>ethernet1/5</member><member>ethernet1/6</member><member>ethernet1/8</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="to-servers"><destination>10.20.0.0/16</destination><nexthop><next-vr>VR-SERVERS</next-vr></nexthop></entry>
+                    <entry name="to-br-a"><destination>10.101.0.0/16</destination><nexthop><ip-address>10.250.0.2</ip-address></nexthop></entry>
+                    <entry name="to-br-b"><destination>10.102.0.0/16</destination><nexthop><ip-address>10.250.0.6</ip-address></nexthop></entry>
+                    <entry name="default"><destination>0.0.0.0/0</destination><nexthop><next-vr>VR-EDGE</next-vr></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+                <entry name="VR-SERVERS">
+                  <interface><member>ethernet1/2</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="to-users"><destination>10.10.0.0/16</destination><nexthop><next-vr>VR-USERS</next-vr></nexthop></entry>
+                    <entry name="to-branches"><destination>10.100.0.0/14</destination><nexthop><next-vr>VR-USERS</next-vr></nexthop></entry>
+                    <entry name="default"><destination>0.0.0.0/0</destination><nexthop><next-vr>VR-EDGE</next-vr></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+                <entry name="VR-EDGE">
+                  <interface><member>ethernet1/3</member><member>ethernet1/4</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="internal"><destination>10.0.0.0/8</destination><nexthop><next-vr>VR-USERS</next-vr></nexthop></entry>
+                    <entry name="servers"><destination>10.20.0.0/16</destination><nexthop><next-vr>VR-SERVERS</next-vr></nexthop></entry>
+                    <entry name="default"><destination>0.0.0.0/0</destination><nexthop><ip-address>203.0.113.1</ip-address></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys>
+              <entry name="vsys1">
+                <display-name>users</display-name>
+                <import><network><interface><member>ethernet1/1</member><member>ethernet1/5</member><member>ethernet1/6</member><member>ethernet1/8</member></interface>
+                  <virtual-router><member>VR-USERS</member></virtual-router></network></import>
+                <zone>
+                  <entry name="USERS"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+                  <entry name="WAN"><network><layer3><member>ethernet1/5</member><member>ethernet1/6</member></layer3></network></entry>
+                  <entry name="VPN-LANDING"><network><layer3/></network></entry>
+                  <entry name="TO-VSYS2"><network><external><member>vsys2</member></external></network></entry>
+                  <entry name="TO-VSYS3"><network><external><member>vsys3</member></external></network></entry>
+                </zone>
+              </entry>
+              <entry name="vsys2">
+                <display-name>servers</display-name>
+                <import><network><interface><member>ethernet1/2</member></interface>
+                  <virtual-router><member>VR-SERVERS</member></virtual-router></network></import>
+                <zone>
+                  <entry name="SERVERS"><network><layer3><member>ethernet1/2</member></layer3></network></entry>
+                  <entry name="FROM-VSYS1"><network><external><member>vsys1</member></external></network></entry>
+                  <entry name="TO-VSYS3"><network><external><member>vsys3</member></external></network></entry>
+                </zone>
+              </entry>
+              <entry name="vsys3">
+                <display-name>edge</display-name>
+                <import><network><interface><member>ethernet1/3</member><member>ethernet1/4</member></interface>
+                  <virtual-router><member>VR-EDGE</member></virtual-router></network></import>
+                <zone>
+                  <entry name="DMZ"><network><layer3><member>ethernet1/3</member></layer3></network></entry>
+                  <entry name="OUTSIDE"><network><layer3><member>ethernet1/4</member></layer3></network></entry>
+                  <entry name="INSIDE"><network><external><member>vsys1</member><member>vsys2</member></external></network></entry>
+                </zone>
+              </entry>
+            </vsys>
+          </entry></devices></config>
+        </entry>
+        <entry name="TPL-BRANCH">
+          <variable>
+            <entry name="$lan-ip"><type><ip-netmask>10.199.0.1/24</ip-netmask></type></entry>
+            <entry name="$wan-ip"><type><ip-netmask>10.199.1.1/30</ip-netmask></type></entry>
+            <entry name="$wan-gw"><type><ip-netmask>10.199.1.2</ip-netmask></type></entry>
+          </variable>
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/1"><layer3><ip><entry name="$lan-ip"/></ip></layer3></entry>
+                <entry name="ethernet1/2"><layer3><ip><entry name="$wan-ip"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="default">
+                  <interface><member>ethernet1/1</member><member>ethernet1/2</member><member>ethernet1/8</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="default"><destination>0.0.0.0/0</destination><nexthop><ip-address>$wan-gw</ip-address></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="vsys1"><zone>
+              <entry name="LAN"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+              <entry name="WAN"><network><layer3><member>ethernet1/2</member></layer3></network></entry>
+            </zone></entry></vsys>
+          </entry></devices></config>
+        </entry>
+      </template>
+      <template-stack>
+        <entry name="ST-DC">
+          <templates><member>TPL-DC-NET</member><member>TPL-COMMON</member></templates>
+          <devices><entry name="000000000101"/></devices>
+        </entry>
+        <entry name="ST-BRANCH">
+          <templates><member>TPL-BRANCH</member><member>TPL-COMMON</member></templates>
+          <devices>
+            <entry name="000000000201"><variable>
+              <entry name="$lan-ip"><type><ip-netmask>10.101.0.1/16</ip-netmask></type></entry>
+              <entry name="$wan-ip"><type><ip-netmask>10.250.0.2/30</ip-netmask></type></entry>
+              <entry name="$wan-gw"><type><ip-netmask>10.250.0.1</ip-netmask></type></entry>
+              <entry name="$mgmt-ip"><type><ip-netmask>203.0.113.11/24</ip-netmask></type></entry>
+            </variable></entry>
+            <entry name="000000000202"><variable>
+              <entry name="$lan-ip"><type><ip-netmask>10.102.0.1/16</ip-netmask></type></entry>
+              <entry name="$wan-ip"><type><ip-netmask>10.250.0.6/30</ip-netmask></type></entry>
+              <entry name="$wan-gw"><type><ip-netmask>10.250.0.5</ip-netmask></type></entry>
+              <entry name="$mgmt-ip"><type><ip-netmask>203.0.113.12/24</ip-netmask></type></entry>
+            </variable></entry>
+          </devices>
+        </entry>
+      </template-stack>
+    </entry>
+  </devices>
+</config>

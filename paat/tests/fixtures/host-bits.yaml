@@ -1,0 +1,22 @@
+requester: fwtest-operator
+ticket: TST-008
+target:
+  type: firewall
+  firewall: fw-1
+  vsys: vsys1
+rule:
+  name: TST-host-bits
+  from_zones:
+    - trust
+  to_zones:
+    - untrust
+  source_addresses:
+    - 10.10.10.5/24
+  destination_addresses:
+    - 192.0.2.53/32
+  applications:
+    - dns
+  services:
+    - application-default
+  action: allow
+  description: "Synthetic request with host bits set on a subnet"

@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "panlab"
+version = "0.3.0"
+description = "PAAT (Policy Automation and Analysis Tool) for Palo Alto Networks PAN-OS firewalls and Panorama: rule-request validation, planning, approval and audited push"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pan-os-python>=1.12.0",
+  "pan-python>=0.17.0",
+  "pyyaml>=6.0",
+  "jsonschema>=4.18.0",
+  "python-dotenv>=1.0.0",
+  "openpyxl>=3.1.0",
+  "defusedxml>=0.7.1",
+  "tzdata>=2024.1",  # zoneinfo fallback: minimal servers and containers may lack the OS time zone files
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "httpx>=0.27", "moto>=5.0"]
+web = ["fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9"]
+offsite = ["boto3>=1.34", "paramiko>=3.4"]  # off-box backup copies (S3, SFTP); git and FTPS need nothing extra
+
+[project.scripts]
+panlab = "panlab.cli:main"
+paat = "panlab.cli:main"
+
+[tool.setuptools.package-data]
+panlab = ["web/*.py"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

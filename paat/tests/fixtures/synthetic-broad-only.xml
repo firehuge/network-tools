@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC. RFC 1918 / RFC 5737 only. Two firewalls, both endpoints only
+     match a /8 summary (and a /13) via the same interface in the same zone. -->
+<config version="11.1.0">
+  <mgt-config>
+    <devices>
+      <entry name="000000000401"><hostname>FW-SUM-A</hostname></entry>
+      <entry name="000000000402"><hostname>FW-SUM-B</hostname></entry>
+    </devices>
+  </mgt-config>
+  <shared/>
+  <readonly>
+    <devices><entry name="localhost.localdomain"><device-group>
+      <entry name="DG-SUM-A"><id>31</id></entry>
+      <entry name="DG-SUM-B"><id>32</id></entry>
+    </device-group></entry></devices>
+  </readonly>
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>PANO-SUM</hostname></system></deviceconfig>
+      <device-group>
+        <entry name="DG-SUM-A">
+          <devices><entry name="000000000401"/></devices>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>allow</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+        <entry name="DG-SUM-B">
+          <devices><entry name="000000000402"/></devices>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>allow</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+      </device-group>
+      <template>
+        <entry name="TPL-SUM">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/4"><layer3><ip><entry name="203.0.113.10/29"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="default">
+                  <interface><member>ethernet1/4</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="internal"><destination>10.0.0.0/8</destination><interface>ethernet1/4</interface><nexthop><ip-address>203.0.113.9</ip-address></nexthop></entry>
+                    <entry name="summary-dst"><destination>10.20.0.0/13</destination><interface>ethernet1/4</interface><nexthop><ip-address>203.0.113.9</ip-address></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="vsys1"><zone>
+              <entry name="External-Transit"><network><layer3><member>ethernet1/4</member></layer3></network></entry>
+            </zone></entry></vsys>
+          </entry></devices></config>
+        </entry>
+      </template>
+      <template-stack>
+        <entry name="ST-SUM-A">
+          <templates><member>TPL-SUM</member></templates>
+          <devices><entry name="000000000401"/></devices>
+        </entry>
+        <entry name="ST-SUM-B">
+          <templates><member>TPL-SUM</member></templates>
+          <devices><entry name="000000000402"/></devices>
+        </entry>
+      </template-stack>
+    </entry>
+  </devices>
+</config>

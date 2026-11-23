@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!-- Synthetic (documentation-style private ranges only): a retired DMZ server still reachable through a broad /24 rule. -->
+<config version="11.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>fwtest-block-synth</hostname></system></deviceconfig>
+      <network>
+        <interface><ethernet>
+          <entry name="ethernet1/1"><layer3><ip><entry name="198.51.100.2/29"/></ip></layer3></entry>
+          <entry name="ethernet1/3"><layer3><ip><entry name="10.1.20.1/24"/></ip></layer3></entry>
+          <entry name="ethernet1/4"><layer3><ip><entry name="10.1.30.1/24"/></ip></layer3></entry>
+        </ethernet></interface>
+        <virtual-router>
+          <entry name="default">
+            <interface><member>ethernet1/1</member><member>ethernet1/3</member><member>ethernet1/4</member></interface>
+            <routing-table><ip><static-route>
+              <entry name="default"><destination>0.0.0.0/0</destination><nexthop><ip-address>198.51.100.1</ip-address></nexthop></entry>
+            </static-route></ip></routing-table>
+          </entry>
+        </virtual-router>
+      </network>
+      <vsys>
+        <entry name="vsys1">
+          <zone>
+            <entry name="untrust"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+            <entry name="LAN"><network><layer3><member>ethernet1/3</member></layer3></network></entry>
+            <entry name="DMZ"><network><layer3><member>ethernet1/4</member></layer3></network></entry>
+          </zone>
+          <address>
+            <entry name="SRV-OLD"><ip-netmask>10.1.30.25/32</ip-netmask></entry>
+            <entry name="SRV-NEW"><ip-netmask>10.1.30.26/32</ip-netmask></entry>
+            <entry name="NET-DMZ"><ip-netmask>10.1.30.0/24</ip-netmask></entry>
+            <entry name="NET-LAN"><ip-netmask>10.1.20.0/24</ip-netmask></entry>
+          </address>
+          <address-group>
+            <entry name="GRP-WEB"><static><member>SRV-OLD</member><member>SRV-NEW</member></static></entry>
+          </address-group>
+          <rulebase>
+            <security><rules>
+              <entry name="R-OLD-ONLY">
+                <from><member>LAN</member></from><to><member>DMZ</member></to>
+                <source><member>NET-LAN</member></source><destination><member>SRV-OLD</member></destination>
+                <application><member>any</member></application><service><member>any</member></service><action>allow</action>
+              </entry>
+              <entry name="R-WEB">
+                <from><member>LAN</member></from><to><member>DMZ</member></to>
+                <source><member>NET-LAN</member></source><destination><member>GRP-WEB</member></destination>
+                <application><member>any</member></application><service><member>any</member></service><action>allow</action>
+              </entry>
+              <entry name="R-DMZ-BROAD">
+                <from><member>LAN</member></from><to><member>DMZ</member></to>
+                <source><member>any</member></source><destination><member>NET-DMZ</member></destination>
+                <application><member>any</member></application><service><member>any</member></service><action>allow</action>
+              </entry>
+            </rules></security>
+          </rulebase>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

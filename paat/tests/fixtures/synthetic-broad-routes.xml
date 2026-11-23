@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<!-- SYNTHETIC Panorama export for tests. Every name, serial, and address here
+     is invented (RFC 1918 / RFC 5737). Not derived from any real config.
+     Two edge firewalls advertise only a /8 and a /13 via the same interface;
+     an app firewall has a named vsys (DG membership uses a vsys id) with a
+     connected /24 for the destination; an MPLS firewall has a /18 for the
+     source; a LAN firewall has two connected /24s in one zone with
+     intrazone-default deny. -->
+<config version="11.1.0">
+  <mgt-config>
+    <devices>
+      <entry name="000000000301"><hostname>FW-EDGE-PHX</hostname></entry>
+      <entry name="000000000302"><hostname>FW-EDGE-ATL</hostname></entry>
+      <entry name="000000000303"><hostname>FW-APP</hostname></entry>
+      <entry name="000000000304"><hostname>FW-MPLS</hostname></entry>
+      <entry name="000000000305"><hostname>FW-LAN</hostname></entry>
+    </devices>
+  </mgt-config>
+  <shared/>
+  <readonly>
+    <devices><entry name="localhost.localdomain"><device-group>
+      <entry name="DG-EDGE-PHX"><id>21</id></entry>
+      <entry name="DG-EDGE-ATL"><id>22</id></entry>
+      <entry name="DG_TIER_APP"><id>23</id></entry>
+      <entry name="DG_MPLS_COMMON"><id>24</id></entry>
+      <entry name="DG_LAN"><id>25</id></entry>
+    </device-group></entry></devices>
+  </readonly>
+  <devices>
+    <entry name="localhost.localdomain">
+      <deviceconfig><system><hostname>PANO-BROAD</hostname></system></deviceconfig>
+      <device-group>
+        <entry name="DG-EDGE-PHX">
+          <devices><entry name="000000000301"/></devices>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>allow</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+        <entry name="DG-EDGE-ATL">
+          <devices><entry name="000000000302"/></devices>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>allow</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+        <entry name="DG_TIER_APP">
+          <devices>
+            <entry name="000000000303"><vsys><entry name="vsys5"/></vsys></entry>
+          </devices>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>allow</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+        <entry name="DG_MPLS_COMMON">
+          <devices>
+            <entry name="000000000304"><vsys><entry name="vsys9"/></vsys></entry>
+          </devices>
+        </entry>
+        <entry name="DG_LAN">
+          <devices><entry name="000000000305"/></devices>
+          <post-rulebase><default-security-rules><rules>
+            <entry name="intrazone-default"><action>deny</action></entry>
+            <entry name="interzone-default"><action>deny</action></entry>
+          </rules></default-security-rules></post-rulebase>
+        </entry>
+      </device-group>
+      <template>
+        <entry name="TPL-EDGE">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/4"><layer3><ip><entry name="203.0.113.2/29"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="default">
+                  <interface><member>ethernet1/4</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="internal"><destination>10.0.0.0/8</destination><interface>ethernet1/4</interface><nexthop><ip-address>203.0.113.1</ip-address></nexthop></entry>
+                    <entry name="summary-dst"><destination>10.20.0.0/13</destination><interface>ethernet1/4</interface><nexthop><ip-address>203.0.113.1</ip-address></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="vsys1"><zone>
+              <entry name="External-Transit"><network><layer3><member>ethernet1/4</member></layer3></network></entry>
+            </zone></entry></vsys>
+          </entry></devices></config>
+        </entry>
+        <entry name="TPL-APP">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/1"><layer3><ip><entry name="10.10.10.1/30"/></ip></layer3></entry>
+                <entry name="ethernet1/2"><layer3><ip><entry name="10.20.20.1/24"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="VR_TIER_APP">
+                  <interface><member>ethernet1/1</member><member>ethernet1/2</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="default"><destination>0.0.0.0/0</destination><interface>ethernet1/1</interface><nexthop><ip-address>10.10.10.2</ip-address></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="VSYS_DC_APP">
+              <import><network>
+                <interface><member>ethernet1/1</member><member>ethernet1/2</member></interface>
+                <virtual-router><member>VR_TIER_APP</member></virtual-router>
+              </network></import>
+              <zone>
+                <entry name="SZ_APP_CORE"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+                <entry name="SZ_APP_DEV"><network><layer3><member>ethernet1/2</member></layer3></network></entry>
+              </zone>
+            </entry></vsys>
+          </entry></devices></config>
+        </entry>
+        <entry name="TPL-MPLS">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/1"><layer3><ip><entry name="10.30.0.1/30"/></ip></layer3></entry>
+                <entry name="ethernet1/2"><layer3><ip><entry name="192.0.2.1/30"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="VR_MPLS">
+                  <interface><member>ethernet1/1</member><member>ethernet1/2</member></interface>
+                  <routing-table><ip><static-route>
+                    <entry name="users"><destination>10.30.0.0/18</destination><interface>ethernet1/1</interface><nexthop><ip-address>10.30.0.2</ip-address></nexthop></entry>
+                    <entry name="default"><destination>0.0.0.0/0</destination><interface>ethernet1/2</interface><nexthop><ip-address>192.0.2.2</ip-address></nexthop></entry>
+                  </static-route></ip></routing-table>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="VSYS_MPLS_COMMON">
+              <import><network>
+                <interface><member>ethernet1/1</member><member>ethernet1/2</member></interface>
+                <virtual-router><member>VR_MPLS</member></virtual-router>
+              </network></import>
+              <zone>
+                <entry name="SZ_MPLS"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+                <entry name="SZ_TRANSIT"><network><layer3><member>ethernet1/2</member></layer3></network></entry>
+              </zone>
+            </entry></vsys>
+          </entry></devices></config>
+        </entry>
+        <entry name="TPL-LAN">
+          <config><devices><entry name="localhost.localdomain">
+            <network>
+              <interface><ethernet>
+                <entry name="ethernet1/1"><layer3><ip><entry name="10.40.1.1/24"/></ip></layer3></entry>
+                <entry name="ethernet1/2"><layer3><ip><entry name="10.40.2.1/24"/></ip></layer3></entry>
+              </ethernet></interface>
+              <virtual-router>
+                <entry name="default">
+                  <interface><member>ethernet1/1</member><member>ethernet1/2</member></interface>
+                </entry>
+              </virtual-router>
+            </network>
+            <vsys><entry name="vsys1"><zone>
+              <entry name="LAN"><network><layer3><member>ethernet1/1</member><member>ethernet1/2</member></layer3></network></entry>
+            </zone></entry></vsys>
+          </entry></devices></config>
+        </entry>
+      </template>
+      <template-stack>
+        <entry name="ST-EDGE-PHX">
+          <templates><member>TPL-EDGE</member></templates>
+          <devices><entry name="000000000301"/></devices>
+        </entry>
+        <entry name="ST-EDGE-ATL">
+          <templates><member>TPL-EDGE</member></templates>
+          <devices><entry name="000000000302"/></devices>
+        </entry>
+        <entry name="ST-APP">
+          <templates><member>TPL-APP</member></templates>
+          <devices><entry name="000000000303"/></devices>
+        </entry>
+        <entry name="ST-MPLS">
+          <templates><member>TPL-MPLS</member></templates>
+          <devices><entry name="000000000304"/></devices>
+        </entry>
+        <entry name="ST-LAN">
+          <templates><member>TPL-LAN</member></templates>
+          <devices><entry name="000000000305"/></devices>
+        </entry>
+      </template-stack>
+    </entry>
+  </devices>
+</config>

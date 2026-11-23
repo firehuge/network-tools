@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lab.local/schema/rule_request.schema.json",
+  "title": "PAN-OS lab rule request",
+  "description": "Synthetic lab schema for a firewall or Panorama security-rule request. Panorama device_group targets are accepted here but plan/push are stubbed until phase 4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requester", "ticket", "target", "rule"],
+  "properties": {
+    "requester": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "ticket": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["firewall", "panorama"]
+        },
+        "firewall": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63,
+          "description": "Lab alias for the firewall. Do not use a real serial or production hostname."
+        },
+        "vsys": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 31,
+          "pattern": "^[A-Za-z][A-Za-z0-9._-]*$",
+          "default": "vsys1"
+        },
+        "panorama": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63
+        },
+        "device_group": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "firewall" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["firewall"] }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "panorama" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["panorama", "device_group"] }
+        }
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "from_zones",
+        "to_zones",
+        "source_addresses",
+        "destination_addresses",
+        "applications",
+        "services",
+        "action"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63,
+          "pattern": "^[A-Za-z][A-Za-z0-9._-]{0,62}$"
+        },
+        "from_zones": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/zoneName" }
+        },
+        "to_zones": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/zoneName" }
+        },
+        "source_addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/address" }
+        },
+        "destination_addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/address" }
+        },
+        "applications": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/appOrServiceName" }
+        },
+        "services": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/appOrServiceName" }
+        },
+        "action": {
+          "type": "string",
+          "enum": ["allow", "deny", "drop", "reset-client", "reset-server", "reset-both"]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "log_start": { "type": "boolean", "default": false },
+        "log_end": { "type": "boolean", "default": true },
+        "disabled": { "type": "boolean", "default": false }
+      }
+    }
+  },
+  "$defs": {
+    "zoneName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 31,
+      "pattern": "^(any|[A-Za-z][A-Za-z0-9._-]*)$"
+    },
+    "objectName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^(any|[A-Za-z][A-Za-z0-9._-]{0,62})$"
+    },
+    "appOrServiceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^(any|application-default|[A-Za-z][A-Za-z0-9._-]{0,62})$"
+    },
+    "address": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "A CIDR/IP literal, 'any', or the name of an existing or new address object."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "value"],
+          "properties": {
+            "name": { "$ref": "#/$defs/objectName" },
+            "value": { "type": "string", "minLength": 1, "maxLength": 255 },
+            "type": {
+              "type": "string",
+              "enum": ["ip-netmask", "ip-range", "fqdn"],
+              "default": "ip-netmask"
+            },
+            "description": { "type": "string", "maxLength": 1024 }
+          }
+        }
+      ]
+    }
+  }
+}

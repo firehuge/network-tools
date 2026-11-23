@@ -1,0 +1,22 @@
+requester: fwtest-operator
+ticket: TST-003
+target:
+  type: firewall
+  firewall: fw-1
+  vsys: vsys1
+rule:
+  name: TST-allow-users-to-web
+  from_zones:
+    - trust
+  to_zones:
+    - dmz
+  source_addresses:
+    - fwtest-user-subnet
+  destination_addresses:
+    - 10.20.20.99/32
+  applications:
+    - ssh
+  services:
+    - application-default
+  action: allow
+  description: "Synthetic request that reuses an existing rule name"

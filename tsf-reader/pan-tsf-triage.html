@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAN Tech-Support Triage Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Offline browser tool to read a Palo Alto Networks tech support file and highlight issues. Nothing is uploaded.">
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#1b2430;--mu:#5c6b7a;--bd:#d8dee4;--g:#1f9d55;--y:#d89b00;--r:#d64545;--b:#2f6fd6;--gb:#e7f6ee;--yb:#fff6dc;--rb:#fdeaea;--ib:#e8f0fe;--i:#2f6fd6}
+.dark{--bg:#12161c;--card:#1b222b;--tx:#e6edf3;--mu:#97a4b1;--bd:#2c3642;--gb:#15301f;--yb:#332a0d;--rb:#3a1a1a;--ib:#1a2740}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.45 system-ui,Segoe UI,Arial;background:var(--bg);color:var(--tx)}
+header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--card);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+header h1{font-size:22px;margin:0;flex:1}
+button,select,input,label.btn{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.primary{background:var(--b);color:#fff;border-color:var(--b)}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1400px;margin:auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:18px}
+#drop{border:3px dashed var(--b);text-align:center;padding:40px;font-size:20px;cursor:pointer}
+#drop.over{background:var(--gb)}
+#drop.small{padding:16px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.f{padding:10px 12px;border-radius:8px;background:var(--bg)}
+.f b{display:block;font-size:13px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.f span{font-size:17px;word-break:break-word;overflow-wrap:anywhere}
+.nf{color:var(--mu);font-style:italic}
+.status{font-size:20px;font-weight:600;padding:10px 14px;border-radius:8px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.s-g{background:var(--gb);color:var(--g)}.s-y{background:var(--yb);color:var(--y)}.s-r{background:var(--rb);color:var(--r)}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.pill{font-size:14px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.pill.r{background:var(--rb);color:var(--r);border-color:var(--r)}
+.pill.y{background:var(--yb);color:var(--y);border-color:var(--y)}
+.pill.i{background:var(--ib);color:var(--i);border-color:var(--b)}
+.issue{border-left:6px solid;border-radius:8px;padding:12px 14px;margin:10px 0;background:var(--bg)}
+.issue.critical{border-color:var(--r)}.issue.warning{border-color:var(--y)}.issue.info{border-color:var(--b)}
+.issue h3{margin:0 0 4px;font-size:18px}
+.tip{color:var(--mu)}
+.cnt{float:right;font-size:13px;color:var(--mu)}
+.ev{font:12px/1.4 Consolas,monospace;color:var(--mu);margin-top:6px}
+.ev a{color:var(--b);cursor:pointer;text-decoration:underline;display:block;margin:2px 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{padding:8px 16px}
+.tabs button.on{background:var(--b);color:#fff;border-color:var(--b)}
+#log{font:13px/1.4 Consolas,monospace;max-height:640px;overflow:auto;border:1px solid var(--bd);border-radius:8px;background:var(--card)}
+.row{display:grid;grid-template-columns:160px 200px 70px 1fr;gap:8px;padding:2px 8px;border-bottom:1px solid var(--bd);white-space:pre-wrap;word-break:break-all}
+.row.err{background:var(--rb)}.row.warn{background:var(--yb)}.row.hit{outline:3px solid var(--b);outline-offset:-3px}
+.row .fn{color:var(--mu)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+.ctl input[type=text],.ctl input[type=search]{flex:1;min-width:180px}
+.ctl input[type=datetime-local]{min-width:190px}
+.loglayout{display:grid;grid-template-columns:260px 1fr;gap:12px}
+@media(max-width:900px){.loglayout{grid-template-columns:1fr}}
+.tree{max-height:640px;overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:8px;background:var(--bg);font-size:13px}
+.tree .item{padding:3px 6px;border-radius:4px;cursor:pointer;word-break:break-all}
+.tree .item:hover,.tree .item.on{background:var(--ib)}
+.tree .dir{font-weight:600;color:var(--mu);cursor:default;margin-top:6px}
+table.data{width:100%;border-collapse:collapse;font-size:14px}
+table.data th,table.data td{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left;vertical-align:top}
+table.data th{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+table.data tr.drop td{background:var(--rb)}
+table.data tr.warn td{background:var(--yb)}
+#prow{max-width:720px;margin:12px auto 0;text-align:center}
+.progress{height:10px;background:var(--bd);border-radius:99px;overflow:hidden;margin:0 auto;max-width:520px}
+.progress>div{height:100%;width:0;background:var(--b);transition:width .15s}
+#btn-cancel{margin:8px 0 0;padding:6px 14px;border-radius:8px;border:1px solid var(--b,#2563eb);background:#fff;color:var(--b,#2563eb);cursor:pointer;font:inherit}
+#btn-cancel:hover{background:var(--gb,#eff6ff)}
+#ptext{margin-top:8px;font-size:13px;word-break:break-word}
+
+#rawview{font:13px/1.4 Consolas,monospace;max-height:640px;overflow:auto;white-space:pre-wrap;word-break:break-all;border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--bg)}
+.muted{color:var(--mu);font-size:14px}
+details.issbox{border-left:6px solid;border-radius:8px;padding:0;margin:10px 0;background:var(--bg)}
+details.issbox>summary{padding:12px 14px;cursor:pointer;list-style:none}
+details.issbox>summary::-webkit-details-marker{display:none}
+details.issbox .body{padding:0 14px 12px}
+h2{margin:0 0 12px;font-size:20px}
+.score{font-size:28px;font-weight:700}
+hr.sep{border:0;border-top:1px solid var(--bd);margin:16px 0}
+@media print{
+  header button,#drop,.ctl,.tree,.tabs,nav,#exportbar{display:none!important}
+  body{background:#fff;color:#000}
+  #log, #rawview{max-height:none}
+  .card{break-inside:avoid}
+}
+
+#sum .f em.src{display:block;font-style:normal;font-size:11px;color:var(--muted,#6b7280);margin-top:2px;font-weight:400}
+#sum .f span.hidden-val{color:var(--muted,#6b7280);font-style:italic}
+#sum .f span.nf{color:var(--muted,#6b7280)}
+#sum .f span{word-break:break-word}
+
+#budgetnote{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:10px 12px;border-radius:8px;margin:8px 0 0}
+.rawpane{flex:1;min-width:0;display:flex;flex-direction:column}
+#rawactions{margin:0 0 8px}
+#btn-loadmore{padding:6px 12px;border-radius:8px;border:1px solid var(--b,#2563eb);background:#fff;color:var(--b,#2563eb);cursor:pointer;font:inherit}
+#btn-loadmore:disabled{opacity:.6;cursor:default}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ PAN Tech-Support Triage</h1>
+  <span class="tip">Files stay on this computer. Nothing is uploaded.</span>
+  <span id="exportbar" hidden>
+    <label class="btn"><input type="checkbox" id="showsens"> Show sensitive values</label>
+    <button id="btn-html" type="button">📄 Export HTML</button>
+    <button id="btn-csv" type="button">📑 Export CSV</button>
+    <button id="btn-print" type="button">🖨️ Report / PDF</button>
+  </span>
+  <button id="btn-dark" type="button">🌓 Dark/Light</button>
+</header>
+<main>
+  <div id="drop" class="card">📂 Drop a Palo Alto tech-support file here (.tgz, .tar.gz, .tar, .zip)<br>
+    <small>or click to browse. Typical name: techsupport_*.tgz — from a firewall or Panorama. Works offline.</small>
+    <input id="fi" type="file" multiple hidden accept=".tgz,.tar,.gz,.tar.gz,.zip,.txt,.xml,.log">
+  </div>
+  <div id="prow" hidden>
+    <div id="pbar" class="progress"><div></div></div>
+    <button type="button" id="btn-cancel" hidden>Cancel</button>
+    <div id="ptext" class="muted"></div>
+  </div>
+
+  <div id="out" hidden>
+    <p class="tip" id="filenote"></p>
+    <p class="banner" id="budgetnote" hidden></p>
+
+    <nav class="tabs" aria-label="Sections">
+      <button type="button" class="on" data-tab="dash">Dashboard</button>
+      <button type="button" data-tab="findings">Findings</button>
+      <button type="button" data-tab="logs">Logs</button>
+      <button type="button" data-tab="sys">System / Resources</button>
+      <button type="button" data-tab="counters">Counters</button>
+      <button type="button" data-tab="config">Config overview</button>
+      <button type="button" data-tab="raw">Raw files</button>
+    </nav>
+
+    <div id="tab-dash" class="tabpanel">
+      <div class="card">
+        <div id="stat" class="status"></div>
+        <div class="grid" id="sum"></div>
+      </div>
+      <div class="card">
+        <h2>Top findings</h2>
+        <div id="topfindings"></div>
+      </div>
+    </div>
+
+    <div id="tab-findings" class="tabpanel" hidden>
+      <div class="card">
+        <h2 style="margin-top:0">All findings</h2>
+        <p class="tip">Red and yellow cards are problems the tool could confirm from this bundle. Blue cards marked “suggestion” are performance or hygiene ideas — not certainties. Click a card (or an evidence line) to jump to the matching logs.</p>
+        <div id="issues"></div>
+      </div>
+    </div>
+
+    <div id="tab-logs" class="tabpanel" hidden>
+      <div class="card" id="logcard">
+        <h2 style="margin-top:0">Logs</h2>
+        <div class="ctl">
+          <select id="ff"><option value="">All files</option></select>
+          <select id="sf">
+            <option value="">All severities</option>
+            <option value="err">Errors only</option>
+            <option value="warn">Errors + warnings</option>
+          </select>
+          <input id="q" type="search" placeholder="Search or regex…">
+          <label class="btn"><input type="checkbox" id="qre"> Regex</label>
+          <label>From <input id="tfrom" type="datetime-local"></label>
+          <label>To <input id="tto" type="datetime-local"></label>
+        </div>
+        <div id="cn" class="tip"></div>
+        <div class="loglayout">
+          <div id="logtree" class="tree" aria-label="Log files"></div>
+          <div id="log"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-sys" class="tabpanel" hidden>
+      <div class="card" id="sysbody"></div>
+    </div>
+
+    <div id="tab-counters" class="tabpanel" hidden>
+      <div class="card">
+        <h2 style="margin-top:0">Global counters</h2>
+        <p class="tip">Drop and error counters are listed first. A large lifetime value with rate 0 may just be history since reboot. A non-zero rate means it is happening now.</p>
+        <div id="counterbody"></div>
+      </div>
+    </div>
+
+    <div id="tab-config" class="tabpanel" hidden>
+      <div class="card" id="cfgbody"></div>
+    </div>
+
+    <div id="tab-raw" class="tabpanel" hidden>
+      <div class="card">
+        <h2 style="margin-top:0">Files in this bundle</h2>
+        <div class="loglayout">
+          <div id="rawtree" class="tree" aria-label="Bundle files"></div>
+          <div class="rawpane">
+            <div id="rawactions" hidden><button type="button" id="btn-loadmore">Load more of this file</button></div>
+            <pre id="rawview"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<!--
+  Archive support uses only native browser APIs (DecompressionStream for gzip/deflate)
+  plus original tar and zip parsers written for this tool (and its GlobalProtect sibling).
+  No third-party libraries and no CDN at runtime.
+-->
+<script>
+/* PAN TSF Triage Viewer — runs entirely in the browser. Nothing is uploaded. */
+(() => {
+"use strict";
+
+const $ = (s, el=document) => el.querySelector(s);
+const dec = new TextDecoder("utf-8");
+
+const TEXT_CAP = 4 * 1024 * 1024;       // store at most 4 MiB per text file
+const TEXT_TAIL = 1 * 1024 * 1024;      // if larger, keep the last 1 MiB
+const SKIP_RE = /\.(?:bin|so|pcap|pcapng|img|iso|mp3|jpg|jpeg|png|gif|pdf|ko|o|a|zip)$/i;
+
+function fmtDate(d){
+  if (!d || isNaN(+d)) return "";
+  const p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function fmtBytes(n){
+  if (n == null) return "";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n/1024).toFixed(1) + " KB";
+  if (n < 1073741824) return (n/1048576).toFixed(1) + " MB";
+  return (n/1073741824).toFixed(2) + " GB";
+}
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+function pick(text, re){
+  if (!text) return null;
+  const m = text.match(re);
+  if (!m) return null;
+  const v = (m[m.length-1] ?? m[1] ?? "").toString().trim();
+  return v ? v : null;
+}
+function toNum(v){
+  if (v == null || v === "") return null;
+  const n = parseFloat(String(v).replace(/,/g,"").replace(/%/,""));
+  return isNaN(n) ? null : n;
+}
+function daysBetween(a,b){ return Math.round((+b - +a) / 86400000); }
+
+function parseLooseDate(s){
+  if (!s || /never|unknown|n\/a/i.test(s)) return null;
+  const t = s.trim().replace(/\s+(PDT|PST|EDT|EST|UTC|GMT|CST|CDT)$/i,"");
+  const mdy = t.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})(?:\s+(\d{2}:\d{2}:\d{2}))?/);
+  if (mdy){
+    const d = new Date(`${mdy[1]} ${mdy[2]}, ${mdy[3]} ${mdy[4]||"12:00:00"}`);
+    return isNaN(+d) ? null : d;
+  }
+  const iso = t.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})(?:[ T](\d{1,2}):(\d{2}):(\d{2}))?/);
+  if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3], +(iso[4]||0), +(iso[5]||0), +(iso[6]||0));
+  const d = new Date(t);
+  return isNaN(+d) ? null : d;
+}
+
+/* ===================== archives (Web Worker, streamed) ===================== */
+const WORKER_JS = "/* Streaming TSF unpacker. Runs in a Web Worker. Never holds the whole archive. */\n\"use strict\";\n\nconst dec = new TextDecoder(\"utf-8\");\nconst TEXT_CAP = 4 * 1024 * 1024;\nconst TEXT_TAIL = 1 * 1024 * 1024;\nconst LOG_HEAD = 64 * 1024;\nconst LOG_TAIL = 256 * 1024;\nconst MAX_MATCH_LINES = 200;\nconst FULL_SOFT = 2 * 1024 * 1024;\nconst DEFAULT_BUDGET = 256 * 1024 * 1024; // ~256 MiB of kept text across the bundle\nconst BATCH_MAX = 16;\nconst BATCH_BYTES = 1 * 1024 * 1024;\nconst SKIP_RE = /\\.(?:bin|so|pcap|pcapng|img|iso|mp3|jpg|jpeg|png|gif|pdf|ko|o|a)$/i;\nconst enc = new TextEncoder();\n\nconst ISSUE_RE = /split-brain|peer state active|link-monitor|link monitor|path-monitor|path monitor|preempt(?!ive)|commit-?all failed|CommitAll job .* fail|commit (job )?(failed|FAIL)|user-?id agent.*disconnect|agent .* disconnected|server-monitor.*disconnect|LDAP bind failed|useridd.*disconnect|authentication failed|auth(entication)? fail|lockout|BGP neighbor|hold timer expired|went down|certificate expired|ssl decryption error|untrusted (issuer|cert)|failed to forward logs|Panorama connectivity|disconnected from Panorama|log forwarding disconnected|cannot send logging|exited unexpectedly|core dumped|restart count|Process \\S+ exited|SIGSEGV|restarting|\\b(Error|Critical|Fatal|EMERG|ALERT|CRIT|panic)\\b/i;\n\nlet cancelled = false;\nlet inBytes = 0;\nlet outBytes = 0;\nlet filesIndexed = 0;\nlet currentFile = \"\";\nlet lastProgress = 0;\nlet fileSize = 0;\nlet peakHeap = 0;\nlet onProgress = null;\nlet retainBudget = DEFAULT_BUDGET;\nlet retainedBytes = 0;\nlet budgetHit = false;\nlet budgetedCount = 0;\nlet batchFiles = [];\nlet batchXfer = [];\nlet extractTarget = null;\nlet extractFound = false;\n\nfunction fmtBytes(n){\n  if (n == null) return \"\";\n  if (n < 1024) return n + \" B\";\n  if (n < 1048576) return (n/1024).toFixed(1) + \" KB\";\n  if (n < 1073741824) return (n/1048576).toFixed(1) + \" MB\";\n  return (n/1073741824).toFixed(2) + \" GB\";\n}\nfunction shortName(p){ return (p||\"\").split(/[\\\\/]/).filter(Boolean).pop() || p; }\nfunction normPath(p){ return (p||\"\").replace(/\\\\/g,\"/\").replace(/^\\.\\//,\"\"); }\nfunction heapNow(){\n  try {\n    if (performance && performance.memory && performance.memory.usedJSHeapSize){\n      const v = performance.memory.usedJSHeapSize;\n      if (v > peakHeap) peakHeap = v;\n      return v;\n    }\n  } catch (e){}\n  return 0;\n}\nfunction progress(stage, force){\n  const now = Date.now();\n  if (!force && now - lastProgress < 80) return;\n  lastProgress = now;\n  const payload = {\n    type: \"progress\",\n    stage: stage || \"reading\",\n    inBytes,\n    outBytes,\n    fileSize,\n    filesIndexed,\n    currentFile,\n    heap: heapNow()\n  };\n  if (onProgress) onProgress(payload);\n  else if (typeof self !== \"undefined\" && self.postMessage) self.postMessage(payload);\n}\nfunction checkCancel(){\n  if (cancelled){\n    const e = new Error(\"Cancelled\");\n    e.name = \"AbortError\";\n    e.cancelled = true;\n    throw e;\n  }\n}\n\nfunction isPrimaryCli(path){\n  const p = normPath(path).toLowerCase();\n  const b = shortName(p);\n  if (/\\/tmp\\/cli\\/logs\\//.test(p)) return false;\n  if (/\\/tmp\\/cli\\/.*techsupport[^/]*\\.(txt|log)$/.test(p) || /^techsupport.*\\.(txt|log)$/.test(b)) return true;\n  if (/^cli\\.(txt|log|out)$/.test(b) || /^output\\.(txt|log)$/.test(b) || /^tech-?support/.test(b)) return true;\n  return false;\n}\nfunction isConfigPath(path){\n  const p = normPath(path).toLowerCase();\n  if (/ha-remote|panorama_pushed|predefined|sysd_objects/i.test(p)) return false;\n  return /running-config\\.xml$/.test(p) || /\\/saved-configs\\/(techsupport-saved-currcfg|running-config|\\.merged-running-config)\\.xml$/.test(p) || /\\/opt\\/pancfg\\/.*running-config\\.xml$/.test(p);\n}\nfunction isLogPath(path){\n  const p = normPath(path).toLowerCase();\n  if (/\\/var\\/log\\//.test(p) || /\\/mp-log\\//.test(p) || /\\/dp-log\\//.test(p)) return true;\n  return /\\.(log)(?:\\.\\d+)?$/.test(p) && !isPrimaryCli(path);\n}\nfunction looksGzip(u8){ return u8.length >= 2 && u8[0] === 0x1f && u8[1] === 0x8b; }\nfunction looksZip(u8){ return u8.length >= 2 && u8[0] === 0x50 && u8[1] === 0x4b; }\nfunction looksTar(u8){ return u8.length > 262 && dec.decode(u8.subarray(257, 262)) === \"ustar\"; }\nfunction tarStr(h, a, b){\n  return dec.decode(h.subarray(a,b)).replace(/\\0.*$/s,\"\").trim();\n}\nfunction concatU8(chunks){\n  let n = 0;\n  for (const c of chunks) n += c.length;\n  const out = new Uint8Array(n);\n  let o = 0;\n  for (const c of chunks){ out.set(c, o); o += c.length; }\n  return out;\n}\n\nfunction isBulkDataPath(path){\n  const l = normPath(path).toLowerCase();\n  return /(?:^|\\/)(?:opt\\/)?(?:panlogs|pan_logs|logdb|log-?db)(?:\\/|$)/.test(l)\n    || /(?:^|\\/)(?:elasticsearch|esdata|es-data|es_data|es\\/data)(?:\\/|$)/.test(l)\n    || /\\/var\\/lib\\/elasticsearch(?:\\/|$)/.test(l)\n    || /(?:^|\\/)(?:log-?collector(?:-data)?|logcollector|lcdata|lc-data|lc_data)(?:\\/|$)/.test(l)\n    || /(?:^|\\/)(?:mongo(?:db)?|solr|clickhouse|filebeat|kibana)(?:\\/|$)/.test(l);\n}\nfunction isEssential(name){\n  return isPrimaryCli(name) || isConfigPath(name);\n}\nfunction namesMatch(a, b){\n  return normPath(a) === normPath(b) || shortName(a) === shortName(b);\n}\nfunction classifyEntry(name, size){\n  const l = normPath(name).toLowerCase();\n  if (/\\/var\\/cores\\//.test(l) || /\\.core(\\.\\d+)?$/.test(l)) return {mode:\"index\", reason:\"core dump (listed, not opened)\", core:true};\n  if (isBulkDataPath(l)) return {mode:\"index\", reason:\"log collector / log database / search data\"};\n  if (SKIP_RE.test(l) || /\\.dat$/i.test(l) || /\\.(db|mdb|sqlite|dmp|vmdk|ova)$/i.test(l)) return {mode:\"index\", reason:\"binary\"};\n  if (/\\.(tgz|tar)$/i.test(l) || /\\.tar\\.gz$/i.test(l)) return {mode:\"nested-tgz\"};\n  if (/\\.zip$/i.test(l)) return {mode: size > 32*1024*1024 ? \"index\" : \"nested-zip\", reason:\"binary\"};\n  if (isPrimaryCli(l) || isConfigPath(l)) return {mode:\"full\", cap: 8*1024*1024};\n  if (/panorama_pushed\\/(mergesp|predefined|newsp|lastsp)\\.xml$/.test(l)) return {mode:\"index\", reason:\"large Panorama pushed content\"};\n  if (/\\/updates\\/(curcontent|oldcontent)\\//.test(l) || /ui_content|ui_predefined/.test(l)) return {mode:\"index\", reason:\"content package\"};\n  if (/(candidatecfg|last-candidatecfg|refreshed-candidatecfg|tplsp_cfg|sysd_objects)/.test(l)) return {mode:\"index\", reason:\"candidate or internal snapshot\"};\n  if (/\\.(log|txt)\\.(old|\\d+)(?:\\.gz)?$/i.test(l) || /\\.log-\\d{8}/i.test(l) || (/\\.gz$/i.test(l) && /\\.log/i.test(l))){\n    return {mode:\"index\", reason:\"rotated log\"};\n  }\n  if (isLogPath(l) || /\\.(log|txt)$/.test(l)){\n    if (size > 512 * 1024) return {mode:\"scan\"};\n    return {mode:\"full\", cap: TEXT_CAP};\n  }\n  if (/\\.(xml|conf|cfg|csv)$/.test(l)){\n    if (size > 8*1024*1024) return {mode:\"index\", reason:\"too large\"};\n    return {mode:\"full\", cap: TEXT_CAP};\n  }\n  if (size > 1*1024*1024) return {mode:\"index\", reason:\"unrecognized large file\"};\n  return {mode:\"full\", cap: TEXT_CAP};\n}\n\nfunction resetEmitState(budget){\n  retainBudget = (budget == null || budget <= 0) ? DEFAULT_BUDGET : budget;\n  retainedBytes = 0;\n  budgetHit = false;\n  budgetedCount = 0;\n  batchFiles = [];\n  batchXfer = [];\n  extractTarget = null;\n  extractFound = false;\n}\nfunction canRetain(n, essential){\n  if (essential) return true;\n  return retainedBytes + n <= retainBudget;\n}\nfunction flushBatch(){\n  if (!batchFiles.length) return;\n  const files = [];\n  const xfer = [];\n  for (const item of batchFiles){\n    const f = item.meta;\n    if (item.buf){\n      f.textBuf = item.buf.buffer;\n      xfer.push(item.buf.buffer);\n    }\n    files.push(f);\n  }\n  batchFiles = [];\n  batchXfer = [];\n  try {\n    self.postMessage({type:\"batch\", files}, xfer);\n  } catch (e){\n    budgetHit = true;\n    const slim = files.map(f => ({\n      name: f.name, size: f.size, skip: f.skip || \"indexed only (memory budget)\",\n      core: f.core, indexed: true, partial: false, budgeted: true,\n      note: \"This file was listed only because the browser was low on memory.\",\n      matchCount: f.matchCount || 0, loadable: !!f.loadable, textLen: 0\n    }));\n    budgetedCount += slim.length;\n    try { self.postMessage({type:\"batch\", files: slim}); }\n    catch (e2){ /* last resort: skip this batch rather than fail the load */ }\n  }\n}\nfunction emitFile(rec){\n  const essential = isEssential(rec.name);\n  let text = rec.text || \"\";\n  if (text && !canRetain(text.length, essential)){\n    if (rec.matches && rec.matches.length){\n      const slim = rec.matches.join(\"\\n\");\n      if (canRetain(slim.length, false)){\n        text = \"[\u2026 kept matching issue lines only \u2014 memory budget \u2026]\\n\\n\" + slim;\n        rec.partial = true;\n        rec.budgeted = true;\n        rec.note = \"Only matching issue lines were kept (memory budget).\";\n      } else {\n        text = \"\";\n        rec.indexed = true;\n        rec.budgeted = true;\n        rec.skip = rec.skip || \"indexed only (memory budget)\";\n        rec.partial = false;\n      }\n    } else {\n      text = \"\";\n      rec.indexed = true;\n      rec.budgeted = true;\n      rec.skip = rec.skip || \"indexed only (memory budget)\";\n      rec.partial = false;\n    }\n    budgetHit = true;\n    budgetedCount++;\n  } else if (text && essential && retainedBytes + text.length > retainBudget && text.length > 2*1024*1024){\n    const room = Math.max(2*1024*1024, retainBudget - retainedBytes);\n    text = text.slice(0, room);\n    rec.partial = true;\n  }\n  const skip = rec.skip || null;\n  const isBin = !!rec.core || (skip && /binary|core dump|content package|search data|pcap/.test(skip));\n  const meta = {\n    name: rec.name,\n    size: rec.size || 0,\n    skip,\n    core: !!rec.core,\n    indexed: !!rec.indexed,\n    partial: !!rec.partial,\n    budgeted: !!rec.budgeted,\n    note: rec.note || null,\n    matchCount: rec.matchCount || 0,\n    loadable: !isBin && (rec.size || 0) > 0 && (!text || rec.partial || rec.budgeted || rec.indexed),\n    textLen: 0\n  };\n  let buf = null;\n  if (text){\n    buf = enc.encode(text);\n    retainedBytes += buf.byteLength;\n    meta.textLen = buf.byteLength;\n  }\n  batchFiles.push({meta, buf});\n  const batchBytes = batchFiles.reduce((n, it) => n + (it.buf ? it.buf.byteLength : 0), 0);\n  if (batchFiles.length >= BATCH_MAX || batchBytes >= BATCH_BYTES) flushBatch();\n}\n\nfunction countInputStream(readable){\n  return readable.pipeThrough(new TransformStream({\n    transform(chunk, ctl){\n      inBytes += chunk.byteLength || chunk.length || 0;\n      progress(\"decompressing\");\n      ctl.enqueue(chunk);\n    }\n  }));\n}\n\nfunction makeTarReader(readable){\n  const reader = readable.getReader();\n  const chunks = [];\n  let offset = 0, bufLen = 0;\n  async function fill(){\n    checkCancel();\n    const {done, value} = await reader.read();\n    if (done) return false;\n    if (value && value.length){\n      chunks.push(value);\n      bufLen += value.length;\n      outBytes += value.length;\n      progress(\"decompressing\");\n    }\n    return true;\n  }\n  async function need(n){\n    while (bufLen < n){\n      if (!(await fill())) return false;\n    }\n    return true;\n  }\n  function shift(n){\n    const out = new Uint8Array(n);\n    let written = 0;\n    while (written < n){\n      const c = chunks[0];\n      const take = Math.min(n - written, c.length - offset);\n      out.set(c.subarray(offset, offset + take), written);\n      written += take;\n      offset += take;\n      bufLen -= take;\n      if (offset >= c.length){ chunks.shift(); offset = 0; }\n    }\n    return out;\n  }\n  async function discard(n){\n    while (n > 0){\n      if (bufLen === 0){\n        if (!(await fill())) return false;\n      }\n      const c = chunks[0];\n      const take = Math.min(n, c.length - offset);\n      offset += take;\n      bufLen -= take;\n      n -= take;\n      if (offset >= c.length){ chunks.shift(); offset = 0; }\n    }\n    return true;\n  }\n  function payloadStream(size, pad){\n    let left = size;\n    let finished = false;\n    async function finish(){\n      if (finished) return;\n      finished = true;\n      if (left > 0) await discard(left);\n      const extra = pad - size;\n      if (extra > 0) await discard(extra);\n      left = 0;\n    }\n    return new ReadableStream({\n      async pull(controller){\n        try {\n          checkCancel();\n          if (left <= 0){ await finish(); controller.close(); return; }\n          if (bufLen === 0){\n            if (!(await fill())){ await finish(); controller.close(); return; }\n          }\n          const take = Math.min(left, bufLen);\n          controller.enqueue(shift(take));\n          left -= take;\n        } catch (e){\n          try { await finish(); } catch (e2){}\n          controller.error(e);\n        }\n      },\n      async cancel(){ await finish(); }\n    }, { highWaterMark: 1 });\n  }\n  async function abort(){\n    try { await reader.cancel(); } catch (e){}\n    chunks.length = 0;\n    bufLen = 0;\n    offset = 0;\n  }\n  return {need, shift, discard, payloadStream, fill, abort};\n}\n\nasync function collectStream(stream, size, cap){\n  const reader = stream.getReader();\n  const headNeed = (size > cap) ? Math.min(Math.max(TEXT_CAP, Math.floor(cap / 2)), cap) : cap;\n  const tailNeed = (size > cap) ? Math.max(TEXT_TAIL, cap - headNeed) : 0;\n  const head = [];\n  let headLen = 0;\n  const tail = [];\n  let tailLen = 0;\n  let seen = 0;\n  while (true){\n    const {done, value} = await reader.read();\n    if (done) break;\n    checkCancel();\n    seen += value.length;\n    if (headLen < headNeed){\n      const needB = headNeed - headLen;\n      if (value.length <= needB){ head.push(value); headLen += value.length; }\n      else {\n        head.push(value.subarray(0, needB));\n        headLen += needB;\n        pushTail(value.subarray(needB));\n      }\n    } else if (tailNeed){\n      pushTail(value);\n    }\n    // if no tail needed and head is full, drain the rest without storing\n  }\n  function pushTail(u8){\n    if (!tailNeed) return;\n    tail.push(u8);\n    tailLen += u8.length;\n    while (tailLen > tailNeed && tail.length){\n      const extra = tailLen - tailNeed;\n      if (tail[0].length <= extra){ tailLen -= tail[0].length; tail.shift(); }\n      else { tail[0] = tail[0].subarray(extra); tailLen -= extra; }\n    }\n  }\n  const headU = concatU8(head);\n  const tailU = tailNeed ? concatU8(tail) : new Uint8Array();\n  function decode(u8){\n    if (!u8.length) return \"\";\n    if (u8[0] === 0xff && u8[1] === 0xfe) return new TextDecoder(\"utf-16le\").decode(u8);\n    return dec.decode(u8);\n  }\n  let text = decode(headU);\n  const partial = size > headLen;\n  if (partial){\n    const omitted = Math.max(0, size - headLen - tailU.length);\n    text += \"\\n\\n[\u2026 \" + fmtBytes(omitted) + \" omitted from the middle of this file; kept the start and the end \u2026]\\n\\n\" + decode(tailU);\n  }\n  return {text, partial, kept: headLen + tailU.length};\n}\n\nfunction scanWindow(name, size){\n  const l = (name||\"\").toLowerCase();\n  if (/show_log_system|scheduled_report|syslog-system|req_stats|mp-monitor|dp-monitor|qtrace_|indexgen|nginx\\/access|mgmt_httpd_access/.test(l)){\n    return {head: 32*1024, tail: 64*1024};\n  }\n  return {head: LOG_HEAD, tail: LOG_TAIL};\n}\nasync function scanStream(stream, size, name, opts){\n  const matchesOnly = !!(opts && opts.matchesOnly);\n  const win = matchesOnly ? {head:0, tail:0} : scanWindow(name, size);\n  const reader = stream.getReader();\n  const head = [];\n  let headLen = 0;\n  const tail = [];\n  let tailLen = 0;\n  const streamDec = new TextDecoder(\"utf-8\");\n  let lineBuf = \"\";\n  let lineNo = 0;\n  const matches = [];\n  function pushTail(u8){\n    tail.push(u8);\n    tailLen += u8.length;\n    while (tailLen > win.tail && tail.length){\n      const extra = tailLen - win.tail;\n      if (tail[0].length <= extra){ tailLen -= tail[0].length; tail.shift(); }\n      else { tail[0] = tail[0].subarray(extra); tailLen -= extra; }\n    }\n  }\n  while (true){\n    const {done, value} = await reader.read();\n    if (done) break;\n    checkCancel();\n    if (headLen < win.head){\n      const needB = win.head - headLen;\n      if (value.length <= needB){ head.push(value); headLen += value.length; }\n      else {\n        head.push(value.subarray(0, needB));\n        headLen += needB;\n        pushTail(value.subarray(needB));\n      }\n    } else {\n      pushTail(value);\n    }\n    const s = streamDec.decode(value, {stream:true});\n    lineBuf += s;\n    let i;\n    while ((i = lineBuf.indexOf(\"\\n\")) >= 0){\n      const line = lineBuf.slice(0, i);\n      lineBuf = lineBuf.slice(i + 1);\n      lineNo++;\n      if (line && ISSUE_RE.test(line) && matches.length < MAX_MATCH_LINES){\n        ISSUE_RE.lastIndex = 0;\n        matches.push(line.length > 400 ? line.slice(0, 400) : line);\n      }\n    }\n    if (lineBuf.length > 1048576) lineBuf = lineBuf.slice(-4096);\n  }\n  if (lineBuf){\n    lineNo++;\n    if (ISSUE_RE.test(lineBuf) && matches.length < MAX_MATCH_LINES){\n      matches.push(lineBuf.slice(0, 400));\n    }\n  }\n  const headText = dec.decode(concatU8(head));\n  const tailText = tailLen ? dec.decode(concatU8(tail)) : \"\";\n  const extra = matches.filter(m => !headText.includes(m) && !tailText.includes(m));\n  let text = headText;\n  const partial = size > headLen;\n  if (partial){\n    const omitted = Math.max(0, size - headLen - tailLen);\n    text += \"\\n\\n[\u2026 \" + fmtBytes(omitted) + \" omitted from the middle of this log; kept the start, matching issue lines, and the end \u2026]\\n\\n\";\n    if (extra.length) text += extra.join(\"\\n\") + \"\\n\\n\";\n    text += tailText;\n  }\n  return {text, partial, matchCount: matches.length, kept: headLen + tailLen, matches};\n}\n\nasync function drainStream(stream){\n  const reader = stream.getReader();\n  while (true){\n    const {done} = await reader.read();\n    if (done) break;\n    checkCancel();\n  }\n}\n\nasync function parseTarStream(readable, depth){\n  if (depth > 4) return;\n  const tar = makeTarReader(readable);\n  let longName = null, paxPath = null;\n  while (await tar.need(512)){\n    checkCancel();\n    const h = tar.shift(512);\n    if (h.every(b => !b)) break;\n    let name = tarStr(h, 0, 100);\n    const prefix = tarStr(h, 345, 500);\n    if (prefix) name = prefix + \"/\" + name;\n    const size = parseInt(tarStr(h, 124, 136) || \"0\", 8) || 0;\n    const type = String.fromCharCode(h[156] || 48);\n    const pad = Math.ceil(size / 512) * 512;\n    if (type === \"L\" || type === \"K\" || type === \"x\" || type === \"g\"){\n      if (!(await tar.need(pad))) break;\n      const data = size ? tar.shift(pad).subarray(0, size) : new Uint8Array();\n      if (type === \"L\" || type === \"K\") longName = dec.decode(data).replace(/\\0.*$/s,\"\");\n      else {\n        const txt = dec.decode(data);\n        const m = txt.match(/\\bpath=([^\\n]+)/);\n        if (m) paxPath = m[1].trim();\n      }\n      continue;\n    }\n    if (longName){ name = longName; longName = null; }\n    if (paxPath){ name = paxPath; paxPath = null; }\n    name = name.replace(/^\\.\\//,\"\").replace(/\\\\/g,\"/\");\n    if (type === \"5\"){\n      if (pad) await tar.discard(pad);\n      continue;\n    }\n    if (type !== \"0\" && type !== \"\\0\" && type !== \"\"){\n      if (pad) await tar.discard(pad);\n      continue;\n    }\n    currentFile = name;\n    const kind = classifyEntry(name, size);\n    filesIndexed++;\n    progress(\"indexing\", filesIndexed % 20 === 0);\n    if (kind.mode === \"index\"){\n      if (pad) await tar.discard(pad);\n      emitFile({name, text:\"\", size, skip: kind.reason, core: !!kind.core, indexed:true});\n      if (extractTarget && namesMatch(name, extractTarget)){ extractFound = true; await tar.abort(); return; }\n      continue;\n    }\n    const ps = tar.payloadStream(size, pad);\n    if (kind.mode === \"nested-tgz\"){\n      try {\n        const inner = ps.pipeThrough(new DecompressionStream(\"gzip\"));\n        await parseTarStream(inner, depth + 1);\n        if (extractFound){ await tar.abort(); return; }\n      } catch (e){\n        if (e && e.cancelled) throw e;\n        emitFile({name, text:\"\", size, skip: \"could not unpack nested archive: \" + (e && e.message || e), indexed:true});\n        try { await drainStream(ps); } catch (e2){}\n      }\n      continue;\n    }\n    if (kind.mode === \"nested-zip\"){\n      const buf = concatU8(await readAllChunks(ps));\n      try {\n        const inner = await unzipMem(buf);\n        for (const e of inner){\n          filesIndexed++;\n          currentFile = e.name;\n          if (e.skip){ emitFile(e); continue; }\n          const ck = classifyEntry(e.name, e.size || (e.data && e.data.length) || 0);\n          if (ck.mode === \"index\"){\n            emitFile({name:e.name, text:\"\", size:e.size||0, skip:ck.reason, core:!!ck.core, indexed:true});\n          } else if (e.data){\n            const t = dec.decode(e.data.length > (ck.cap||TEXT_CAP) ? e.data.subarray(e.data.length - TEXT_TAIL) : e.data);\n            emitFile({name:e.name, text:t, size:e.size||e.data.length, partial: e.data.length > (ck.cap||TEXT_CAP)});\n          }\n        }\n      } catch (e){\n        emitFile({name, text:\"\", size, skip: \"could not unpack zip: \" + (e && e.message || e), indexed:true});\n      }\n      continue;\n    }\n    if (extractTarget && namesMatch(name, extractTarget)){\n      const r = await collectStream(ps, size, 8 * 1024 * 1024);\n      emitFile({name, text:r.text, size, partial: !!r.partial, skip:null, note: r.partial ? \"Loaded a larger slice of this file on demand.\" : null});\n      extractFound = true;\n      await tar.abort();\n      return;\n    }\n    if (kind.mode === \"scan\"){\n      const matchesOnly = budgetHit && !isEssential(name);\n      const r = await scanStream(ps, size, name, {matchesOnly});\n      emitFile({name, text:r.text, size, partial:r.partial || matchesOnly, matchCount:r.matchCount, matches:r.matches, skip:null, budgeted: matchesOnly});\n      continue;\n    }\n    // full (size-capped)\n    if (budgetHit && !isEssential(name)){\n      await drainStream(ps);\n      emitFile({name, text:\"\", size, skip:\"indexed only (memory budget)\", indexed:true, budgeted:true});\n      continue;\n    }\n    const r = await collectStream(ps, size, kind.cap || TEXT_CAP);\n    emitFile({name, text:r.text, size, partial:r.partial, skip:null});\n  }\n}\n\nasync function readAllChunks(stream){\n  const reader = stream.getReader();\n  const chunks = [];\n  while (true){\n    const {done, value} = await reader.read();\n    if (done) break;\n    checkCancel();\n    chunks.push(value);\n  }\n  return chunks;\n}\n\nasync function inflateRaw(u8, fmt){\n  const s = new Blob([u8]).stream().pipeThrough(new DecompressionStream(fmt));\n  return concatU8(await readAllChunks(s));\n}\n\nasync function unzipMem(u8){\n  const v = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);\n  let e = u8.length - 22;\n  while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;\n  if (e < 0) throw new Error(\"Not a valid zip file\");\n  let n = v.getUint16(e + 10, true), p = v.getUint32(e + 16, true);\n  const out = [];\n  for (let i = 0; i < n; i++){\n    const m = v.getUint16(p + 10, true);\n    const cs = v.getUint32(p + 20, true);\n    const fl = v.getUint16(p + 28, true);\n    const xl = v.getUint16(p + 30, true);\n    const cl = v.getUint16(p + 32, true);\n    const lo = v.getUint32(p + 42, true);\n    const name = dec.decode(u8.subarray(p + 46, p + 46 + fl));\n    p += 46 + fl + xl + cl;\n    if (name.endsWith(\"/\")) continue;\n    const ds = lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true);\n    const raw = u8.subarray(ds, ds + cs);\n    if (v.getUint16(lo + 6, true) & 1){\n      out.push({name, text:\"\", skip:\"password protected\", size:0, indexed:true});\n      continue;\n    }\n    let data;\n    if (m === 0) data = raw.slice();\n    else if (m === 8) data = await inflateRaw(raw, \"deflate-raw\");\n    else data = new Uint8Array();\n    out.push({name, data, size: data.length});\n  }\n  return out;\n}\n\nasync function unpackTsfFile(file){\n  inBytes = 0;\n  outBytes = 0;\n  filesIndexed = 0;\n  currentFile = file && file.name || \"\";\n  fileSize = file && file.size || 0;\n  peakHeap = 0;\n  let emitted = 0;\n  const before = () => (emitted = filesIndexed);\n  const head = new Uint8Array(await file.slice(0, 512).arrayBuffer());\n  // Re-read via File.slice(0) + stream so on-demand extract uses the same path.\n  const src = file.slice ? file.slice(0) : file;\n  if (looksGzip(head) || /\\.(tgz|tar\\.gz|gz)$/i.test(file.name || \"\")){\n    const stream = countInputStream(src.stream()).pipeThrough(new DecompressionStream(\"gzip\"));\n    before();\n    await parseTarStream(stream, 0);\n    if (filesIndexed === emitted && !extractFound){\n      const raw = await inflateRaw(new Uint8Array(await src.arrayBuffer()), \"gzip\");\n      if (looksTar(raw)){\n        await parseTarStream(new Blob([raw]).stream(), 0);\n      } else {\n        const n = (file.name || \"file\").replace(/\\.gz$/i,\"\");\n        const kind = classifyEntry(n, raw.length);\n        filesIndexed++;\n        if (kind.mode === \"index\") emitFile({name:n, text:\"\", size:raw.length, skip:kind.reason, core:!!kind.core, indexed:true});\n        else emitFile({name:n, text:dec.decode(raw.length > (kind.cap||TEXT_CAP) ? raw.subarray(raw.length-TEXT_TAIL) : raw), size:raw.length});\n      }\n    }\n  } else if (looksZip(head) || /\\.zip$/i.test(file.name || \"\")){\n    if (file.size > 256*1024*1024) throw new Error(\"This zip is too large to open in the browser. Use the original .tgz if you have it.\");\n    const u8 = new Uint8Array(await src.arrayBuffer());\n    inBytes = file.size;\n    const inner = await unzipMem(u8);\n    for (const e of inner){\n      filesIndexed++;\n      currentFile = e.name;\n      if (e.skip){ emitFile(e); continue; }\n      const ck = classifyEntry(e.name, e.size || (e.data && e.data.length) || 0);\n      if (ck.mode === \"index\") emitFile({name:e.name, text:\"\", size:e.size||0, skip:ck.reason, core:!!ck.core, indexed:true});\n      else if (ck.mode === \"nested-tgz\" && e.data){\n        try {\n          const raw = looksGzip(e.data) ? new Blob([e.data]).stream().pipeThrough(new DecompressionStream(\"gzip\")) : new Blob([e.data]).stream();\n          await parseTarStream(raw, 1);\n        } catch (err){\n          emitFile({name:e.name, text:\"\", size:e.size||0, skip:\"could not unpack nested archive: \" + err.message, indexed:true});\n        }\n      } else if (e.data){\n        const cap = ck.cap || TEXT_CAP;\n        const slice = e.data.length > cap ? e.data.subarray(Math.max(0, e.data.length - TEXT_TAIL)) : e.data;\n        emitFile({name:e.name, text:dec.decode(slice), size:e.size||e.data.length, partial: e.data.length > cap});\n      }\n      if (extractFound) break;\n    }\n  } else if (looksTar(head) || /\\.tar$/i.test(file.name || \"\")){\n    const stream = countInputStream(src.stream());\n    await parseTarStream(stream, 0);\n  } else {\n    const u8 = new Uint8Array(await src.arrayBuffer());\n    inBytes = file.size;\n    filesIndexed = 1;\n    emitFile({name: file.name, text: dec.decode(u8), size: u8.length});\n  }\n  flushBatch();\n  progress(\"done\", true);\n  return {peakHeap, inBytes, outBytes, filesIndexed, retainedBytes, budgetHit, budgetedCount, budget: retainBudget, extractFound};\n}\n\nif (typeof self !== \"undefined\"){\n  self.onmessage = async function(ev){\n    const msg = ev.data || {};\n    if (msg.type === \"cancel\"){ cancelled = true; return; }\n    if (msg.type !== \"start\" && msg.type !== \"extract\") return;\n    cancelled = false;\n    onProgress = null;\n    try {\n      if (msg.type === \"extract\"){\n        resetEmitState(Math.max(msg.cap || 8*1024*1024, 8*1024*1024));\n        extractTarget = msg.name || \"\";\n        extractFound = false;\n        const result = await unpackTsfFile(msg.file);\n        flushBatch();\n        if (cancelled){ self.postMessage({type:\"cancelled\"}); return; }\n        self.postMessage({type:\"extracted\", found: !!result.extractFound, name: extractTarget, peakHeap: result.peakHeap});\n        return;\n      }\n      resetEmitState(msg.budget);\n      const result = await unpackTsfFile(msg.file);\n      flushBatch();\n      if (cancelled){ self.postMessage({type:\"cancelled\"}); return; }\n      self.postMessage({\n        type:\"done\",\n        peakHeap: result.peakHeap,\n        inBytes: result.inBytes,\n        outBytes: result.outBytes,\n        filesIndexed: result.filesIndexed,\n        retainedBytes: result.retainedBytes,\n        budgetHit: result.budgetHit,\n        budgetedCount: result.budgetedCount,\n        budget: result.budget\n      });\n    } catch (e){\n      if (cancelled || (e && (e.name === \"AbortError\" || e.cancelled))) self.postMessage({type:\"cancelled\"});\n      else self.postMessage({type:\"error\", message: String(e && e.message || e)});\n    }\n  };\n}\n";
+let activeWorker = null;
+let activeWorkerUrl = null;
+let activeReject = null;
+let lastUnpackStats = null;
+let loadCancelled = false;
+let lastSourceFiles = [];
+const DEFAULT_BUDGET = 256 * 1024 * 1024;
+
+function currentBudget(){
+  const fromWin = (typeof window !== "undefined" && window.__TSF_BUDGET) || 0;
+  return fromWin > 0 ? fromWin : DEFAULT_BUDGET;
+}
+function decodeWorkerFile(f){
+  if (f.textBuf){
+    f.text = dec.decode(new Uint8Array(f.textBuf));
+    try { delete f.textBuf; } catch (e){ f.textBuf = null; }
+  } else if (f.text == null) f.text = "";
+  return f;
+}
+function spawnWorker(){
+  const url = URL.createObjectURL(new Blob([WORKER_JS], {type: "text/javascript"}));
+  const w = new Worker(url);
+  return {w, url};
+}
+
+function loadArchive(file, onProgress, opts){
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const collected = [];
+    const finish = (fn, arg) => {
+      if (settled) return;
+      settled = true;
+      if (activeReject === reject) activeReject = null;
+      try { if (activeWorker) activeWorker.terminate(); } catch (e){}
+      if (activeWorkerUrl){ try { URL.revokeObjectURL(activeWorkerUrl); } catch (e){} }
+      activeWorker = null;
+      activeWorkerUrl = null;
+      fn(arg);
+    };
+    if (typeof Worker === "undefined"){
+      reject(new Error("This browser cannot unpack a tech-support file in the background (no Worker support). Try a current Chrome, Edge, Firefox, or Safari."));
+      return;
+    }
+    let url, w;
+    try {
+      const s = spawnWorker();
+      url = s.url; w = s.w;
+    } catch (e){
+      if (url) try { URL.revokeObjectURL(url); } catch (e2){}
+      reject(new Error("This browser could not start a background worker to unpack the file."));
+      return;
+    }
+    activeWorker = w;
+    activeWorkerUrl = url;
+    activeReject = reject;
+    w.onmessage = ev => {
+      const m = ev.data || {};
+      if (m.type === "progress"){ try { window.__unpackProgress = m; } catch (e){} onProgress && onProgress(m); }
+      else if (m.type === "batch" && Array.isArray(m.files)){
+        for (const f of m.files) collected.push(decodeWorkerFile(f));
+      }
+      else if (m.type === "done"){
+        lastUnpackStats = {
+          peakHeap: m.peakHeap, inBytes: m.inBytes, outBytes: m.outBytes,
+          filesIndexed: m.filesIndexed, retainedBytes: m.retainedBytes,
+          budgetHit: !!m.budgetHit, budgetedCount: m.budgetedCount || 0,
+          budget: m.budget
+        };
+        finish(resolve, collected);
+      }
+      else if (m.type === "cancelled") finish(reject, Object.assign(new Error("Cancelled"), {cancelled:true}));
+      else if (m.type === "error") finish(reject, new Error(m.message || "Unpack failed"));
+    };
+    w.onerror = ev => finish(reject, new Error(ev.message || "Worker failed"));
+    const budget = (opts && opts.budget) || currentBudget();
+    w.postMessage({type:"start", file, budget});
+  });
+}
+
+function extractFromSource(name, cap){
+  const file = (lastSourceFiles || []).find(f => f) || null;
+  if (!file) return Promise.reject(new Error("Original file is no longer available to re-read."));
+  return new Promise((resolve, reject) => {
+    let url, w, settled = false;
+    const got = [];
+    const finish = (fn, arg) => {
+      if (settled) return;
+      settled = true;
+      try { if (w) w.terminate(); } catch (e){}
+      if (url) try { URL.revokeObjectURL(url); } catch (e){}
+      fn(arg);
+    };
+    try {
+      const s = spawnWorker();
+      url = s.url; w = s.w;
+    } catch (e){
+      reject(new Error("Could not start a worker to re-read that file."));
+      return;
+    }
+    w.onmessage = ev => {
+      const m = ev.data || {};
+      if (m.type === "progress") onProgressExtract && onProgressExtract(m);
+      else if (m.type === "batch" && Array.isArray(m.files)){
+        for (const f of m.files) got.push(decodeWorkerFile(f));
+      }
+      else if (m.type === "extracted"){
+        const hit = got.find(f => f.name === name || shortName(f.name) === shortName(name)) || got[0] || null;
+        finish(resolve, hit);
+      }
+      else if (m.type === "error") finish(reject, new Error(m.message || "Re-read failed"));
+      else if (m.type === "cancelled") finish(reject, Object.assign(new Error("Cancelled"), {cancelled:true}));
+    };
+    w.onerror = ev => finish(reject, new Error(ev.message || "Re-read failed"));
+    w.postMessage({type:"extract", file, name, cap: cap || 8*1024*1024});
+  });
+}
+let onProgressExtract = null;
+
+function cancelUnpack(){
+  loadCancelled = true;
+  const rej = activeReject;
+  const w = activeWorker;
+  const url = activeWorkerUrl;
+  activeReject = null;
+  activeWorker = null;
+  activeWorkerUrl = null;
+  if (w){
+    try { w.postMessage({type:"cancel"}); } catch (e){}
+    try { w.terminate(); } catch (e){}
+  }
+  if (url) try { URL.revokeObjectURL(url); } catch (e){}
+  if (rej) rej(Object.assign(new Error("Cancelled"), {cancelled:true}));
+}
+
+/* ===================== classify files ===================== */
+function shortName(p){ return (p||"").split(/[\\/]/).filter(Boolean).pop() || p; }
+function normPath(p){ return (p||"").replace(/\\/g,"/").replace(/^\.\//,""); }
+
+function commandFromFilename(path){
+  const base = shortName(path).replace(/\.(txt|log|out|cfg)$/i,"");
+  if (/^techsupport/i.test(base)) return null;
+  const s = base.replace(/[_-]/g, " ").trim().toLowerCase();
+  if (/^(show|debug|request) /.test(s)) return s.replace(/\s+/g," ");
+  return null;
+}
+
+function isCliBundle(path){
+  const p = normPath(path).toLowerCase();
+  const b = shortName(p);
+  if (/\/tmp\/cli\/logs\//.test(p)) return false;
+  if (/\/tmp\/cli\/.*techsupport[^/]*\.(txt|log)$/.test(p) || /^techsupport.*\.(txt|log)$/.test(b)) return true;
+  if (/\/tmp\/cli\//.test(p) && /\.(txt|log|out)$/.test(p)) return true;
+  if (/^cli\.(txt|log|out)$/.test(b) || /^output\.(txt|log)$/.test(b) || /^tech-?support/.test(b)) return true;
+  return false;
+}
+function isConfig(path){
+  const p = normPath(path).toLowerCase();
+  if (/ha-remote|panorama_pushed|predefined|sysd_objects/i.test(p)) return false;
+  return /running-config\.xml$/.test(p) || /\/saved-configs\/(techsupport-saved-currcfg|running-config|\.merged-running-config)\.xml$/.test(p) || /\/opt\/pancfg\/.*running-config\.xml$/.test(p);
+}
+function pickConfigFile(files){
+  const scored = files.filter(f => f.text && isConfig(f.name));
+  const prefer = [
+    /\/saved-configs\/running-config\.xml$/i,
+    /running-config\.xml$/i,
+    /\/saved-configs\/techsupport-saved-currcfg\.xml$/i,
+    /\/saved-configs\/\.merged-running-config\.xml$/i
+  ];
+  for (const re of prefer){
+    const f = scored.find(x => re.test(normPath(x.name)));
+    if (f) return f;
+  }
+  return scored[0] || files.find(f => f.text && /\.xml$/i.test(f.name) && /running-config/i.test(f.name)) || null;
+}
+function isLogFile(path){
+  const p = normPath(path).toLowerCase();
+  if (/\/var\/log\//.test(p) || /\/mp-log\//.test(p) || /\/dp-log\//.test(p)) return true;
+  return /\.(log)(?:\.\d+)?$/.test(p) && !isCliBundle(path);
+}
+function isCorePath(path){
+  return /\/var\/cores\//i.test(path) || /\.core(\.\d+)?$/i.test(path);
+}
+
+/* ===================== split CLI techsupport text ===================== */
+function normalizeCmd(s){
+  return s.toLowerCase().replace(/\s+/g," ").replace(/[=\-*#]+$/g,"").trim();
+}
+function isSepLine(s){ return /^[=\-*#]{8,}\s*$/.test(s); }
+function cmdFromLine(s){
+  let m = s.match(/^[=\-*#\s>]*((?:show|debug|request)\s+.+?)\s*$/i);
+  if (!m) m = s.match(/Command:\s*((?:show|debug|request)\s+.+?)\s*$/i);
+  if (!m) m = s.match(/^\s*\[[=\s]*((?:show|debug|request)\s+[^\]]+?)\s*\]/i);
+  if (m){
+    let c = m[1].trim().replace(/[=\-*#\s]+$/,"").trim();
+    if (c.length > 0 && c.length < 160) return normalizeCmd(c);
+  }
+  return null;
+}
+
+function splitCliSections(text){
+  const map = new Map();
+  if (!text) return map;
+  const lines = text.split(/\r?\n/);
+  let cur = "preamble", buf = [];
+  const flush = () => {
+    const body = buf.join("\n").trim();
+    if (!body) { buf = []; return; }
+    if (map.has(cur)) map.set(cur, map.get(cur) + "\n" + body);
+    else map.set(cur, body);
+    buf = [];
+  };
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    let cmd = null;
+    if (isSepLine(line) && i + 1 < lines.length){
+      const c = cmdFromLine(lines[i+1]) || (!isSepLine(lines[i+1]) && /^(show|debug|request)\s+/i.test(lines[i+1].trim()) ? normalizeCmd(lines[i+1].trim()) : null);
+      if (c){
+        cmd = c;
+        i += 1;
+        if (i + 1 < lines.length && isSepLine(lines[i+1])) i += 1;
+      }
+    }
+    if (!cmd){
+      const c = cmdFromLine(line);
+      if (c && (/^[=\-*#]/.test(line) || /^\s*>\s*(show|debug|request)\b/i.test(line))) cmd = c;
+    }
+    if (cmd){
+      flush();
+      cur = cmd;
+      continue;
+    }
+    buf.push(line);
+  }
+  flush();
+  return map;
+}
+
+function getSection(sections, ...needles){
+  const parts = [];
+  for (const [cmd, body] of sections){
+    for (const n of needles){
+      if (typeof n === "string"){
+        if (cmd === n || cmd.startsWith(n + " ") || cmd === n) { parts.push({cmd, body}); break; }
+        if (cmd.startsWith(n)) { parts.push({cmd, body}); break; }
+      } else if (n.test(cmd)){ parts.push({cmd, body}); break; }
+    }
+  }
+  return parts;
+}
+function sectionText(sections, ...needles){
+  return getSection(sections, ...needles).map(x => x.body).join("\n");
+}
+function sectionCmd(sections, ...needles){
+  const s = getSection(sections, ...needles);
+  return s.length ? s[0].cmd : needles[0];
+}
+
+
+/* ===================== command parsers ===================== */
+function parseKeyValues(text){
+  const out = {};
+  if (!text) return out;
+  for (const line of text.split(/\r?\n/)){
+    const m = line.match(/^\s*([A-Za-z][\w .\/\-()]{0,80}?):\s*(.*?)\s*$/);
+    if (m) out[m[1].trim().toLowerCase()] = m[2].trim();
+  }
+  return out;
+}
+
+function parseSystemInfo(text){
+  const kv = parseKeyValues(text);
+  const g = k => kv[k] || null;
+  return {
+    hostname: g("hostname"),
+    ip: g("ip-address") || g("ip address"),
+    model: g("model"),
+    serial: g("serial"),
+    version: g("sw-version") || g("sw version"),
+    uptime: g("uptime"),
+    family: g("family") || g("platform-family"),
+    time: g("time"),
+    timeDate: parseLooseDate(g("time")),
+    systemMode: g("system-mode") || g("system mode"),
+    operationalMode: g("operational-mode"),
+    appVersion: g("app-version"),
+    appDate: g("app-release-date"),
+    avVersion: g("av-version"),
+    avDate: g("av-release-date"),
+    threatVersion: g("threat-version"),
+    threatDate: g("threat-release-date"),
+    wildfireVersion: g("wildfire-version"),
+    wildfireDate: g("wildfire-release-date"),
+    urlVersion: g("url-filtering-version"),
+    urlDate: g("url-filtering-release-date"),
+    gpVersion: g("global-protect-client-package-version"),
+    deviceCert: g("device-certificate-status"),
+    raw: kv
+  };
+}
+
+function detectDeviceType(info, sections, files){
+  const model = (info.model||"").toLowerCase();
+  const mode = (info.systemMode||"").toLowerCase();
+  if (mode === "panorama" || /panorama/.test(model) || /^m-?(100|200|500|600|700)/.test(model)) return "Panorama";
+  if (/log.?collector|^m-?\d+/.test(model) && /log collector/i.test(sectionText(sections, "show system info"))) return "Log Collector";
+  // Panorama CLI only present
+  if (sectionText(sections, "show devices all", "show devices connected", "show log-collector all") && !info.model){
+    if (files.some(f => /panorama/i.test(f.name))) return "Panorama";
+  }
+  if (sectionText(sections, "show devices all", "show log-collector all") && (mode === "panorama" || /panorama/i.test(info.hostname||""))) return "Panorama";
+  if (sectionText(sections, "show devices all") && sectionText(sections, "show log-collector all")) return "Panorama";
+  return info.model || info.hostname ? "Firewall" : "Unknown";
+}
+
+function parseHA(text){
+  if (!text || !text.trim()) return { enabled: null, missing: true };
+  if (/HA (is )?not enabled|high-availability (is )?not (enabled|configured|fully configured)|not licensed for high-availability/i.test(text) && !/Local Information:[\s\S]{0,400}\bState:\s*\S+/i.test(text)){
+    return { enabled: false, missing: false };
+  }
+  const localState = pick(text, /Local Information:[\s\S]{0,800}?\bState:\s*(\S+)/i);
+  const peerState = pick(text, /Peer Information:[\s\S]{0,800}?\bState:\s*(\S+)/i);
+  const mode = pick(text, /\bMode:\s*([^\n]+)/i);
+  const cfgSync = pick(text, /Running Config:\s*([^\n]+)/i)
+    || pick(text, /Configuration Synchronization:[\s\S]{0,400}?(?:Synchronized|Running Config|Status):\s*([^\n]+)/i)
+    || pick(text, /\bSynchronized:\s*([^\n]+)/i)
+    || pick(text, /Running (?:configuration|config)[\s\S]{0,80}?(?:is |status:?\s*)(not synchronized|out of sync|synchronized)/i);
+  const preempt = pick(text, /Local Information:[\s\S]{0,1200}?\bPreemptive:\s*(\S+)/i)
+    || pick(text, /\bPreemptive:\s*(\S+)/i);
+  const linkFail = /Link Monitoring:[\s\S]{0,800}?\bStatus:\s*fail/i.test(text);
+  const pathFail = /Path Monitoring:[\s\S]{0,800}?\bStatus:\s*fail/i.test(text);
+  const linkUp = /Link Monitoring:[\s\S]{0,800}?\bStatus:\s*up/i.test(text);
+  const pathUp = /Path Monitoring:[\s\S]{0,800}?\bStatus:\s*up/i.test(text);
+  return {
+    enabled: true, missing: false, mode, localState, peerState, cfgSync, preempt,
+    linkFail, pathFail, linkUp, pathUp,
+    inSync: cfgSync ? (/yes|synchronized|in sync|complete/i.test(cfgSync) && !/not |out of/i.test(cfgSync)) : null,
+    splitBrain: /active/i.test(localState||"") && /active/i.test(peerState||"")
+  };
+}
+
+function parseCpuTable(block){
+  if (!block) return null;
+  const lines = block.split(/\n/);
+  let header = null;
+  for (const line of lines){
+    if (/\bavg\b/i.test(line) && /cpu/i.test(line)){
+      header = line.trim().split(/\s+/);
+      continue;
+    }
+    const cols = line.trim().split(/\s+/);
+    if (header && cols[0] === "1" && cols.length >= 2 && cols.slice(1).every(c => /^[\d.]+$/.test(c))){
+      const avgI = header.findIndex(c => /^avg$/i.test(c));
+      const maxI = header.findIndex(c => /^max$/i.test(c));
+      const avg = avgI >= 0 && cols[avgI] != null ? parseFloat(cols[avgI]) : parseFloat(cols[cols.length-2]);
+      const max = maxI >= 0 && cols[maxI] != null ? parseFloat(cols[maxI]) : parseFloat(cols[cols.length-1]);
+      if (!isNaN(avg)) return {avg, max: isNaN(max)?null:max};
+    }
+  }
+  return null;
+}
+
+function parseCpuAvgRows(block){
+  if (!block) return null;
+  const avgLine = block.match(/(?:^|\n)\s*avg\s+([\d. \t]+)/i);
+  const maxLine = block.match(/(?:^|\n)\s*max\s+([\d. \t]+)/i);
+  if (!avgLine || avgLine[1] == null) return null;
+  const nums = String(avgLine[1]).trim().split(/\s+/).map(parseFloat).filter(n => !isNaN(n));
+  if (!nums.length) return null;
+  const avg = Math.round(nums.reduce((a,b)=>a+b,0)/nums.length*10)/10;
+  let max = null;
+  if (maxLine){
+    const mx = maxLine[1].trim().split(/\s+/).map(parseFloat).filter(n => !isNaN(n));
+    if (mx.length) max = Math.max(...mx);
+  }
+  return {avg, max};
+}
+
+function util1min(text, name){
+  if (!text) return null;
+  const re = new RegExp("(?:^|\\n)\\s*" + name + "\\s*(?:\\n[\\s\\S]{0,400}?)?\\b1min\\s+([\\d.]+)", "i");
+  const m = text.match(re);
+  if (m) return parseFloat(m[1]);
+  const re2 = new RegExp(name + "\\s*[:\\s]+(?:utilization[:\\s]+)?([\\d.]+)\\s*%", "i");
+  const m2 = text.match(re2);
+  return m2 ? parseFloat(m2[1]) : null;
+}
+
+function parseUtilSeries(text, label){
+  if (!text) return null;
+  const re = new RegExp("(?:^|\\n)\\s*" + label + "\\s*:\\s*\\n((?:[ \\t]*[\\d.]+[ \\t]*\\n?)+)", "i");
+  const m = text.match(re);
+  if (!m || m[1] == null) return null;
+  const nums = String(m[1]).trim().split(/\s+/).map(parseFloat).filter(n => !isNaN(n));
+  if (!nums.length) return null;
+  return {latest: nums[0], avg: Math.round(nums.reduce((a,b)=>a+b,0)/nums.length*10)/10, max: Math.max(...nums)};
+}
+
+function parseCoreSampleRows(block){
+  // "CPU load (%) during last 60 seconds:\ncore   0   1   2   3\n       *   0   0   0"
+  // core 0 is often MP and printed as *. Use dataplane cores (numeric cells).
+  if (!block) return null;
+  const rows = [];
+  for (const line of block.split(/\n/)){
+    if (/core/i.test(line) && /\b0\b/.test(line) && /avg/i.test(line) === false){
+      continue;
+    }
+    const cols = line.trim().split(/\s+/);
+    if (!cols.length || !cols.every(c => c === "*" || /^[\d.]+$/.test(c))) continue;
+    if (cols.length < 2) continue;
+    const nums = cols.filter(c => c !== "*").map(parseFloat);
+    if (nums.length) rows.push({avg: nums.reduce((a,b)=>a+b,0)/nums.length, max: Math.max(...nums)});
+  }
+  if (!rows.length) return null;
+  const latest = rows[0];
+  const max = Math.max(...rows.map(r => r.max));
+  const avg = rows.reduce((a,r)=>a+r.avg,0)/rows.length;
+  return {avg: Math.round(avg*10)/10, max: Math.round(max*10)/10, latest: Math.round(latest.avg*10)/10};
+}
+
+function parsePerMinuteAvgMax(block){
+  // core    0       1       2       3
+  //      avg max avg max avg max avg max
+  //        *   *   0   0   0   1   0   0
+  if (!block) return null;
+  const lines = block.split(/\n/);
+  let headerSeen = false;
+  for (const line of lines){
+    if (/\bavg\b/i.test(line) && /\bmax\b/i.test(line) && !/[\d*]/.test(line.replace(/avg|max/ig,""))){
+      headerSeen = true;
+      continue;
+    }
+    if (!headerSeen) continue;
+    const cols = line.trim().split(/\s+/);
+    if (!cols.length || !cols.every(c => c === "*" || /^[\d.]+$/.test(c))) continue;
+    const avgs=[], maxs=[];
+    for (let i=0;i+1<cols.length;i+=2){
+      if (cols[i] !== "*" && !isNaN(parseFloat(cols[i]))) avgs.push(parseFloat(cols[i]));
+      if (cols[i+1] !== "*" && !isNaN(parseFloat(cols[i+1]))) maxs.push(parseFloat(cols[i+1]));
+    }
+    if (avgs.length){
+      return {avg: Math.round(avgs.reduce((a,b)=>a+b,0)/avgs.length*10)/10, max: maxs.length ? Math.max(...maxs) : null};
+    }
+  }
+  return null;
+}
+
+function parseResourceMonitor(text){
+  const res = { dpCpuAvg:null, dpCpuMax:null, mpCpuAvg:null, mpCpuMax:null, memory:null, session:null, pktBuf:null, pktDesc:null };
+  if (!text) return res;
+  try { return parseResourceMonitorInner(text, res); }
+  catch (e){ console.warn("parseResourceMonitor", e); return res; }
+}
+function parseResourceMonitorInner(text, res){
+  const dpBlock = pick(text, /\bDP(?:\s*(?:dp)?\d+)?\b:?([\s\S]*?)(?=\bMP\b|Resource utilization|$)/i);
+  const mpBlock = pick(text, /\bMP\b:?([\s\S]*?)(?=Resource utilization|\bDP(?:\s*(?:dp)?\d+)?\b|$)/i);
+  const dp = parseCpuTable(dpBlock || (/DP\s*(?:dp)?\d+/i.test(text) ? text : null)) || parseCpuAvgRows(dpBlock);
+  const mp = parseCpuTable(mpBlock) || parseCpuAvgRows(mpBlock);
+  if (dp){ res.dpCpuAvg = dp.avg; res.dpCpuMax = dp.max; }
+  if (mp){ res.mpCpuAvg = mp.avg; res.mpCpuMax = mp.max; }
+  // PAN-OS 11.x per-minute avg/max table (preferred for DP)
+  const perMin = pick(text, /CPU load \(%\) during last 60 minutes:([\s\S]*?)(?=Resource utilization|Resource monitoring sampling data|$)/i);
+  const perSec = pick(text, /CPU load \(%\) during last 60 seconds:([\s\S]*?)(?=Resource utilization|Resource monitoring sampling data|$)/i);
+  if (!res.dpCpuAvg){
+    const row = parsePerMinuteAvgMax(perMin) || parseCoreSampleRows(perSec);
+    if (row){ res.dpCpuAvg = row.avg; res.dpCpuMax = row.max; }
+  }
+  if (!dp && !mp && res.dpCpuAvg == null){
+    const only = parseCpuTable(text);
+    if (only){ res.dpCpuAvg = only.avg; res.dpCpuMax = only.max; }
+  }
+  res.memory = util1min(text, "Memory");
+  const sess = parseUtilSeries(text, "session(?: \(average\))?") || (util1min(text, "Session") != null ? {avg: util1min(text, "Session")} : null);
+  const buf = parseUtilSeries(text, "packet buffer(?: \(average\))?") || (util1min(text, "Packet Buffer") != null ? {avg: util1min(text, "Packet Buffer")} : null);
+  const desc = parseUtilSeries(text, "packet descriptor(?: \(average\))?") || (util1min(text, "Packet Descriptor") != null ? {avg: util1min(text, "Packet Descriptor")} : null);
+  if (sess) res.session = sess.latest != null ? sess.latest : sess.avg;
+  if (buf) res.pktBuf = buf.latest != null ? buf.latest : buf.avg;
+  if (desc) res.pktDesc = desc.latest != null ? desc.latest : desc.avg;
+  return res;
+}
+
+function parseTop(text){
+  const out = { cpuUsed:null, memUsedPct:null, memUsed:null, memTotal:null, swapUsed:null, swapTotal:null, load:null };
+  if (!text) return out;
+  const load = text.match(/load average:\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)/i);
+  if (load) out.load = {a:+load[1], b:+load[2], c:+load[3]};
+  const cpu = text.match(/%Cpu(?:\(s\))?:\s*([^\n]+)/i);
+  if (cpu){
+    const id = cpu[1].match(/([\d.]+)\s*id/i);
+    if (id) out.cpuUsed = Math.round((100 - parseFloat(id[1])) * 10) / 10;
+  }
+  const mem = text.match(/Mem\s*:\s*([\d.]+)\s+\w*\s*total,\s*([\d.]+)\s+\w*\s*free,\s*([\d.]+)\s+\w*\s*used/i);
+  if (mem){
+    out.memTotal = +mem[1]; out.memUsed = +mem[3];
+    if (out.memTotal) out.memUsedPct = Math.round(out.memUsed / out.memTotal * 1000) / 10;
+  }
+  const sw = text.match(/Swap:\s*([\d.]+)\s+\w*\s*total,\s*([\d.]+)\s+\w*\s*free,\s*([\d.]+)\s+\w*\s*used/i);
+  if (sw){ out.swapTotal = +sw[1]; out.swapUsed = +sw[3]; }
+  return out;
+}
+
+function parseSessionInfo(text){
+  const out = { supported:null, allocated:null, util:null, pktRate:null, setupRate:null, tcpTimeout:null, udpTimeout:null };
+  if (!text) return out;
+  const num = (label) => {
+    const re = new RegExp(label + "\\s*[:\\s]+([\\d.,]+)\\s*%?", "i");
+    const m = text.match(re);
+    return m ? toNum(m[1]) : null;
+  };
+  out.supported = num("Number of sessions supported");
+  out.allocated = num("Number of allocated sessions");
+  out.util = num("Session table utilization");
+  if (out.util == null && out.supported && out.allocated != null) out.util = Math.round(out.allocated / out.supported * 1000)/10;
+  out.pktRate = num("Packet rate");
+  out.setupRate = num("New connection establish rate");
+  out.tcpTimeout = num("TCP default timeout");
+  out.udpTimeout = num("UDP default timeout");
+  return out;
+}
+
+function parseCounters(text){
+  const rows = [];
+  if (!text) return rows;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^([A-Za-z][\w]+)\s+(\d+)\s+(-?\d+)\s+(\w+)\s+(\w+)\s+(\w+)\s+(.*)$/);
+    if (m){
+      rows.push({name:m[1], value:+m[2], rate:+m[3], severity:m[4].toLowerCase(), category:m[5], aspect:m[6], desc:(m[7]||"").trim()});
+      continue;
+    }
+    const m2 = line.match(/^([A-Za-z][\w]+)\s+(\d+)\s+(-?\d+)\b/);
+    if (m2 && !/^[A-Z][a-z]+ [A-Z]/.test(line)){
+      rows.push({name:m2[1], value:+m2[2], rate:+m2[3], severity:"", category:"", aspect:"", desc:""});
+    }
+  }
+  return rows;
+}
+
+function parsePools(text){
+  const pools = [];
+  if (!text) return pools;
+  // Newer PAN-OS: "[ 1] Packet Buffers            :    94312/97280" (Free/Total)
+  const slashRe = /\[\s*\d+\]\s*([A-Za-z][A-Za-z0-9 ._-]*?)\s*:\s*([\d,]+)\s*\/\s*([\d,]+)/g;
+  let sm;
+  while ((sm = slashRe.exec(text))){
+    const name = sm[1].trim();
+    if (!/packet buffer|packet descriptor|work queue/i.test(name)) continue;
+    const free = toNum(sm[2]), total = toNum(sm[3]);
+    if (!total) continue;
+    const used = Math.max(0, total - free);
+    pools.push({name, util: Math.round(used/total*1000)/10, allocated: used, available: free, total, unit: "free/total"});
+  }
+  const names = ["Packet Buffers", "Packet Buffer", "Packet Descriptors", "Packet Descriptor", "Work Queue 0", "Work Queue"];
+  for (const name of names){
+    if (pools.some(p => p.name.replace(/s$/i,"").toLowerCase() === name.replace(/s$/i,"").toLowerCase())) continue;
+    const re = new RegExp(name.replace(/ /g,"\\s+") + "([\\s\\S]{0,500}?)(?=\\n[A-Z][A-Za-z].{0,40}\\n|Software Pools|Hardware Pools|$)", "i");
+    const m = text.match(re);
+    if (!m) continue;
+    const block = m[1];
+    const util = pick(block, /utilization\s+([\d.]+)\s*%/i);
+    const alloc = toNum(pick(block, /allocated\s+([\d,]+)/i));
+    const avail = toNum(pick(block, /available\s+([\d,]+)/i));
+    const total = toNum(pick(block, /total\s+([\d,]+)/i));
+    let u = util != null ? toNum(util) : (total ? Math.round((alloc||0)/total*1000)/10 : null);
+    pools.push({name, util:u, allocated:alloc, available:avail, total});
+  }
+  const seen = new Set();
+  return pools.filter(p => {
+    const k = p.name.replace(/s$/,"").toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return p.util != null || p.allocated != null;
+  });
+}
+
+function parseJobs(text){
+  const jobs = [];
+  if (!text) return jobs;
+  for (const line of text.split(/\n/)){
+    // PAN-OS 11: Enqueued, optional Dequeued date/time, ID, Type, Status, Result, Completed (date or percent)
+    const m = line.match(/^(\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2})(?:\s+(?:\d{4}\/\d{2}\/\d{2}\s+)?\d{2}:\d{2}:\d{2})?\s+(\d+)\s+(\S+)\s+(FIN|ACT|PEND|DONE)\s+(\S+)\s*(.*)$/i);
+    if (m){
+      jobs.push({enqueued:m[1], id:m[2], type:m[3], status:m[4], result:m[5], completed:(m[6]||"").trim()});
+      continue;
+    }
+    const m2 = line.match(/(\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2})\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\d{4}\/\d{2}\/\d{2}\s+\d{2}:\d{2}:\d{2}))?/);
+    if (m2) jobs.push({enqueued:m2[1], id:m2[2], type:m2[3], status:m2[4], result:m2[5], completed:m2[6]||""});
+  }
+  return jobs;
+}
+
+function parseBgp(text){
+  const peers = [];
+  if (!text) return peers;
+  const states = "Established|Connect|Idle|Active|OpenSent|OpenConfirm|Closed|Unknown|Connect\\w*";
+  const re = new RegExp("^(\\d{1,3}(?:\\.\\d{1,3}){3})\\s+(\\d+)\\s+(\\d+)\\s+(.+?)\\s+(" + states + ")\\s*$", "i");
+  for (const line of text.split(/\n/)){
+    const m = line.trim().match(re);
+    if (m) peers.push({peer:m[1], asn:m[2], flaps:+m[3], duration:m[4].trim(), state:m[5]});
+  }
+  return peers;
+}
+
+function parseInterfaces(text){
+  const list = [];
+  const map = {};
+  if (!text) return list;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^(ethernet[\w\/.]+|ha\d+(?:-backup)?|ae\d+|mgmt|management|vlan|loopback|tunnel)\s+(\d+)\s+(\S+)/i);
+    if (m){
+      const rec = {name:m[1], id:m[2], link:m[3], up:/\/up\b/i.test(m[3]) || /\bup$/i.test(m[3]), errors:null, drops:null, discards:null};
+      list.push(rec);
+      map[rec.name.toLowerCase()] = rec;
+    }
+  }
+  let cur = null;
+  for (const line of text.split(/\n/)){
+    const n = line.trim().match(/^(ethernet[\w\/.]+|ha\d+(?:-backup)?|ae\d+)\s*$/i);
+    if (n){
+      const key = n[1].toLowerCase();
+      cur = map[key] || (map[key] = {name:n[1], errors:null, drops:null, discards:null, up:null});
+      if (!list.includes(cur)) list.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    const e = line.match(/errors:\s*([\d,]+)/i);
+    const d = line.match(/drops:\s*([\d,]+)/i);
+    const di = line.match(/discards:\s*([\d,]+)/i);
+    if (e) cur.errors = toNum(e[1]);
+    if (d) cur.drops = toNum(d[1]);
+    if (di) cur.discards = toNum(di[1]);
+    const n2 = line.match(/^Interface:\s*(ethernet[\w\/.]+|ha\d+(?:-backup)?|ae\d+)/i);
+    if (n2){
+      const key = n2[1].toLowerCase();
+      cur = map[key] || (map[key] = {name:n2[1], errors:null, drops:null, discards:null, up:null});
+      if (!list.includes(cur)) list.push(cur);
+      continue;
+    }
+    if (cur){
+      const re = line.match(/receive errors\s+([\d,]+)/i);
+      const rd = line.match(/packets dropped\s+([\d,]+)\s*$/i);
+      const rdisc = line.match(/receive discarded\s+([\d,]+)/i);
+      if (re) cur.errors = (cur.errors||0) + (toNum(re[1])||0);
+      if (rd) cur.drops = (cur.drops||0) + (toNum(rd[1])||0);
+      if (rdisc) cur.discards = (cur.discards||0) + (toNum(rdisc[1])||0);
+    }
+  }
+  return list;
+}
+
+function parseDisk(text){
+  const rows = [];
+  if (!text) return rows;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\d+)\s*%\s+(\S+)/);
+    if (m && !/^Filesystem$/i.test(m[1])) rows.push({fs:m[1], size:m[2], used:m[3], avail:m[4], pct:+m[5], mount:m[6]});
+  }
+  return rows;
+}
+
+function parseLicenses(text){
+  const list = [];
+  if (!text) return list;
+  const blocks = text.split(/License entry:\s*/i).slice(1);
+  for (const b of blocks){
+    const feature = pick(b, /Feature:\s*([^\n]+)/i);
+    const expires = pick(b, /Expires:\s*([^\n]+)/i);
+    const expiredFlag = pick(b, /Expired\??:\s*([^\n]+)/i);
+    const expired = /yes/i.test(expiredFlag||"");
+    const serial = pick(b, /Serial:\s*([^\n]+)/i);
+    list.push({feature: feature||"(unnamed)", expires: expires||"", expired, date: parseLooseDate(expires), serial});
+  }
+  return list;
+}
+
+function parseDevices(text){
+  const list = [];
+  if (!text) return list;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^(\S+)\s+(\S+)\s+(\d{1,3}(?:\.\d{1,3}){3}|unknown)\s+(yes|no)\s+(\S+)/i);
+    if (m && !/^serial$/i.test(m[1])) list.push({serial:m[1], hostname:m[2], ip:m[3], connected:/^yes$/i.test(m[4]), version:m[5]});
+  }
+  return list;
+}
+
+function parseCollectors(text){
+  const list = [];
+  if (!text) return list;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^(\S+)\s+(\S+)\s+(\d{1,3}(?:\.\d{1,3}){3}|unknown)\s+(yes|no)\s+(\S+)/i);
+    if (m && !/^serial$/i.test(m[1])) list.push({serial:m[1], hostname:m[2], ip:m[3], connected:/^yes$/i.test(m[4]), status:m[5]});
+  }
+  return list;
+}
+
+function parseRuleHits(text){
+  const list = [];
+  if (!text) return list;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^(\S+)\s+(\d+)\s+(\S(?:.*\S)?)\s*$/);
+    if (m && !/^rule$/i.test(m[1]) && !/^-+$/.test(m[1])) list.push({rule:m[1], hits:+m[2], last:m[3]});
+  }
+  return list;
+}
+
+function parsePanoramaStatus(text){
+  if (!text) return { missing:true };
+  const connected = pick(text, /Connected:\s*([^\n]+)/i);
+  const server = pick(text, /Panorama Server(?:\s*1)?:\s*([^\n]+)/i);
+  const err = pick(text, /Last error:\s*([^\n]+)/i);
+  return { missing:false, connected: connected ? /^yes$/i.test(connected) : null, server, error: err, raw: text };
+}
+
+function parseNtp(text){
+  if (!text) return { missing:true };
+  return {
+    missing:false,
+    configured: /NTP configured:\s*yes/i.test(text),
+    synced: /NTP synchronized:\s*yes/i.test(text),
+    server: pick(text, /NTP server:\s*(\S+)/i),
+    status: pick(text, /status:\s*(\S+)/i)
+  };
+}
+
+function parseProcessStatus(text){
+  const list = [];
+  if (!text) return list;
+  for (const line of text.split(/\n/)){
+    const m = line.match(/^([A-Za-z][\w\-]+)\s+(running|stopped|failed)\s+(\d+)/i);
+    if (m) list.push({name:m[1], status:m[2], restarts:+m[3]});
+  }
+  return list;
+}
+
+/* ===================== config XML ===================== */
+function textOf(el){ return (el && el.textContent || "").trim(); }
+function members(el, sel){
+  if (!el) return [];
+  return [...el.querySelectorAll(sel)].map(e => textOf(e)).filter(Boolean);
+}
+function isAny(vals){ return !vals.length || vals.every(v => /^any$/i.test(v)); }
+
+function parseConfigXml(xmlText){
+  const out = {
+    ok:false, error:null, hostname:null,
+    security:[], nat:[], decryption:[], zones:[], interfaces:[],
+    profiles:{}, jumbo:null, mtu:null, tcpTimeout:null, udpTimeout:null,
+    logStartRules:[], broadDecrypt:[], zonesNoZpp:[], unknownAppRules:[],
+    certs:[], users:[], panoramaServer:null
+  };
+  if (!xmlText || !xmlText.trim()) return out;
+  let doc;
+  try {
+    doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    const err = doc.querySelector("parsererror");
+    if (err){ out.error = textOf(err).slice(0,200); return out; }
+  } catch (e){ out.error = e.message; return out; }
+  out.ok = true;
+  out.hostname = textOf(doc.querySelector("deviceconfig > system > hostname")) || null;
+  out.ipAddress = textOf(doc.querySelector("deviceconfig > system > ip-address")) || null;
+  out.jumbo = textOf(doc.querySelector("jumbo-frame > enable")) || textOf(doc.querySelector("jumbo-frame"));
+  out.mtu = toNum(textOf(doc.querySelector("deviceconfig > system > mtu")));
+  out.tcpTimeout = toNum(textOf(doc.querySelector("setting > session > timeout-tcp"))) || toNum(textOf(doc.querySelector("setting > session > timeout-default")));
+  out.udpTimeout = toNum(textOf(doc.querySelector("setting > session > timeout-udp")));
+  out.panoramaServer = textOf(doc.querySelector("deviceconfig > system > panorama > server")) || null;
+  out.users = [...doc.querySelectorAll("mgt-config > users > entry")].map(e => e.getAttribute("name")).filter(Boolean);
+
+  for (const z of doc.querySelectorAll("zone > entry")){
+    out.zones.push({
+      name: z.getAttribute("name") || "",
+      zpp: textOf(z.querySelector("zone-protection-profile")) || null,
+      ifaces: members(z, "member")
+    });
+  }
+  out.zonesNoZpp = out.zones.filter(z => !z.zpp);
+
+  const ifNames = new Set();
+  for (const e of doc.querySelectorAll("network interface ethernet entry, network interface aggregate-ethernet entry, network interface tunnel units entry, network interface loopback units entry, network interface vlan units entry")){
+    const n = e.getAttribute("name");
+    if (n) ifNames.add(n);
+  }
+  out.interfaces = [...ifNames];
+
+  function rules(sel, bucket){
+    for (const e of doc.querySelectorAll(sel)){
+      const r = {
+        name: e.getAttribute("name") || "",
+        from: members(e, "from > member"),
+        to: members(e, "to > member"),
+        source: members(e, "source > member"),
+        dest: members(e, "destination > member"),
+        app: members(e, "application > member"),
+        service: members(e, "service > member"),
+        action: textOf(e.querySelector("action")) || textOf(e.querySelector(":scope > type")) || "",
+        logStart: /^yes$/i.test(textOf(e.querySelector("log-start"))),
+        logEnd: /^yes$/i.test(textOf(e.querySelector("log-end")))
+      };
+      bucket.push(r);
+    }
+  }
+  rules("rulebase > security > rules > entry", out.security);
+  rules("rulebase > nat > rules > entry", out.nat);
+  // decryption action may be under <action>decrypt</action>
+  for (const e of doc.querySelectorAll("rulebase > decryption > rules > entry")){
+    const r = {
+      name: e.getAttribute("name") || "",
+      from: members(e, "from > member"),
+      to: members(e, "to > member"),
+      source: members(e, "source > member"),
+      dest: members(e, "destination > member"),
+      service: members(e, "service > member"),
+      category: members(e, "category > member"),
+      action: textOf(e.querySelector("action")) || "",
+      type: textOf(e.querySelector("type"))
+    };
+    out.decryption.push(r);
+    if (r.action && /decrypt/i.test(r.action) && isAny(r.from) && isAny(r.to) && isAny(r.source) && isAny(r.dest) && isAny(r.category)){
+      out.broadDecrypt.push(r);
+    }
+  }
+  out.logStartRules = out.security.filter(r => r.logStart);
+  out.unknownAppRules = out.security.filter(r => r.app.some(a => /unknown-(tcp|udp)/i.test(a)));
+
+  const prof = {virus:0, spyware:0, vulnerability:0, "url-filtering":0, wildfire:0, "file-blocking":0, "zone-protection":0};
+  for (const key of Object.keys(prof)){
+    prof[key] = doc.querySelectorAll(`profiles > ${key} > entry, profiles > ${key}-protection > entry`).length;
+  }
+  // zone protection profiles sometimes under network profiles
+  prof["zone-protection"] = doc.querySelectorAll("zone-protection-profile, profiles > zone-protection-profile > entry, network > profiles > zone-protection-profile > entry").length || prof["zone-protection"];
+  out.profiles = prof;
+
+  for (const c of doc.querySelectorAll("certificate > entry")){
+    out.certs.push({
+      name: c.getAttribute("name") || "",
+      notBefore: textOf(c.querySelector("not-valid-before")),
+      notAfter: textOf(c.querySelector("not-valid-after")),
+      afterDate: parseLooseDate(textOf(c.querySelector("not-valid-after")))
+    });
+  }
+  return out;
+}
+
+/* ===================== logs ===================== */
+const MON = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function tsOf(line){
+  let m = line.match(/(\d{4})[\/\-](\d{2})[\/\-](\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:[.,:](\d{1,3}))?/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6], +(m[7]||0));
+  m = line.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})[ T]+(\d{1,2}):(\d{2}):(\d{2})/);
+  if (m){ let y=+m[3]; if (y<100) y+=2000; return new Date(y, m[1]-1, +m[2], +m[4], +m[5], +m[6]); }
+  m = line.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})/i);
+  if (m) return new Date(new Date().getFullYear(), MON[m[1].toLowerCase()], +m[2], +m[3], +m[4], +m[5]);
+  return null;
+}
+function sevOf(line){
+  if (/\b(Error|Critical|Fatal|EMERG|ALERT|CRIT|panic)\b/i.test(line) || /\sError:\s/.test(line)) return "err";
+  if (/\b(Warn(?:ing)?)\b/.test(line) || /\sWarning:\s/.test(line)) return "warn";
+  return "";
+}
+
+const MAX_LINES_PER_FILE = 12000;
+const MAX_LINES_TOTAL = 40000;
+function parseLogFile(file, lines, maxTotal){
+  if (!file.text) return;
+  if (lines.length >= (maxTotal || MAX_LINES_TOTAL)) return;
+  const short = shortName(file.name);
+  let last = null;
+  const parts = file.text.split(/\r?\n/);
+  const room = (maxTotal || MAX_LINES_TOTAL) - lines.length;
+  const limit = Math.min(parts.length, MAX_LINES_PER_FILE, room);
+  // If we have to trim, keep the start and the end so scanned matches at both ends survive.
+  let idxs;
+  if (parts.length <= limit) idxs = null;
+  else {
+    const head = Math.ceil(limit * 0.7);
+    const tail = limit - head;
+    idxs = new Set([...Array(head).keys(), ...Array.from({length: tail}, (_,i) => parts.length - tail + i)]);
+  }
+  for (let i = 0; i < parts.length; i++){
+    if (idxs && !idxs.has(i)) continue;
+    const t = parts[i];
+    if (!t.trim()) continue;
+    const d = tsOf(t);
+    if (d) last = d;
+    lines.push({f: short, path: file.name, t, d: d||last, n: i+1, sev: sevOf(t)});
+    if (lines.length >= (maxTotal || MAX_LINES_TOTAL)) break;
+  }
+}
+
+
+/* ===================== triage ===================== */
+const CPU_WARN = 60, CPU_CRIT = 80;
+const MEM_WARN = 80, MEM_CRIT = 90;
+const SESS_WARN = 80, SESS_CRIT = 90;
+const POOL_WARN = 80, POOL_CRIT = 90;
+const DISK_WARN = 80, DISK_CRIT = 90;
+const LIC_WARN_DAYS = 30, LIC_INFO_DAYS = 90;
+const CONTENT_STALE_DAYS = 30;
+
+function finding(list, ev){
+  list.push(Object.assign({
+    id: "f" + (list.length + 1),
+    sev: "info",
+    title: "",
+    explain: "",
+    action: "",
+    source: "",
+    evidence: [],
+    suggestion: false
+  }, ev));
+}
+
+function evLine(file, n, text, lineId){
+  return {file, n, text: String(text||"").slice(0, 400), id: lineId};
+}
+
+function evFromText(sourceName, text, re, max=5){
+  if (!text) return [];
+  const out = [];
+  const lines = text.split(/\n/);
+  for (let i = 0; i < lines.length && out.length < max; i++){
+    if (re.test(lines[i])) out.push(evLine(sourceName, i+1, lines[i].trim()));
+    re.lastIndex = 0;
+  }
+  return out;
+}
+
+function evFromLogs(lines, re, max=8){
+  const out = [];
+  for (const l of lines){
+    const src = (l.path || l.f || "");
+    if (isCliBundle(src) || /^techsupport/i.test(l.f) || /tmp\/cli\//i.test(src)) continue;
+    if (re.test(l.t)){
+      out.push(evLine(l.f, l.n, l.t, l.id));
+      if (out.length >= max) break;
+    }
+    re.lastIndex = 0;
+  }
+  return out;
+}
+
+function fileHint(sections, ...needles){
+  const s = getSection(sections, ...needles);
+  return s.length ? s[0].cmd : (typeof needles[0] === "string" ? needles[0] : "tech support CLI");
+}
+
+function runTriage(ctx){
+  const F = [];
+  const {
+    info, dtype, ha, top, mon, sess, counters, pools, jobs, bgp, ifaces,
+    disks, licenses, devices, collectors, hits, panoStat, ntp, procs,
+    config, lines, files, sections, now
+  } = ctx;
+  const cliName = (ctx.cliFile && ctx.cliFile.name) ? shortName(ctx.cliFile.name) : "techsupport CLI";
+
+  // ---- CPU / memory ----
+  const mp = mon.mpCpuAvg, dp = mon.dpCpuAvg;
+  const topCpu = top.cpuUsed;
+  if (mp != null){
+    const sev = mp >= CPU_CRIT ? "critical" : mp >= CPU_WARN ? "warning" : null;
+    if (sev) finding(F, {
+      sev, title: "Management-plane CPU is high",
+      explain: `Management CPU averaged ${mp}% over the last 1-minute sample in show running resource-monitor${mon.mpCpuMax!=null?` (max ${mon.mpCpuMax}%)`:""}. Sustained MP CPU above ${CPU_WARN}% (critical at ${CPU_CRIT}%) can delay commits, logging, User-ID, and the web UI.`,
+      action: "Check recently restarted processes, logging volume (especially logging at session start), User-ID, and management-plane jobs. Avoid new commits until CPU comes down. If this is a VM, confirm vCPU count matches the license.",
+      source: fileHint(sections, "show running resource-monitor"),
+      evidence: evFromText(cliName, sectionText(sections, "show running resource-monitor"), /\bMP\b|CPU|\b1\s+\d+/)
+    });
+  } else if (topCpu != null && (dtype === "Panorama" || dp == null)){
+    const sev = topCpu >= CPU_CRIT ? "critical" : topCpu >= CPU_WARN ? "warning" : null;
+    if (sev) finding(F, {
+      sev, title: "Management CPU is high (from show system resources)",
+      explain: `show system resources reports about ${topCpu}% CPU used (100 − idle). Thresholds: warning at ${CPU_WARN}%, critical at ${CPU_CRIT}%. On Panorama this is the management server; on a firewall this is the management plane.`,
+      action: "Identify busy processes in the show system resources process list. Check logging, user activity, and recent process restarts.",
+      source: fileHint(sections, "show system resources"),
+      evidence: evFromText(cliName, sectionText(sections, "show system resources"), /%Cpu|load average/)
+    });
+  }
+  if (dp != null){
+    const sev = dp >= CPU_CRIT ? "critical" : dp >= CPU_WARN ? "warning" : null;
+    if (sev) finding(F, {
+      sev, title: "Dataplane CPU is high",
+      explain: `Dataplane CPU averaged ${dp}% in the 1-minute sample of show running resource-monitor${mon.dpCpuMax!=null?` (max ${mon.dpCpuMax}%)`:""}. Above ${CPU_WARN}% (critical at ${CPU_CRIT}%) can increase latency and packet loss.`,
+      action: "Review session rate, decryption load, security profiles, and packet buffer / drop counters in this report. Consider moving heavy inspection off this platform or spreading traffic.",
+      source: fileHint(sections, "show running resource-monitor"),
+      evidence: evFromText(cliName, sectionText(sections, "show running resource-monitor"), /\bDP\b|CPU/)
+    });
+  }
+  const mem = mon.memory != null ? mon.memory : top.memUsedPct;
+  const memSrc = mon.memory != null ? "show running resource-monitor" : "show system resources";
+  if (mem != null){
+    const sev = mem >= MEM_CRIT ? "critical" : mem >= MEM_WARN ? "warning" : null;
+    if (sev) finding(F, {
+      sev, title: "Memory utilization is high",
+      explain: `Memory is at ${mem}% (${memSrc}). Warning at ${MEM_WARN}%, critical at ${MEM_CRIT}%. High memory can trigger process restarts or dataplane impact.`,
+      action: "Check for memory-growing processes, large log buffers, and recent cores. If swap is in use, treat that as a sign of pressure.",
+      source: fileHint(sections, memSrc),
+      evidence: evFromText(cliName, sectionText(sections, memSrc), /Mem\s*:|Memory|Swap:/)
+    });
+  }
+
+  // ---- sessions ----
+  const sUtil = sess.util != null ? sess.util : mon.session;
+  if (sUtil != null){
+    const sev = sUtil >= SESS_CRIT ? "critical" : sUtil >= SESS_WARN ? "warning" : null;
+    if (sev) finding(F, {
+      sev, title: "Session table is nearly full",
+      explain: `Session table utilization is ${sUtil}%` + (sess.allocated!=null && sess.supported!=null ? ` (${sess.allocated} of ${sess.supported} sessions)` : "") + (sess.setupRate!=null ? `. New connection rate: ${sess.setupRate}/s` : "") + `. Warning at ${SESS_WARN}%, critical at ${SESS_CRIT}%. When the table is full, new sessions fail.`,
+      action: "Look for session setup failures in counters. Consider lowering long TCP timeouts if many idle sessions are held, adding capacity, or reducing unnecessary traffic (for example a rule that allows too much).",
+      source: fileHint(sections, "show session info", "show running resource-monitor"),
+      evidence: evFromText(cliName, sectionText(sections, "show session info") || sectionText(sections, "show running resource-monitor"), /session|Session|connection establish/i)
+    });
+  }
+
+  // ---- pools ----
+  for (const p of pools){
+    if (p.util == null) continue;
+    const isBuf = /buffer/i.test(p.name);
+    const isDesc = /descriptor/i.test(p.name);
+    if (!isBuf && !isDesc) continue;
+    const sev = p.util >= POOL_CRIT ? "critical" : p.util >= POOL_WARN ? "warning" : null;
+    if (!sev) continue;
+    finding(F, {
+      sev, title: `${p.name} pool is nearly exhausted`,
+      explain: `${p.name} utilization is ${p.util}%` + (p.allocated!=null && p.total!=null ? ` (${p.allocated} of ${p.total} in use)` : "") + ` in debug dataplane pool statistics. Warning at ${POOL_WARN}%, critical at ${POOL_CRIT}%. Exhausted packet buffers or descriptors cause packet drops.`,
+      action: "Confirm matching drop counters (pkt_alloc_failure, flow_np_pktbuf_nomem). Reduce bursty traffic or dataplane load, and open a case with Palo Alto Networks if this is sustained on a correctly sized platform.",
+      source: fileHint(sections, "debug dataplane pool statistics"),
+      evidence: evFromText(cliName, sectionText(sections, "debug dataplane pool statistics"), /Packet|allocated|utilization/i)
+    });
+  }
+  if (!pools.length && mon.pktBuf != null){
+    const sev = mon.pktBuf >= POOL_CRIT ? "critical" : mon.pktBuf >= POOL_WARN ? "warning" : null;
+    if (sev) finding(F, {sev, title: "Packet buffer utilization is high", explain: `Packet buffer utilization is ${mon.pktBuf}% in show running resource-monitor. Warning at ${POOL_WARN}%, critical at ${POOL_CRIT}%.`, action: "See drop counters and consider dataplane load.", source: fileHint(sections, "show running resource-monitor"), evidence: evFromText(cliName, sectionText(sections, "show running resource-monitor"), /Packet Buffer/i)});
+  }
+  if (!pools.length && mon.pktDesc != null){
+    const sev = mon.pktDesc >= POOL_CRIT ? "critical" : mon.pktDesc >= POOL_WARN ? "warning" : null;
+    if (sev) finding(F, {sev, title: "Packet descriptor utilization is high", explain: `Packet descriptor utilization is ${mon.pktDesc}% in show running resource-monitor. Warning at ${POOL_WARN}%, critical at ${POOL_CRIT}%.`, action: "See drop counters and consider dataplane load.", source: fileHint(sections, "show running resource-monitor"), evidence: evFromText(cliName, sectionText(sections, "show running resource-monitor"), /Packet Descriptor/i)});
+  }
+
+  // ---- drop counters ----
+  const dropNameRe = /(?:^|_)(?:pkt_alloc(?:_fail(?:ure)?)?|session_alloc_failure|flow_np_pktbuf_nomem|flow_.*_drop|flow_fpga_pkt_drop|flow_host_pkt_drop)/i;
+  const interestingDrops = counters.filter(c =>
+    dropNameRe.test(c.name) || ((c.severity === "drop" || c.severity === "error") && c.rate > 0 && /fail|drop|nomem|exhaust|denied/i.test(c.name+" "+c.desc))
+  );
+  const allocFail = counters.filter(c => /pkt_alloc_fail|session_alloc_failure|flow_np_pktbuf_nomem/i.test(c.name) && (c.value > 0 || c.rate > 0));
+  if (allocFail.length){
+    const bits = allocFail.map(c => `${c.name}=${c.value} (rate ${c.rate})`).join(", ");
+    finding(F, {
+      sev: allocFail.some(c => c.rate > 0) ? "critical" : "warning",
+      title: "Packet or session allocation failures",
+      explain: `show counter global reports allocation failures: ${bits}. These counters increment when the firewall cannot get a packet buffer or a session slot, which drops traffic.`,
+      action: "Compare with session-table and pool utilization in this report. If rates are still incrementing, this is an active problem, not just a historical count since reboot.",
+      source: fileHint(sections, "show counter global"),
+      evidence: evFromText(cliName, sectionText(sections, "show counter global"), /pkt_alloc|session_alloc_failure|flow_np_pktbuf_nomem/)
+    });
+  }
+  const otherDrops = interestingDrops.filter(c => !allocFail.includes(c)
+    && !/flow_policy_deny|policy_deny/i.test(c.name)
+    && (c.rate > 0 || (c.severity==="drop" && c.value > 1000 && /flow_.*drop/i.test(c.name))));
+  if (otherDrops.length){
+    const bits = otherDrops.slice(0,8).map(c => `${c.name}=${c.value} (rate ${c.rate})`).join(", ");
+    finding(F, {
+      sev: otherDrops.some(c => c.rate > 2) ? "warning" : "info",
+      title: "Dataplane drop counters are incrementing",
+      explain: `show counter global has drop-related counters: ${bits}. A non-zero lifetime value after a long uptime can be normal; a non-zero rate means drops are happening now. flow_policy_deny is often expected (traffic hitting a deny rule).`,
+      action: "Focus on counters with a non-zero rate other than policy denies. Use the counter description and packet diag logs to see whether this is resource exhaustion, TTL, or unexpected policy drops.",
+      source: fileHint(sections, "show counter global"),
+      evidence: evFromText(cliName, sectionText(sections, "show counter global"), /flow_.*drop|flow_fpga_pkt_drop|flow_policy_deny|flow_tcp_non_syn/)
+    });
+  }
+
+  // ---- HA ----
+  if (ha && ha.enabled && !ha.missing){
+    if (ha.splitBrain){
+      finding(F, {
+        sev: "critical", title: "HA possible split brain (both members active)",
+        explain: `show high-availability all reports local state “${ha.localState}” and peer state “${ha.peerState}”. Two actives at once can cause traffic loops or asymmetric forwarding.`,
+        action: "Isolate HA links and management carefully, confirm HA1/HA2 are healthy, and follow Palo Alto split-brain recovery. Do not preempt or reboot both members at once without a plan.",
+        source: fileHint(sections, "show high-availability all"),
+        evidence: evFromText(cliName, sectionText(sections, "show high-availability all"), /State:|split|Peer Information|Local Information/).concat(evFromLogs(lines, /split-brain|peer state active/i))
+      });
+    }
+    if (ha.linkFail){
+      finding(F, {
+        sev: "critical", title: "HA link monitoring has failed",
+        explain: "show high-availability all reports Link Monitoring status fail. A failed link-monitor group can cause an HA failover (or a split if both sides fail).",
+        action: "Check the monitored interfaces (they may be down). Restore the link or temporarily adjust monitoring only if you understand the failover impact.",
+        source: fileHint(sections, "show high-availability all"),
+        evidence: evFromText(cliName, sectionText(sections, "show high-availability all"), /Link Monitoring|Status:\s*fail|Interfaces:/).concat(evFromLogs(lines, /link-monitor|link monitor/i))
+      });
+    }
+    if (ha.pathFail){
+      finding(F, {
+        sev: "critical", title: "HA path monitoring has failed",
+        explain: "show high-availability all reports Path Monitoring status fail. The device cannot reach one or more monitored destinations, which can force a failover.",
+        action: "Verify the path-monitor destination is reachable from the correct virtual router and interface. A bad destination or upstream outage can flap HA.",
+        source: fileHint(sections, "show high-availability all"),
+        evidence: evFromText(cliName, sectionText(sections, "show high-availability all"), /Path Monitoring|Destination:|Status:\s*fail/).concat(evFromLogs(lines, /path-monitor|path monitor/i))
+      });
+    }
+    if (ha.inSync === false){
+      finding(F, {
+        sev: "warning", title: "HA running configuration is out of sync",
+        explain: `Configuration synchronization shows “${ha.cfgSync}”. An out-of-sync pair can behave differently after failover.`,
+        action: "From the active member, sync the running configuration to the peer once you know which side has the intended config. Do not sync blindly if both sides were edited.",
+        source: fileHint(sections, "show high-availability all"),
+        evidence: evFromText(cliName, sectionText(sections, "show high-availability all"), /Running Config|Configuration Synchronization|out of sync/i)
+      });
+    }
+    const preemptLogs = evFromLogs(lines, /preempt(?!ive)\b/i, 8);
+    if (preemptLogs.length || (/yes/i.test(ha.preempt||"") && evFromLogs(lines, /preempt/i).length)){
+      if (preemptLogs.length){
+        finding(F, {
+          sev: "warning", title: "HA preempt activity or flaps",
+          explain: "ha_agent logs show preempt activity. With preempt enabled, a recovering higher-priority member can take the active role again, which causes another dataplane transition.",
+          action: "If this fired more than once, consider disabling preempt or raising the hold timer so a flapping member does not keep stealing the active role.",
+          source: "ha_agent.log and show high-availability all",
+          evidence: preemptLogs.concat(evFromText(cliName, sectionText(sections, "show high-availability all"), /Preemptive:/))
+        });
+      }
+    }
+  }
+
+  // ---- licenses / content ----
+  for (const lic of licenses){
+    const expired = lic.expired || (lic.date && lic.date < now);
+    const days = lic.date ? daysBetween(now, lic.date) : null;
+    if (expired){
+      finding(F, {
+        sev: "critical", title: `License expired: ${lic.feature}`,
+        explain: `request license info lists “${lic.feature}” as expired (expires: ${lic.expires || "unknown"}). Expired threat, URL, WildFire, or logging licenses stop those updates or features.`,
+        action: "Renew the license and confirm the device can reach the update servers (or a local update package).",
+        source: fileHint(sections, "request license info"),
+        evidence: evFromText(cliName, sectionText(sections, "request license info"), new RegExp(lic.feature.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "|Expires:|Expired:", "i"))
+      });
+    } else if (days != null && days <= LIC_WARN_DAYS){
+      finding(F, {
+        sev: "warning", title: `License expiring soon: ${lic.feature}`,
+        explain: `“${lic.feature}” expires on ${lic.expires} (about ${days} day(s) from the device time). Warning is issued at ${LIC_WARN_DAYS} days.`,
+        action: "Start renewal now so content updates do not stop.",
+        source: fileHint(sections, "request license info"),
+        evidence: evFromText(cliName, sectionText(sections, "request license info"), new RegExp(lic.feature.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "|Expires:", "i"))
+      });
+    } else if (days != null && days <= LIC_INFO_DAYS){
+      finding(F, {
+        sev: "info", title: `License due in ${days} days: ${lic.feature}`,
+        explain: `“${lic.feature}” expires on ${lic.expires}. This is a heads-up at ${LIC_INFO_DAYS} days.`,
+        action: "Plan the renewal; no immediate outage.",
+        source: fileHint(sections, "request license info"),
+        evidence: evFromText(cliName, sectionText(sections, "request license info"), new RegExp(lic.feature.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "|Expires:", "i"))
+      });
+    }
+  }
+  const zeroVer = v => {
+    if (v == null || String(v).trim() === "") return false;
+    const s = String(v).trim();
+    return /^0+([.\-_]0+)*$/.test(s) || s === "0000.00.00.000" || /^0+(\.0+)+$/.test(s);
+  };
+  const missingContent = [];
+  if (zeroVer(info.threatVersion) && zeroVer(info.appVersion)) missingContent.push("Threat / App-ID");
+  else if (zeroVer(info.threatVersion)) missingContent.push("Threat");
+  if (zeroVer(info.avVersion)) missingContent.push("Antivirus");
+  if (zeroVer(info.wildfireVersion)) missingContent.push("WildFire");
+  if (zeroVer(info.urlVersion)) missingContent.push("URL filtering");
+  if (missingContent.length){
+    finding(F, {
+      sev: "warning",
+      title: "Security content is not installed",
+      explain: `show system info reports version 0 (or an empty package) for ${missingContent.join(", ")}. That usually means the corresponding license is expired or the device has not downloaded dynamic updates, so App-ID, threat, AV, WildFire, or URL lookup may be missing or outdated.`,
+      action: "Renew the licenses if they are expired, then check Device > Dynamic Updates (or request content upgrade check) and connectivity to the update servers.",
+      source: fileHint(sections, "show system info"),
+      evidence: evFromText(cliName, sectionText(sections, "show system info"), /threat-version|av-version|wildfire-version|url-filtering-version|app-version/i)
+    });
+  }
+  const contentDates = [
+    ["Threat / App-ID content", (!zeroVer(info.threatVersion) && info.threatDate) || (!zeroVer(info.appVersion) && info.appDate)],
+    ["Antivirus content", !zeroVer(info.avVersion) && info.avDate],
+    ["URL filtering content", !zeroVer(info.urlVersion) && info.urlDate],
+    ["WildFire content", !zeroVer(info.wildfireVersion) && info.wildfireDate]
+  ];
+  for (const [label, raw] of contentDates){
+    if (!raw) continue;
+    const d = parseLooseDate(raw);
+    if (!d) continue;
+    const age = daysBetween(d, now);
+    if (age >= CONTENT_STALE_DAYS){
+      finding(F, {
+        sev: age >= 90 ? "warning" : "info",
+        title: `${label} looks stale`,
+        explain: `show system info lists the ${label} release date as ${raw} (about ${age} days before the device time). These packages are normally updated at least weekly, often daily. This is a suggestion to verify that content updates are working, not proof that the device is unprotected.`,
+        action: "Check Device > Dynamic Updates (or request content upgrade check), licenses, and connectivity to updates.paloaltonetworks.com or your update proxy.",
+        source: fileHint(sections, "show system info"),
+        evidence: evFromText(cliName, sectionText(sections, "show system info"), /release-date|version/i),
+        suggestion: true
+      });
+    }
+  }
+
+  // ---- disk ----
+  for (const d of disks){
+    const sev = d.pct >= DISK_CRIT ? "critical" : d.pct >= DISK_WARN ? "warning" : null;
+    if (!sev) continue;
+    finding(F, {
+      sev, title: `Disk usage high on ${d.mount}`,
+      explain: `${d.mount} is ${d.pct}% full (${d.used} of ${d.size}, ${d.avail} free) in show system disk-space. Warning at ${DISK_WARN}%, critical at ${DISK_CRIT}%. A full /opt/panlogs or root filesystem can stop logging, commits, or processes.`,
+      action: d.mount.includes("panlogs") ? "Purge or offload old logs, confirm log forwarding is working, and check for a logging loop. Do not let /opt/panlogs reach 100%." : "Identify large files on that filesystem, rotate logs, and confirm there is no core-dump buildup under /var/cores.",
+      source: fileHint(sections, "show system disk-space"),
+      evidence: evFromText(cliName, sectionText(sections, "show system disk-space"), new RegExp(d.mount.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + "|Use%"))
+    });
+  }
+
+  // ---- jobs / commits ----
+  const failedJobs = jobs.filter(j => /fail/i.test(j.result||"") || /fail/i.test(j.status||""));
+  const commitFails = failedJobs.filter(j => /commit/i.test(j.type||""));
+  const commitAllFails = failedJobs.filter(j => /commitall|commit-all|commit all/i.test(j.type||""));
+  if (commitAllFails.length){
+    finding(F, {
+      sev: "critical", title: "Panorama commit-all failed",
+      explain: `${commitAllFails.length} CommitAll job(s) finished with FAIL in show jobs all. Device pushes did not complete for at least one firewall.`,
+      action: "Open the failed job details (show jobs id <n>) and fix the validation or connectivity error on the listed devices, then push again.",
+      source: fileHint(sections, "show jobs all", /^show jobs /),
+      evidence: evFromText(cliName, sectionText(sections, "show jobs all", /^show jobs /), /CommitAll|FAIL|commit-all/i).concat(evFromLogs(lines, /commit-?all failed|CommitAll job .* fail/i))
+    });
+  }
+  if (commitFails.length){
+    finding(F, {
+      sev: "warning", title: "Commit job failed",
+      explain: `${commitFails.length} commit-related job(s) have Result FAIL in show jobs all (most recent id ${commitFails[0].id}, type ${commitFails[0].type}). A failed commit means the intended policy change is not in the running config.`,
+      action: "Read the job details for the validation error, fix the config, and commit again. The configd/ms logs often repeat the reason.",
+      source: fileHint(sections, "show jobs all", /^show jobs /),
+      evidence: evFromText(cliName, sectionText(sections, "show jobs all", /^show jobs /), /Commit|FAIL/).concat(evFromLogs(lines, /commit (job )?(failed|fail)/i))
+    });
+  }
+  const dlFails = failedJobs.filter(j => /downld|download|content/i.test(j.type||"") && !commitFails.includes(j));
+  const otherFails = failedJobs.filter(j => !commitFails.includes(j) && !dlFails.includes(j));
+  if (dlFails.length){
+    finding(F, {
+      sev: "warning", title: "Content or software download jobs failed",
+      explain: `${dlFails.length} download job(s) finished with FAIL (for example type ${dlFails[0].type}, most recent id ${dlFails[0].id}). This often happens when a license is expired or the device cannot reach the update servers.`,
+      action: "Check request license info and Device > Dynamic Updates. Confirm the update server is reachable, then retry the download.",
+      source: fileHint(sections, "show jobs processed", "show jobs all", /^show jobs/),
+      evidence: evFromText(cliName, sectionText(sections, "show jobs processed", "show jobs all", /^show jobs/), /Downld|Download|Content|FAIL/i)
+    });
+  }
+  if (otherFails.length){
+    finding(F, {
+      sev: "warning", title: "Other jobs failed",
+      explain: `Failed jobs: ${otherFails.slice(0,8).map(j => `${j.type} #${j.id}`).join(", ")}${otherFails.length>8?"…":""}.`,
+      action: "Check the job type and the job details in the tech-support CLI.",
+      source: fileHint(sections, "show jobs processed", "show jobs all", /^show jobs/),
+      evidence: evFromText(cliName, sectionText(sections, "show jobs processed", "show jobs all", /^show jobs/), /FAIL/)
+    });
+  }
+
+  // ---- User-ID ----
+  const uidEv = evFromLogs(lines, /user-?id agent.*disconnect|agent .* disconnected|server-monitor.*disconnect|LDAP bind failed|useridd.*disconnect/i, 10);
+  if (uidEv.length){
+    finding(F, {
+      sev: "warning", title: "User-ID agent or server-monitor disconnects",
+      explain: `useridd logs show ${uidEv.length}+ disconnect or bind failure line(s). When User-ID is down, user-based policy may fail open or fail closed depending on the rule.`,
+      action: "Confirm the agent or domain controller is reachable, times are in sync, and the service account can bind. Reconnect the agent and watch for repeats.",
+      source: "useridd.log",
+      evidence: uidEv
+    });
+  }
+
+  // ---- auth failures ----
+  const authEv = evFromLogs(lines, /authentication failed|auth(entication)? fail|invalid password|account lockout|user not found/i, 12);
+  if (authEv.length >= 3){
+    finding(F, {
+      sev: authEv.length >= 8 || evFromLogs(lines, /lockout/i).length ? "warning" : "info",
+      title: "Authentication failures in authd",
+      explain: `authd logs have ${authEv.length}+ authentication failure line(s). A few typo failures are normal; a burst or a lockout may be a wrong password, a stale account, or a guessing attempt.`,
+      action: "Confirm who was signing in and from where. Reset or unlock the account if it is a legitimate user. If the source is unexpected, treat it as a security event.",
+      source: "authd.log",
+      evidence: authEv
+    });
+  }
+
+  // ---- BGP / routing ----
+  const badPeers = bgp.filter(p => p.flaps > 0 || !/^established$/i.test(p.state||""));
+  if (badPeers.length){
+    finding(F, {
+      sev: badPeers.some(p => !/^established$/i.test(p.state||"")) ? "warning" : "info",
+      title: "BGP neighbor not established or flapping",
+      explain: badPeers.map(p => `${p.peer} AS${p.asn} state ${p.state}, flaps ${p.flaps}`).join("; ") + ". From show routing protocol bgp summary.",
+      action: "Check reachability, ASN, and authentication toward the peer. routed.log usually shows why the session went down.",
+      source: fileHint(sections, "show routing protocol bgp summary"),
+      evidence: evFromText(cliName, sectionText(sections, "show routing protocol bgp summary"), /^\d{1,3}\./).concat(evFromLogs(lines, /BGP neighbor|hold timer expired|went down/i))
+    });
+  }
+  const bgpLogs = evFromLogs(lines, /BGP neighbor .* (went down|flap)/i, 8);
+  if (bgpLogs.length && !badPeers.length){
+    finding(F, {sev:"info", title:"BGP neighbor events in routed logs", explain:"routed.log mentions BGP neighbor down or flap events, but the current BGP summary was not found or looks established.", action:"Compare the event times with the current neighbor state.", source:"routed.log", evidence:bgpLogs});
+  }
+
+  // ---- interfaces ----
+  const badIf = ifaces.filter(i => (i.errors||0) > 0 || (i.drops||0) > 0 || (i.discards||0) > 0);
+  const downIf = ifaces.filter(i => i.up === false && /ethernet|ae\d+|ha/i.test(i.name||""));
+  if (badIf.length){
+    finding(F, {
+      sev: badIf.some(i => (i.errors||0) + (i.drops||0) > 100) ? "warning" : "info",
+      title: "Interface errors or drops",
+      explain: badIf.map(i => `${i.name}: errors ${i.errors||0}, drops ${i.drops||0}, discards ${i.discards||0}`).join("; ") + ". From show interface all (or per-interface counters).",
+      action: "Check duplex/speed, cabling, and the adjacent switch. Errors usually point to a Layer-1 or duplex problem; drops can also be from dataplane exhaustion.",
+      source: fileHint(sections, "show interface all", /^show interface /),
+      evidence: evFromText(cliName, sectionText(sections, "show interface all", /^show interface /), /errors:|drops:|discards:|ethernet/)
+    });
+  }
+  if (downIf.length && ha && ha.linkFail){
+    // already covered by HA link monitor; still mention if not
+  }
+
+  // ---- SSL / certs ----
+  const sslEv = evFromLogs(lines, /certificate expired|ssl decryption error|untrusted (issuer|cert)|not-valid-after/i, 10);
+  const expiredCerts = (config.certs||[]).filter(c => c.afterDate && c.afterDate < now);
+  if (sslEv.length || expiredCerts.length){
+    finding(F, {
+      sev: "warning",
+      title: expiredCerts.length ? "SSL decryption / certificate expired" : "SSL decryption errors",
+      explain: (expiredCerts.length ? `running-config.xml has ${expiredCerts.length} certificate(s) past not-valid-after (${expiredCerts.map(c=>c.name+" "+c.notAfter).join("; ")}). ` : "") + (sslEv.length ? `sslmgr or related logs have ${sslEv.length}+ decryption/certificate error line(s).` : "") + " Expired forward-proxy certs break decryption and can interrupt TLS.",
+      action: "Renew the decryption or management certificate, install it, and commit. Review decryption exclusions for sites that break inspection.",
+      source: expiredCerts.length ? "running-config.xml (certificate not-valid-after) and sslmgr.log" : "sslmgr.log / show counter global",
+      evidence: sslEv.concat(evFromText("running-config.xml", files.find(f=>isConfig(f.name))?.text || "", /not-valid-after|lab-decrypt-cert|certificate/i))
+    });
+  }
+  const decryptCtr = counters.filter(c => /proxy_decrypt_error|proxy_cert_expired|proxy_untrusted_cert|decrypt/i.test(c.name) && (c.value>0));
+  if (decryptCtr.length && !sslEv.length && !expiredCerts.length){
+    finding(F, {
+      sev: decryptCtr.some(c=>c.rate>0) ? "warning" : "info",
+      title: "SSL decryption error counters",
+      explain: decryptCtr.map(c=>`${c.name}=${c.value} (rate ${c.rate})`).join(", ") + " in show counter global.",
+      action: "Check sslmgr logs and the forward-proxy certificate. A historical count with rate 0 may be leftover since reboot.",
+      source: fileHint(sections, "show counter global"),
+      evidence: evFromText(cliName, sectionText(sections, "show counter global"), /proxy_decrypt|proxy_cert|decrypt/)
+    });
+  }
+
+  // ---- log forwarding / panorama connectivity ----
+  if (panoStat && !panoStat.missing && panoStat.connected === false){
+    finding(F, {
+      sev: "warning", title: "Firewall is not connected to Panorama",
+      explain: `show panorama-status reports Connected: no` + (panoStat.server ? ` (server ${panoStat.server})` : "") + (panoStat.error ? `. Last error: ${panoStat.error}` : "") + ". The firewall will not receive pushes or reliably forward logs until this is restored.",
+      action: "Confirm routing, TCP 3978, certificates, and that the serial is still in Panorama. Check logrcvr/ms logs for the disconnect reason.",
+      source: fileHint(sections, "show panorama-status"),
+      evidence: evFromText(cliName, sectionText(sections, "show panorama-status"), /Connected:|Last error:|Panorama Server/).concat(evFromLogs(lines, /failed to forward logs to Panorama|Panorama connectivity|disconnected from Panorama/i))
+    });
+  }
+  const logFwdEv = evFromLogs(lines, /failed to forward logs|log forwarding disconnected|cannot send logging|buffer \d+% used/i, 8);
+  if (logFwdEv.length && !(panoStat && panoStat.connected === false)){
+    finding(F, {
+      sev: "warning", title: "Log forwarding / Panorama connectivity issues",
+      explain: "logrcvr or varrcvr logs show failures sending logs to Panorama or a collector, or a growing log buffer.",
+      action: "Restore connectivity to Panorama or the log collector. If the local log disk is also full, logs are being lost.",
+      source: "logrcvr.log / varrcvr.log",
+      evidence: logFwdEv
+    });
+  }
+
+  // ---- Panorama devices / collectors ----
+  const downDevs = devices.filter(d => !d.connected);
+  if (downDevs.length){
+    finding(F, {
+      sev: downDevs.length === devices.length && devices.length > 0 ? "critical" : "warning",
+      title: `${downDevs.length} managed device(s) not connected to Panorama`,
+      explain: `show devices all lists disconnected: ${downDevs.map(d => d.hostname || d.serial).join(", ")}. Those firewalls cannot receive commits or reliably send logs.`,
+      action: "On each disconnected firewall, check show panorama-status, routing, and TCP 3978. Confirm the device was not replaced with a new serial.",
+      source: fileHint(sections, "show devices all", "show devices connected"),
+      evidence: evFromText(cliName, sectionText(sections, "show devices all"), /no\s+\S+\s+\S+|\s+no\s+/)
+    });
+  }
+  const downLc = collectors.filter(c => !c.connected || /disconnect/i.test(c.status||""));
+  if (downLc.length){
+    finding(F, {
+      sev: "warning", title: "Log collector not connected",
+      explain: `show log-collector all lists disconnected collectors: ${downLc.map(c => c.hostname || c.serial).join(", ")}. Log ingestion or query may be impaired.`,
+      action: "Check the collector's network path, disk, and process status. Confirm the collector is still in the collector group.",
+      source: fileHint(sections, "show log-collector all", "show log-collector connected"),
+      evidence: evFromText(cliName, sectionText(sections, "show log-collector all"), /disconnect|\s+no\s+/)
+    });
+  }
+
+  // ---- cores ----
+  const cores = files.filter(f => f.core || isCorePath(f.name));
+  if (cores.length){
+    finding(F, {
+      sev: "critical", title: `Crash dump(s) present (${cores.length})`,
+      explain: "One or more files under var/cores (or *.core) are in this bundle. A core means a process crashed. The dump itself is not opened by this tool.",
+      action: "Note the process name and time from the filename and from ms.log / masterd restart lines. Collect the TSF for TAC if this is unexpected or repeating.",
+      source: "var/cores",
+      evidence: cores.slice(0,10).map(f => evLine(shortName(f.name), 1, `${f.name} (${fmtBytes(f.size)}) — core dump listed, not opened`))
+    });
+  }
+
+  // ---- process restarts ----
+  const restartEv = evFromLogs(lines, /exited unexpectedly|core dumped|restart count|Process \S+ exited|SIGSEGV|restarting/i, 12);
+  const restartedProcs = procs.filter(p => p.restarts > 0);
+  if (restartEv.length || restartedProcs.length){
+    finding(F, {
+      sev: (restartEv.length >= 2 || restartedProcs.some(p => p.restarts >= 3)) ? "warning" : "info",
+      title: "Process restart or unexpected exit",
+      explain: (restartedProcs.length ? `show system software status lists restarts: ${restartedProcs.map(p=>`${p.name}=${p.restarts}`).join(", ")}. ` : "") + (restartEv.length ? `Logs mention unexpected exits or restarts (${restartEv.length}+ lines).` : ""),
+      action: "Match the process name to any core files. Repeated restarts of devsrvr, logrcvr, or configd are worth a TAC case.",
+      source: restartEv.length ? "ms.log / masterd" : fileHint(sections, "show system software status"),
+      evidence: restartEv.concat(evFromText(cliName, sectionText(sections, "show system software status"), /restarts|running/))
+    });
+  }
+
+  // ---- NTP ----
+  if (ntp && !ntp.missing && ntp.configured && ntp.synced === false){
+    finding(F, {
+      sev: "warning", title: "NTP is not synchronized",
+      explain: `show ntp reports NTP is configured but not synchronized` + (ntp.status ? ` (server ${ntp.server||"?"} status ${ntp.status})` : "") + ". Certificate checks, HA, and log timestamps depend on accurate time.",
+      action: "Confirm the NTP server is reachable and allowed by policy. Set the correct time zone, then re-check show ntp.",
+      source: fileHint(sections, "show ntp"),
+      evidence: evFromText(cliName, sectionText(sections, "show ntp"), /NTP|synchronized|status/)
+    });
+  }
+
+  // ---- performance suggestions (never certainties) ----
+  if (config && config.ok){
+    if (config.logStartRules && config.logStartRules.length){
+      finding(F, {
+        sev: "info", suggestion: true,
+        title: "Logging at session start is enabled on some rules",
+        explain: `${config.logStartRules.length} security rule(s) have <log-start>yes</log-start> in running-config.xml (${config.logStartRules.slice(0,6).map(r=>r.name).join(", ")}${config.logStartRules.length>6?"…":""}). Session-start logging increases management-plane work. This is a suggestion, not a finding that the setting is “wrong.”` + (mp != null && mp >= CPU_WARN ? " It is more relevant here because MP CPU is already high." : ""),
+        action: "Prefer log-end for most allow rules unless you truly need the start event (for example some C2 or audit use cases). Test any change in a window.",
+        source: "running-config.xml (log-start)",
+        evidence: config.logStartRules.slice(0,6).map(r => evLine("running-config.xml", 1, `rule ${r.name}: log-start yes`))
+      });
+    }
+    if (config.broadDecrypt && config.broadDecrypt.length){
+      finding(F, {
+        sev: "info", suggestion: true,
+        title: "Decryption rule looks very broad",
+        explain: `Decryption rule(s) ${config.broadDecrypt.map(r=>r.name).join(", ")} match any source, any destination, and any zone (running-config.xml). Broad forward-proxy decryption raises dataplane CPU and often causes certificate errors for applications that pin certs. This is a suggestion to review scope, not proof the rule is incorrect.`,
+        action: "Narrow decryption by zone, user, or category, and add exclusions for sites that break. Watch proxy_decrypt_error counters after changes.",
+        source: "running-config.xml (decryption rules)",
+        evidence: config.broadDecrypt.map(r => evLine("running-config.xml", 1, `rule ${r.name}: from ${r.from||"any"} to ${r.to||"any"} action ${r.action}`))
+      });
+    }
+    const untrustLike = (config.zonesNoZpp||[]).filter(z => /untrust|outside|wan|internet|dmz|external/i.test(z.name));
+    const zppMissing = untrustLike.length ? untrustLike : (config.zonesNoZpp||[]);
+    if (untrustLike.length || (config.zones||[]).length && zppMissing.length === (config.zones||[]).length){
+      const listed = (untrustLike.length ? untrustLike : zppMissing).slice(0,8);
+      finding(F, {
+        sev: "info", suggestion: true,
+        title: "Zone protection profile is missing on some zones",
+        explain: `These zones have no zone-protection-profile in running-config.xml: ${listed.map(z=>z.name).join(", ")}. Zone protection can help with flood and reconnaissance traffic. This is a suggestion — attach a profile only after you understand the thresholds, or you can drop legitimate traffic.`,
+        action: "Start with the default or a conservative zone protection profile on untrust-side zones, and monitor drop counters.",
+        source: "running-config.xml (zone-protection-profile)",
+        evidence: listed.map(z => evLine("running-config.xml", 1, `zone ${z.name}: no zone-protection-profile`))
+      });
+    }
+    if (config.unknownAppRules && config.unknownAppRules.length){
+      finding(F, {
+        sev: "info", suggestion: true,
+        title: "Security rules allow unknown-tcp or unknown-udp",
+        explain: `Rule(s) ${config.unknownAppRules.map(r=>r.name).join(", ")} allow unknown-tcp and/or unknown-udp. Unknown App-ID often means incomplete identification or non-standard ports. This is a suggestion to review, not automatic proof of a hole.`,
+        action: "Identify the traffic (packet capture / ACC), write a custom app or an app-override if it is legitimate, and tighten the rule.",
+        source: "running-config.xml (application unknown-tcp/udp)",
+        evidence: config.unknownAppRules.map(r => evLine("running-config.xml", 1, `rule ${r.name}: application ${r.app.join(",")}`))
+      });
+    }
+    // session timeout suggestion only when table is stressed
+    const tcpTo = sess.tcpTimeout != null ? sess.tcpTimeout : config.tcpTimeout;
+    if (tcpTo != null && tcpTo >= 3600 && sUtil != null && sUtil >= SESS_WARN){
+      finding(F, {
+        sev: "info", suggestion: true,
+        title: "Long TCP session timeout while the session table is already high",
+        explain: `TCP default timeout is ${tcpTo} seconds (show session info or the config). 3600 is the PAN-OS default, so this is not a misconfiguration by itself. Combined with a session table at ${sUtil}%, idle sessions may be holding slots that new connections need. This is a suggestion, not a required change.`,
+        action: "Consider a lower timeout for short-lived traffic, or application-specific timeouts, after you understand the applications. Test before applying widely.",
+        source: sess.tcpTimeout != null ? fileHint(sections, "show session info") : "running-config.xml (timeout-tcp)",
+        evidence: evFromText(cliName, sectionText(sections, "show session info"), /TCP default timeout/)
+      });
+    }
+    if (/^yes$/i.test(config.jumbo||"") || (config.mtu && config.mtu > 1500)){
+      finding(F, {
+        sev: "info", suggestion: true,
+        title: "Jumbo frames or a raised MTU are enabled",
+        explain: `running-config.xml has jumbo-frame=${config.jumbo || "n/a"}` + (config.mtu?` and MTU ${config.mtu}`:"") + ". Jumbo helps throughput only when every hop in the path supports it. A mismatch can fragment or drop packets. This is a suggestion to verify the path, not a finding that jumbo is wrong.",
+        action: "Confirm the switch, router, and any tunnels use a compatible MTU. If you see unexplained drops or fragmentation, test with standard 1500.",
+        source: "running-config.xml (jumbo-frame / mtu)",
+        evidence: [evLine("running-config.xml", 1, `jumbo-frame=${config.jumbo} mtu=${config.mtu}`)]
+      });
+    }
+  }
+  const unk = counters.filter(c => /appid_unknown|unknown_tcp|unknown_udp/i.test(c.name));
+  const unkVal = unk.reduce((a,c)=>a+c.value,0);
+  const unkRate = unk.reduce((a,c)=>a+(c.rate||0),0);
+  if (unkVal > 100000 || unkRate > 50){
+    finding(F, {
+      sev: "info", suggestion: true,
+      title: "High volume of unknown App-ID traffic",
+      explain: `show counter global reports unknown App-ID counters totaling value ${unkVal}` + (unkRate?` and rate ${unkRate}/s`:"") + ` (${unk.map(c=>c.name+"="+c.value).join(", ")}). A large unknown share can mean incomplete identification or overly broad allow rules. This is a suggestion to investigate, not a certainty that policy is wrong.`,
+      action: "Use ACC or a packet capture for unknown-tcp/udp, then refine App-ID, or add a custom application if the traffic is legitimate.",
+      source: fileHint(sections, "show counter global"),
+      evidence: evFromText(cliName, sectionText(sections, "show counter global"), /appid_unknown|unknown_tcp|unknown_udp/)
+    });
+  }
+  const unused = hits.filter(h => h.hits === 0 && !/never-used-placeholder/.test(h.rule));
+  if (unused.length){
+    finding(F, {
+      sev: "info", suggestion: true,
+      title: `${unused.length} security rule(s) have zero hits`,
+      explain: `show rule-hit-count lists zero hits for: ${unused.slice(0,12).map(h=>h.rule).join(", ")}${unused.length>12?"…":""}. Unused rules add clutter and review cost. Hits reset after some operations, so a zero may also mean the counter was cleared. This is a suggestion to review, not automatic proof the rule can be deleted.`,
+      action: "Confirm the hit-count window, then disable and later remove rules that are truly unused, following your change process.",
+      source: fileHint(sections, "show rule-hit-count", /^show rule-hit-count/),
+      evidence: evFromText(cliName, sectionText(sections, "show rule-hit-count", /^show rule-hit-count/), /\s0\s+never|\s0\s+/)
+    });
+  }
+
+  F.sort((a,b) => {
+    const rank = {critical:0, warning:1, info:2};
+    const ra = (rank[a.sev]??3) + (a.suggestion?0.4:0);
+    const rb = (rank[b.sev]??3) + (b.suggestion?0.4:0);
+    return ra - rb;
+  });
+  return F;
+}
+
+function healthScore(findings){
+  let score = 100, sug = 0;
+  for (const f of findings){
+    if (f.suggestion){
+      const d = f.sev === "warning" ? 2 : 1;
+      sug += d;
+    } else if (f.sev === "critical") score -= 12;
+    else if (f.sev === "warning") score -= 5;
+    else score -= 1;
+  }
+  score -= Math.min(10, sug);
+  return clamp(Math.round(score), 0, 100);
+}
+
+
+/* ===================== redact / export ===================== */
+function buildRedactor(ctx){
+  const pairs = [];
+  const add = (v, tok) => { if (v && String(v).length >= 3 && !pairs.some(p => p[0]===String(v))) pairs.push([String(v), tok]); };
+  if (ctx.info){
+    add(ctx.info.hostname, "[HOSTNAME]");
+    add(ctx.info.serial, "[SERIAL]");
+    add(ctx.info.ip, "[IP]");
+  }
+  (ctx.config && ctx.config.users || []).forEach(u => add(u, "[USER]"));
+  (ctx.licenses||[]).forEach(()=>{});
+  pairs.sort((a,b) => b[0].length - a[0].length);
+  const ip4 = /\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\b/g;
+  const mac = /\b(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b/g;
+  const email = /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g;
+  const keepHost = /^(yes|no|tcp|udp|http|https|info|drop|error|packet|session|resource|policy|flow|appid|proxy|decrypt|unknown|any|src|dst|ethernet|tunnel|vlan|loopback|panorama|firewall|localhost|localdomain|paloaltonetworks|com|org|net|edu)$/i;
+  const fqdn = /\b(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}\b/g;
+  const serialRe = /\b(?:0\d{11}|[A-Z0-9]{10,16})\b/g;
+  return function redact(s, extra){
+    if (s == null) return "";
+    let o = String(s);
+    for (const [a,b] of pairs) o = o.split(a).join(b);
+    o = o.replace(email, "[EMAIL]");
+    o = o.replace(mac, "[MAC]");
+    o = o.replace(ip4, "[IP]");
+    o = o.replace(fqdn, m => keepHost.test(m.split(".")[0]) && m.split(".").length===1 ? m : (keepHost.test(m) ? m : "[HOST]"));
+    if (ctx.info && ctx.info.serial) o = o.split(ctx.info.serial).join("[SERIAL]");
+    return o;
+  };
+}
+
+function alwaysRedactSecrets(s){
+  if (s == null) return "";
+  let o = String(s);
+  o = o.replace(/\bAuth(?:-| )?codes?:\s*\S+/gi, "Authcode: [AUTHCODE]");
+  o = o.replace(/\b(?:shared-secret|password|passwd|pre-shared-key|private-key|api-key|secret-key|authcode)\s*[:=]\s*\S+/gi, m => {
+    const i = m.search(/[:=]/);
+    return m.slice(0, i + 1) + " [REDACTED]";
+  });
+  o = o.replace(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g, "[REDACTED KEY]");
+  return o;
+}
+function maybeRedact(s, redact){ return alwaysRedactSecrets(redact ? redact(s) : (s==null?"":String(s))); }
+
+function downloadBlob(name, mime, text){
+  const blob = new Blob([text], {type: mime});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+function exportCSV(state, redact){
+  const rows = [["severity","suggestion","title","source","explanation","action","evidence"]];
+  for (const f of state.findings){
+    const ev = (f.evidence||[]).map(e => `${e.file}:${e.n}: ${e.text}`).join(" | ");
+    rows.push([f.sev, f.suggestion?"yes":"no", f.title, f.source, f.explain, f.action, ev].map(x => maybeRedact(x, redact)));
+  }
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const tag = redact ? "-redacted" : "";
+  downloadBlob(`pan-tsf-findings${tag}.csv`, "text/csv;charset=utf-8", csv);
+}
+
+function exportHTML(state, redact){
+  const R = (s) => escapeHtml(maybeRedact(s, redact));
+  const d = state.device;
+  const pills = ["critical","warning","info"].map(s => `${s}: ${(state.findings.filter(f=>f.sev===s).length)}`).join(" · ");
+  const fields = Object.entries(d.fields||{}).map(([k,v]) => `<div class="f"><b>${R(k)}</b><span>${v?R(v):"Not found in this bundle"}</span></div>`).join("");
+  const issues = state.findings.map(f => {
+    const ev = (f.evidence||[]).map(e => `<div class="ev">${R(e.file+":"+e.n+": "+e.text)}</div>`).join("");
+    return `<div class="issue ${f.sev}"><h3>${f.sev==="critical"?"🔴":f.sev==="warning"?"🟡":"🔵"} ${R(f.title)}${f.suggestion?" (suggestion)":""}</h3>
+      <div>${R(f.explain)}</div>
+      <div class="tip">What to try: ${R(f.action)}</div>
+      <div class="tip">Source: ${R(f.source)}</div>${ev}</div>`;
+  }).join("");
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>PAN TSF triage report${redact?" (redacted)":""}</title>
+<style>
+body{font:16px/1.45 system-ui,Segoe UI,Arial;max-width:1100px;margin:24px auto;padding:0 16px;color:#1b2430;background:#f4f6f8}
+h1{font-size:22px}.card{background:#fff;border:1px solid #d8dee4;border-radius:12px;padding:18px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.f{padding:10px 12px;border-radius:8px;background:#f4f6f8}.f b{display:block;font-size:13px;color:#5c6b7a;text-transform:uppercase}
+.status{font-weight:600;padding:10px 14px;border-radius:8px;margin-bottom:12px}
+.issue{border-left:6px solid;border-radius:8px;padding:12px 14px;margin:10px 0;background:#f4f6f8}
+.issue.critical{border-color:#d64545}.issue.warning{border-color:#d89b00}.issue.info{border-color:#2f6fd6}
+.tip{color:#5c6b7a}.ev{font:12px/1.4 Consolas,monospace;color:#5c6b7a;margin-top:4px}
+.note{font-size:13px;color:#5c6b7a}
+</style></head><body>
+<h1>Palo Alto tech-support triage report</h1>
+<p class="note">Generated in the browser by PAN TSF Triage Viewer. Files never left the computer.${redact?" Identifiers in this copy were redacted.":""}</p>
+<div class="card"><div class="status">Health score ${state.health}/100 · ${R(pills)}</div>
+<div class="grid">${fields}</div></div>
+<div class="card"><h2>Findings</h2>${issues || "<p>No findings.</p>"}</div>
+</body></html>`;
+  downloadBlob(`pan-tsf-report${redact?"-redacted":""}.html`, "text/html;charset=utf-8", html);
+}
+
+/* ===================== parse bundle ===================== */
+function assembleSections(files){
+  const sections = new Map();
+  let cliFile = null, cliLen = 0;
+  for (const f of files){
+    if (!f.text) continue;
+    if (isCliBundle(f.name) || (/\.txt$/i.test(f.name) && /techsupport/i.test(f.name))
+        || (f.text && f.text.length > 500 && /(?:^|\n)\s*(?:=+|-+|\*+|>)?\s*(?:==\s*)?(?:Command:\s*)?show system info\b/i.test(f.text) && !isLogFile(f.name) && !isConfig(f.name))){
+      const part = splitCliSections(f.text);
+      for (const [k,v] of part){
+        if (sections.has(k)) sections.set(k, sections.get(k)+"\n"+v);
+        else sections.set(k, v);
+      }
+      if (f.text.length > cliLen){ cliFile = f; cliLen = f.text.length; }
+    }
+    const cmd = commandFromFilename(f.name);
+    if (cmd){
+      if (sections.has(cmd)) sections.set(cmd, sections.get(cmd)+"\n"+f.text);
+      else sections.set(cmd, f.text);
+    }
+  }
+  return {sections, cliFile};
+}
+
+function looksLikeIdent(v){
+  if (v == null) return false;
+  const s = String(v).trim();
+  if (!s) return false;
+  if (/^(unknown|n\/a|none|null|not found)$/i.test(s)) return false;
+  if (/^\[(HOSTNAME|SERIAL|IP|MAC|USER|EMAIL|HOST)\]$/i.test(s)) return false;
+  return true;
+}
+function setIdent(info, field, value, source){
+  if (!looksLikeIdent(value) || info[field]) return false;
+  info[field] = String(value).trim();
+  info._src = info._src || {};
+  info._src[field] = source;
+  return true;
+}
+function resolveIdentity(info, config, sections, files, cliFile, licenses){
+  info._src = info._src || {};
+  if (info.hostname) info._src.hostname = info._src.hostname || "show system info";
+  if (info.ip) info._src.ip = info._src.ip || "show system info";
+  if (info.serial) info._src.serial = info._src.serial || "show system info";
+  if (info.time) info._src.time = info._src.time || "show system info";
+  if (config){
+    setIdent(info, "hostname", config.hostname, "running-config.xml (deviceconfig/system/hostname)");
+    setIdent(info, "ip", config.ipAddress, "running-config.xml (deviceconfig/system/ip-address)");
+  }
+  const mgmt = sectionText(sections, "show interface management");
+  if (mgmt){
+    setIdent(info, "ip", pick(mgmt, /Ip address:\s*(\S+)/i), "show interface management");
+  }
+  if (licenses && licenses.length){
+    const ser = licenses.find(l => looksLikeIdent(l.serial));
+    if (ser) setIdent(info, "serial", ser.serial, "request license info");
+  }
+  const names = [];
+  if (cliFile && cliFile.name) names.push(cliFile.name);
+  for (const f of files) if (f && f.name) names.push(f.name);
+  for (const n of names){
+    const m = shortName(n).match(/^techsupport[_-]([A-Za-z0-9][A-Za-z0-9._-]{1,62})[_-]\d{8}/i);
+    if (m && !/^(techsupport|firewall|panorama|pa|pan-os)$/i.test(m[1])){
+      setIdent(info, "hostname", m[1], "tech-support filename");
+      break;
+    }
+  }
+  if (!info.time){
+    const clk = sectionText(sections, "show clock");
+    if (clk){
+      const line = clk.split(/\n/).map(s => s.trim()).find(s => /20\d{2}/.test(s) && /[A-Za-z]{3}/.test(s));
+      if (line){ info.time = line.replace(/^>\s*/,""); info.timeDate = parseLooseDate(info.time); info._src.time = "show clock"; }
+    }
+  }
+  for (const f of files){
+    if (!f || !f.text) continue;
+    if (!/(^|\/)(ms|devsrvr)\.log$/i.test(normPath(f.name))) continue;
+    if (!info.serial){
+      const m = f.text.match(/\bserial(?:\s*(?:number|no|#))?\s*[:=]\s*([A-Za-z0-9]{8,20})\b/i);
+      if (m) setIdent(info, "serial", m[1], shortName(f.name));
+    }
+    if (!info.hostname){
+      const m = f.text.match(/\bhostname\s*[:=]\s*([A-Za-z0-9._-]{1,64})\b/i);
+      if (m) setIdent(info, "hostname", m[1], shortName(f.name));
+    }
+  }
+}
+
+function parseBundle(files){
+  const {sections, cliFile} = assembleSections(files);
+  const sysText = sectionText(sections, "show system info");
+  const info = parseSystemInfo(sysText);
+  const cfgFile = pickConfigFile(files);
+  const config = parseConfigXml(cfgFile ? cfgFile.text : "");
+
+  const ha = parseHA(sectionText(sections, "show high-availability all", "show high-availability state"));
+  const top = parseTop(sectionText(sections, "show system resources"));
+  const mon = parseResourceMonitor(sectionText(sections, "show running resource-monitor"));
+  const sess = parseSessionInfo(sectionText(sections, "show session info"));
+  const counters = parseCounters(sectionText(sections, "show counter global", /^show counter global/));
+  const pools = parsePools(sectionText(sections, "debug dataplane pool statistics"));
+  const jobs = parseJobs(sectionText(sections, "show jobs all", /^show jobs/));
+  const bgp = parseBgp(sectionText(sections, "show routing protocol bgp summary", /^show routing protocol bgp/));
+  const ifaces = parseInterfaces(sectionText(sections, "show interface all", /^show interface /, "show counter interface all"));
+  const disks = parseDisk(sectionText(sections, "show system disk-space", "show system disk"));
+  const licenses = parseLicenses(sectionText(sections, "request license info", "show license"));
+  const devices = parseDevices(sectionText(sections, "show devices all", "show devices connected"));
+  const collectors = parseCollectors(sectionText(sections, "show log-collector all", "show log-collector connected"));
+  const hits = parseRuleHits(sectionText(sections, "show rule-hit-count", /^show rule-hit-count/));
+  const panoStat = parsePanoramaStatus(sectionText(sections, "show panorama-status"));
+  const ntp = parseNtp(sectionText(sections, "show ntp"));
+  const procs = parseProcessStatus(sectionText(sections, "show system software status"));
+  const dtype = detectDeviceType(info, sections, files);
+  resolveIdentity(info, config, sections, files, cliFile, licenses);
+
+  const lines = [];
+  for (const f of files){
+    if (f.text && isLogFile(f.name)) parseLogFile(f, lines, MAX_LINES_TOTAL);
+    if (lines.length >= MAX_LINES_TOTAL) break;
+  }
+  // If almost no logs classified, include other .log/.txt under var/
+  if (lines.length < 10){
+    for (const f of files){
+      if (f.text && /\.(log|txt)$/i.test(f.name) && /\/var\//i.test(f.name) && !isCliBundle(f.name)) parseLogFile(f, lines, MAX_LINES_TOTAL);
+    }
+  }
+  if (cliFile && cliFile.text && lines.length < MAX_LINES_TOTAL) parseLogFile(cliFile, lines, MAX_LINES_TOTAL);
+  lines.forEach((l,i) => l.id = i);
+
+  const now = info.timeDate || new Date();
+  const ctx = {info, dtype, ha, top, mon, sess, counters, pools, jobs, bgp, ifaces, disks, licenses, devices, collectors, hits, panoStat, ntp, procs, config, lines, files, sections, now, cliFile};
+  const findings = runTriage(ctx);
+  attachEvidenceIds(findings, lines);
+  const health = healthScore(findings);
+  return {ctx, findings, health, lines, files, sections, config, info, dtype};
+}
+
+function attachEvidenceIds(findings, lines){
+  for (const f of findings){
+    for (const e of (f.evidence||[])){
+      if (e.id != null) continue;
+      const file = (e.file||"").toLowerCase();
+      let hit = null;
+      if (file && e.n){
+        hit = lines.find(l => l.n === e.n && (l.f.toLowerCase() === file || (l.path||"").toLowerCase().endsWith(file)));
+      }
+      if (!hit && e.text){
+        const snippet = e.text.trim().slice(0, 80);
+        if (snippet.length >= 12){
+          hit = lines.find(l => l.t.includes(snippet) || snippet.includes(l.t.trim().slice(0,80)));
+        }
+      }
+      if (hit) e.id = hit.id;
+    }
+  }
+}
+
+function deviceFields(parsed){
+  const {info, dtype, ha, licenses} = parsed.ctx || parsed;
+  const haTxt = !ha || ha.missing ? null
+    : ha.enabled === false ? "HA not enabled"
+    : [ha.localState, ha.mode, ha.peerState ? ("peer "+ha.peerState) : null, ha.inSync==null?null:(ha.inSync?"in sync":"NOT in sync")].filter(Boolean).join(" · ");
+  const licTxt = licenses && licenses.length
+    ? licenses.map(l => l.feature + (l.expired ? " EXPIRED" : l.expires ? (" exp "+l.expires) : "")).join("; ")
+    : null;
+  const content = [
+    info.threatVersion ? `Threat ${info.threatVersion}` + (info.threatDate?` (${info.threatDate})`:"") : null,
+    info.appVersion ? `App ${info.appVersion}` : null,
+    info.avVersion ? `AV ${info.avVersion}` + (info.avDate?` (${info.avDate})`:"") : null,
+    info.wildfireVersion ? `WildFire ${info.wildfireVersion}` : null,
+    info.urlVersion ? `URL ${info.urlVersion}` : null
+  ].filter(Boolean).join(" · ");
+  return {
+    "Device type": dtype && dtype !== "Unknown" ? dtype : null,
+    "Hostname": info.hostname || null,
+    "Model": info.model || null,
+    "Serial": info.serial || null,
+    "PAN-OS": info.version || null,
+    "Uptime": info.uptime || null,
+    "Management IP": info.ip || null,
+    "HA state": haTxt,
+    "Device time": info.time || null,
+    "Content / AV / Threat": content || null,
+    "Licenses": licTxt
+  };
+}
+const SENSITIVE_DEVICE_KEYS = new Set(["Hostname", "Serial", "Management IP"]);
+function deviceSources(parsed){
+  const info = (parsed.ctx || parsed).info || parsed.info || {};
+  const src = info._src || {};
+  return {
+    "Hostname": src.hostname || null,
+    "Serial": src.serial || null,
+    "Management IP": src.ip || null
+  };
+}
+
+/* ===================== UI ===================== */
+let STATE = null;
+let HIT = new Set();
+let ACTIVE_FILE = "";
+let LOG_CURSOR = [];
+let LOG_POS = 0;
+const MAX_LOG_RENDER = 8000;
+
+function showingSensitive(){
+  const box = $("#showsens");
+  return !!(box && box.checked);
+}
+function D(s){
+  if (s == null || s === "") return s == null ? "" : s;
+  const r = STATE && STATE.displayRedact;
+  return alwaysRedactSecrets(r ? r(String(s)) : String(s));
+}
+function currentRedactor(){
+  if (!STATE) return s => alwaysRedactSecrets(s);
+  if (!showingSensitive()){
+    const r = buildRedactor(STATE.ctx);
+    return s => alwaysRedactSecrets(r(s));
+  }
+  return s => alwaysRedactSecrets(s);
+}
+function refreshRedaction(){
+  if (!STATE) return;
+  STATE.displayRedact = currentRedactor();
+  renderDevice({ctx: STATE.ctx, info: STATE.info, dtype: STATE.dtype}, STATE.findings, STATE.health);
+  renderFindings(STATE.findings);
+  renderLogs();
+  renderSystem(STATE.ctx);
+  renderCounters(STATE.ctx.counters);
+  renderConfig(STATE.config, STATE.ctx.hits);
+  renderRaw(STATE.files);
+}
+
+function setProgress(msg, pct, opts){
+  const drop = $("#drop");
+  const bar = $("#pbar");
+  const fill = $("#pbar > div");
+  const pt = $("#ptext");
+  const cancel = $("#btn-cancel");
+  if (pt) pt.textContent = msg;
+  if (bar) bar.hidden = false;
+  if (fill && pct != null) fill.style.width = clamp(pct,0,100) + "%";
+  if (cancel) cancel.hidden = !(opts && opts.cancellable);
+  const prow = $("#prow");
+  if (prow) prow.hidden = false;
+  if (drop && !STATE) drop.classList.add("small");
+}
+function hideProgress(){
+  const bar = $("#pbar");
+  const pt = $("#ptext");
+  const cancel = $("#btn-cancel");
+  const prow = $("#prow");
+  if (bar) bar.hidden = true;
+  if (pt) pt.textContent = "";
+  if (cancel) cancel.hidden = true;
+  if (prow) prow.hidden = true;
+}
+
+function showTab(name){
+  $$(".tabpanel").forEach(p => p.hidden = p.id !== "tab-"+name);
+  $$(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+}
+
+function $$ (sel, el=document){ return [...el.querySelectorAll(sel)]; }
+
+function renderDevice(parsed, findings, health){
+  const fields = deviceFields(parsed);
+  const sources = deviceSources(parsed);
+  parsed.device = {fields, sources};
+  if (STATE) STATE.device = {fields, sources};
+  const crit = findings.filter(f=>f.sev==="critical" && !f.suggestion).length;
+  const warn = findings.filter(f=>f.sev==="warning" && !f.suggestion).length;
+  const infoN = findings.filter(f=>f.sev==="info" || f.suggestion).length;
+  let st = "g", label = "🟢 Looks healthy";
+  if (health < 70 || crit) { st = "r"; label = "🔴 Problems found"; }
+  else if (health < 90 || warn) { st = "y"; label = "🟡 Needs attention"; }
+  const stat = $("#stat");
+  stat.className = "status s-"+st;
+  stat.innerHTML = "";
+  const left = document.createElement("span");
+  left.innerHTML = `<span class="score">${health}</span> / 100&nbsp;&nbsp;${label}`;
+  const pills = document.createElement("span");
+  pills.className = "pills";
+  pills.innerHTML = `<span class="pill r" id="pill-c">${crit} critical</span><span class="pill y" id="pill-w">${warn} warning</span><span class="pill i" id="pill-i">${infoN} info / suggestions</span>`;
+  stat.append(left, pills);
+  const sum = $("#sum");
+  sum.innerHTML = "";
+  const hideIdent = !showingSensitive();
+  for (const [k,v] of Object.entries(fields)){
+    const d = document.createElement("div");
+    d.className = "f";
+    const b = document.createElement("b"); b.textContent = k;
+    const sp = document.createElement("span");
+    if (!v){
+      sp.textContent = "Not found in this bundle";
+      sp.className = "nf";
+      sp.dataset.state = "missing";
+    } else if (hideIdent && SENSITIVE_DEVICE_KEYS.has(k)){
+      sp.textContent = "Hidden — turn on Show sensitive values";
+      sp.className = "hidden-val";
+      sp.dataset.state = "hidden";
+    } else {
+      sp.textContent = D(v);
+      sp.dataset.state = "shown";
+    }
+    d.append(b, sp);
+    if (v && sources[k]){
+      const em = document.createElement("em");
+      em.className = "src";
+      em.textContent = "Source: " + sources[k];
+      d.append(em);
+    }
+    sum.appendChild(d);
+  }
+  const top = findings.filter(f => !f.suggestion).slice(0, 6);
+  const topBox = $("#topfindings");
+  topBox.innerHTML = "";
+  if (!top.length){
+    const p = document.createElement("div");
+    p.className = "issue info";
+    p.innerHTML = "<h3>✅ No problems in the rule set</h3>";
+    const t = document.createElement("div");
+    t.className = "tip";
+    t.textContent = "Suggestions, if any, are on the Findings tab. This is not a guarantee the device is healthy — only that these checks did not fire.";
+    p.append(t);
+    topBox.append(p);
+  } else {
+    top.forEach(f => topBox.appendChild(renderIssue(f, true)));
+  }
+}
+
+function renderIssue(f, compact){
+  const d = document.createElement("div");
+  d.className = "issue "+f.sev;
+  d.dataset.id = f.id;
+  const cnt = document.createElement("span"); cnt.className = "cnt";
+  cnt.textContent = (f.suggestion?"suggestion · ":"") + f.sev + (f.evidence&&f.evidence.length ? ` · ${f.evidence.length} evidence` : "") + " · click to view";
+  const h = document.createElement("h3");
+  h.textContent = (f.sev==="critical"?"🔴 ":f.sev==="warning"?"🟡 ":"🔵 ") + D(f.title);
+  const ex = document.createElement("div"); ex.textContent = D(f.explain);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.textContent = "What to try: " + D(f.action);
+  const src = document.createElement("div"); src.className = "tip"; src.textContent = "Source: " + D(f.source);
+  d.append(cnt, h, ex, tip, src);
+  if (!compact && f.evidence && f.evidence.length){
+    const ev = document.createElement("div"); ev.className = "ev";
+    f.evidence.forEach(e => {
+      const a = document.createElement("a");
+      a.textContent = D((e.file||"") + (e.n?(":"+e.n):"") + "  " + (e.text||"").slice(0,240));
+      a.onclick = evnt => { evnt.stopPropagation(); jumpEvidence(f, e); };
+      ev.appendChild(a);
+    });
+    d.append(ev);
+  }
+  d.onclick = () => jumpEvidence(f, (f.evidence&&f.evidence[0])||null);
+  return d;
+}
+
+function renderFindings(findings){
+  const box = $("#issues");
+  box.innerHTML = "";
+  const groups = [
+    ["Critical", findings.filter(f=>f.sev==="critical" && !f.suggestion)],
+    ["Warnings", findings.filter(f=>f.sev==="warning" && !f.suggestion)],
+    ["Info", findings.filter(f=>f.sev==="info" && !f.suggestion)],
+    ["Performance suggestions", findings.filter(f=>f.suggestion)]
+  ];
+  for (const [label, list] of groups){
+    if (!list.length) continue;
+    const h = document.createElement("h2"); h.textContent = label; box.append(h);
+    list.forEach(f => box.appendChild(renderIssue(f, false)));
+  }
+  if (!findings.length){
+    const d = document.createElement("div");
+    d.className = "issue info";
+    d.innerHTML = "<h3>✅ No known problems detected</h3>";
+    const t = document.createElement("div"); t.className="tip";
+    t.textContent = "Look at System/Resources, Counters, and raw logs if you still have a symptom these rules do not cover.";
+    d.append(t); box.append(d);
+  }
+}
+
+function treeFromFiles(files){
+  const root = {};
+  for (const f of files){
+    const parts = normPath(f.name).split("/").filter(Boolean);
+    let n = root;
+    parts.forEach((p,i) => {
+      if (i === parts.length-1){
+        n[p] = n[p] || {_file:f};
+      } else {
+        n[p] = n[p] || {};
+        n = n[p];
+      }
+    });
+  }
+  return root;
+}
+
+function renderTree(container, obj, prefix, onFile, filterFn){
+  container.innerHTML = "";
+  const walk = (node, parent, path) => {
+    const names = Object.keys(node).filter(k => k!=="_file").sort((a,b) => {
+      const ad = !node[a]._file, bd = !node[b]._file;
+      if (ad!==bd) return ad?-1:1;
+      return a.localeCompare(b);
+    });
+    for (const name of names){
+      const child = node[name];
+      const p = path ? path+"/"+name : name;
+      if (child._file){
+        if (filterFn && !filterFn(child._file)) continue;
+        const d = document.createElement("div");
+        d.className = "item";
+        d.dataset.path = child._file.name;
+        const skip = child._file.skip ? " — "+child._file.skip : "";
+        d.textContent = name + (child._file.size?` (${fmtBytes(child._file.size)})`:"") + skip;
+        d.onclick = () => onFile(child._file, d);
+        parent.appendChild(d);
+      } else {
+        const dir = document.createElement("div");
+        dir.className = "dir";
+        dir.textContent = name + "/";
+        parent.appendChild(dir);
+        walk(child, parent, p);
+      }
+    }
+  };
+  walk(obj, container, "");
+}
+
+function jumpEvidence(finding, ev){
+  showTab("logs");
+  let ids = (finding.evidence||[]).map(e => e.id).filter(id => id!=null);
+  if (ev && ev.id != null && !ids.includes(ev.id)) ids = [ev.id, ...ids];
+  HIT = new Set(ids);
+  LOG_CURSOR = ids.slice();
+  LOG_POS = ev && ev.id != null ? Math.max(0, LOG_CURSOR.indexOf(ev.id)) : 0;
+  $("#ff").value = "";
+  $("#sf").value = "";
+  $("#q").value = (!ids.length && ev && ev.text) ? ev.text.trim().slice(0, 80) : "";
+  $("#qre").checked = false;
+  $("#tfrom").value = "";
+  $("#tto").value = "";
+  renderLogs();
+  $("#logcard").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function filteredLines(){
+  if (!STATE) return [];
+  const f = $("#ff").value;
+  const s = $("#sf").value;
+  const q = $("#q").value;
+  const rxOn = $("#qre").checked;
+  const tfrom = $("#tfrom").value ? new Date($("#tfrom").value) : null;
+  const tto = $("#tto").value ? new Date($("#tto").value) : null;
+  let re = null;
+  if (q && rxOn){
+    try { re = new RegExp(q, "i"); $("#q").style.borderColor = ""; }
+    catch(e){ $("#q").style.borderColor = "var(--r)"; }
+  }
+  const ql = q.toLowerCase();
+  return STATE.lines.filter(l => {
+    if (HIT.size && !HIT.has(l.id)) return false;
+    if (f && l.f !== f && l.path !== f) return false;
+    if (s === "err" && l.sev !== "err") return false;
+    if (s === "warn" && !(l.sev==="err"||l.sev==="warn")) return false;
+    if (tfrom && l.d && l.d < tfrom) return false;
+    if (tto && l.d && l.d > tto) return false;
+    if (q){
+      if (re) { if (!re.test(l.t)) return false; }
+      else if (!l.t.toLowerCase().includes(ql)) return false;
+    }
+    return true;
+  });
+}
+
+function renderLogs(){
+  if (!STATE) return;
+  const v = filteredLines();
+  const shown = v.slice(0, MAX_LOG_RENDER);
+  const cn = $("#cn");
+  cn.textContent = "Showing " + shown.length + " of " + v.length + " matching lines (" + STATE.lines.length + " parsed).";
+  if (HIT.size){
+    const b = document.createElement("button");
+    b.textContent = "Show all lines";
+    b.onclick = () => { HIT = new Set(); LOG_CURSOR=[]; renderLogs(); };
+    cn.append(" ", b);
+    const prev = document.createElement("button");
+    prev.textContent = "◀ Previous issue line";
+    prev.onclick = () => stepHit(-1);
+    const next = document.createElement("button");
+    next.textContent = "Next issue line ▶";
+    next.onclick = () => stepHit(1);
+    cn.append(" ", prev, " ", next);
+  }
+  const fr = document.createDocumentFragment();
+  shown.forEach(l => {
+    const r = document.createElement("div");
+    r.className = "row " + (l.sev||"") + (HIT.has(l.id)?" hit":"");
+    r.dataset.id = l.id;
+    const c0 = document.createElement("span"); c0.textContent = fmtDate(l.d);
+    const c1 = document.createElement("span"); c1.className="fn"; c1.textContent = D(l.f);
+    const c2 = document.createElement("span"); c2.textContent = l.sev || "";
+    const c3 = document.createElement("span"); c3.textContent = D(l.t);
+    r.append(c0,c1,c2,c3);
+    fr.appendChild(r);
+  });
+  $("#log").replaceChildren(fr);
+  const firstHit = shown.find(l => HIT.has(l.id));
+  if (firstHit){
+    const el = $("#log").querySelector(`[data-id="${firstHit.id}"]`);
+    if (el) el.scrollIntoView({block:"center"});
+  }
+}
+
+function stepHit(dir){
+  if (!LOG_CURSOR.length) return;
+  LOG_POS = (LOG_POS + dir + LOG_CURSOR.length) % LOG_CURSOR.length;
+  const id = LOG_CURSOR[LOG_POS];
+  const el = $("#log").querySelector(`[data-id="${id}"]`);
+  if (el){ el.scrollIntoView({block:"center"}); el.classList.add("hit"); }
+}
+
+function fillLogFilters(lines){
+  const ff = $("#ff");
+  const cur = ff.value;
+  ff.length = 1;
+  const names = [...new Set(lines.map(l => l.f))];
+  names.sort().forEach(n => ff.add(new Option(n, n)));
+  if (cur) ff.value = cur;
+}
+
+function tableHtml(el, headers, rows, rowClass){
+  el.innerHTML = "";
+  const t = document.createElement("table");
+  t.className = "data";
+  const thead = document.createElement("thead");
+  const trh = document.createElement("tr");
+  headers.forEach(h => { const th=document.createElement("th"); th.textContent=h; trh.append(th); });
+  thead.append(trh); t.append(thead);
+  const tb = document.createElement("tbody");
+  rows.forEach((r,i) => {
+    const tr = document.createElement("tr");
+    if (rowClass){ const c = rowClass(r,i); if (c) tr.className=c; }
+    r.forEach(c => { const td=document.createElement("td"); td.textContent = c==null || c==="" ? "—" : D(c); tr.append(td); });
+    tb.append(tr);
+  });
+  t.append(tb);
+  if (!rows.length){
+    const p = document.createElement("p"); p.className="nf"; p.textContent="Not found in this bundle";
+    el.append(p); return;
+  }
+  el.append(t);
+}
+
+function renderSystem(ctx){
+  const box = $("#sysbody");
+  box.innerHTML = "";
+  const addSec = (title) => { const h=document.createElement("h2"); h.textContent=title; box.append(h); const d=document.createElement("div"); box.append(d); return d; };
+  const mon = ctx.mon, top=ctx.top, sess=ctx.sess;
+  const cpuRows = [
+    ["Management CPU (1-min avg / max)", mon.mpCpuAvg, mon.mpCpuMax],
+    ["Dataplane CPU (1-min avg / max)", mon.dpCpuAvg, mon.dpCpuMax],
+    ["show system resources CPU used", top.cpuUsed, ""],
+    ["Memory % (resource-monitor)", mon.memory, ""],
+    ["Memory % (show system resources)", top.memUsedPct, ""],
+    ["Session % (resource-monitor)", mon.session, ""],
+    ["Packet buffer %", mon.pktBuf, ""],
+    ["Packet descriptor %", mon.pktDesc, ""]
+  ];
+  tableHtml(addSec("CPU and memory"), ["Metric","Value","Max"], cpuRows.map(r => [r[0], r[1]==null?"Not found in this bundle":r[1]+(String(r[0]).includes("%")||true && r[1]!=null?"%":""), r[2]==null||r[2]===""?"—":r[2]+"%"]), r => {
+    const n = parseFloat(r[1]);
+    if (isNaN(n)) return "";
+    if (n >= 90) return "drop";
+    if (n >= 80) return "warn";
+    return "";
+  });
+  tableHtml(addSec("Sessions (show session info)"), ["Metric","Value"], [
+    ["Sessions supported", sess.supported],
+    ["Sessions allocated", sess.allocated],
+    ["Session table utilization", sess.util!=null?sess.util+"%":null],
+    ["Packet rate", sess.pktRate!=null?sess.pktRate+"/s":null],
+    ["New connection rate", sess.setupRate!=null?sess.setupRate+"/s":null],
+    ["TCP default timeout (s)", sess.tcpTimeout],
+    ["UDP default timeout (s)", sess.udpTimeout]
+  ].map(r => [r[0], r[1]==null?"Not found in this bundle":r[1]]));
+  tableHtml(addSec("Disk (show system disk-space)"), ["Filesystem","Size","Used","Avail","Use%","Mount"],
+    ctx.disks.map(d => [d.fs,d.size,d.used,d.avail,d.pct+"%",d.mount]),
+    r => { const n=parseInt(r[4],10); return n>=90?"drop":n>=80?"warn":""; });
+  const ha = ctx.ha;
+  const haRows = ha && !ha.missing ? [
+    ["Enabled", ha.enabled?"yes":"no"],
+    ["Mode", ha.mode],
+    ["Local state", ha.localState],
+    ["Peer state", ha.peerState],
+    ["Config sync", ha.cfgSync],
+    ["Preemptive", ha.preempt],
+    ["Link monitor fail", ha.linkFail?"yes":"no"],
+    ["Path monitor fail", ha.pathFail?"yes":"no"]
+  ] : [];
+  tableHtml(addSec("High availability"), ["Field","Value"], haRows.length?haRows:[["HA","Not found in this bundle"]]);
+  tableHtml(addSec("Jobs"), ["Enqueued","ID","Type","Status","Result","Completed"],
+    ctx.jobs.map(j => [j.enqueued,j.id,j.type,j.status,j.result,j.completed]),
+    r => /fail/i.test(r[4]||"")?"drop":"");
+  tableHtml(addSec("BGP peers"), ["Peer","AS","Flaps","Duration","State"],
+    ctx.bgp.map(p => [p.peer,p.asn,p.flaps,p.duration,p.state]),
+    r => !/^established$/i.test(r[4]||"")||r[2]>0?"warn":"");
+  tableHtml(addSec("Interfaces"), ["Name","Link","Errors","Drops","Discards"],
+    ctx.ifaces.map(i => [i.name,i.link||(i.up?"up":"down"),i.errors,i.drops,i.discards]),
+    r => (parseInt(r[2]||0)+parseInt(r[3]||0))>0?"warn":"");
+  if (ctx.devices && ctx.devices.length){
+    tableHtml(addSec("Managed devices (Panorama)"), ["Serial","Hostname","IP","Connected","Version"],
+      ctx.devices.map(d => [d.serial,d.hostname,d.ip,d.connected?"yes":"no",d.version]),
+      r => r[3]==="no"?"drop":"");
+  }
+  if (ctx.collectors && ctx.collectors.length){
+    tableHtml(addSec("Log collectors"), ["Serial","Hostname","IP","Connected","Status"],
+      ctx.collectors.map(d => [d.serial,d.hostname,d.ip,d.connected?"yes":"no",d.status]),
+      r => r[3]==="no"||/disconnect/i.test(r[4]||"")?"drop":"");
+  }
+  if (ctx.ntp && !ctx.ntp.missing){
+    tableHtml(addSec("NTP"), ["Field","Value"], [["Configured",ctx.ntp.configured?"yes":"no"],["Synchronized",ctx.ntp.synced?"yes":"no"],["Server",ctx.ntp.server],["Status",ctx.ntp.status]]);
+  }
+  if (ctx.licenses && ctx.licenses.length){
+    tableHtml(addSec("Licenses"), ["Feature","Expires","Expired"],
+      ctx.licenses.map(l => [l.feature,l.expires,l.expired?"yes":"no"]),
+      r => r[2]==="yes"?"drop":"");
+  }
+  if (ctx.pools && ctx.pools.length){
+    tableHtml(addSec("Dataplane pools"), ["Pool","Utilization","Allocated","Available","Total"],
+      ctx.pools.map(p => [p.name, p.util!=null?p.util+"%":null, p.allocated, p.available, p.total]),
+      r => parseFloat(r[1])>=90?"drop":parseFloat(r[1])>=80?"warn":"");
+  }
+}
+
+function renderCounters(counters){
+  const notable = [...counters].sort((a,b) => {
+    const ar = (a.severity==="drop"||a.severity==="error"||/fail|drop|nomem/i.test(a.name))?1:0;
+    const br = (b.severity==="drop"||b.severity==="error"||/fail|drop|nomem/i.test(b.name))?1:0;
+    if (ar!==br) return br-ar;
+    return (b.rate-a.rate) || (b.value-a.value);
+  });
+  tableHtml($("#counterbody"), ["Name","Value","Rate","Severity","Category","Aspect","Description"],
+    notable.map(c => [c.name,c.value,c.rate,c.severity,c.category,c.aspect,c.desc]),
+    r => (r[3]==="drop"||r[3]==="error"||/fail|drop|nomem/i.test(r[0])) && (parseInt(r[2])>0||parseInt(r[1])>0) ? "drop" : "");
+  if (!counters.length) $("#counterbody").innerHTML = '<p class="nf">Not found in this bundle</p>';
+}
+
+function renderConfig(cfg, hits){
+  const box = $("#cfgbody");
+  box.innerHTML = "";
+  if (!cfg || !cfg.ok){
+    const p = document.createElement("p"); p.className="nf";
+    p.textContent = cfg && cfg.error ? ("Config could not be parsed: "+cfg.error) : "Not found in this bundle";
+    box.append(p); return;
+  }
+  const d = document.createElement("div"); d.className="grid";
+  const items = [
+    ["Security rules", cfg.security.length],
+    ["NAT rules", cfg.nat.length],
+    ["Decryption rules", cfg.decryption.length],
+    ["Zones", cfg.zones.length],
+    ["Interfaces (config)", cfg.interfaces.length],
+    ["AV profiles", cfg.profiles.virus],
+    ["Anti-spyware profiles", cfg.profiles.spyware],
+    ["Vulnerability profiles", cfg.profiles.vulnerability],
+    ["Jumbo frames", cfg.jumbo || "Not found in this bundle"],
+    ["MTU", cfg.mtu || "Not found in this bundle"],
+    ["TCP timeout (config)", cfg.tcpTimeout || "Not found in this bundle"]
+  ];
+  items.forEach(([k,v]) => {
+    const el=document.createElement("div"); el.className="f";
+    const b=document.createElement("b"); b.textContent=k;
+    const s=document.createElement("span"); s.textContent=String(v);
+    el.append(b,s); d.append(el);
+  });
+  box.append(d);
+  const zt = document.createElement("div"); box.append(zt);
+  tableHtml(zt, ["Zone","Zone protection","Interfaces"], cfg.zones.map(z => [z.name, z.zpp||"(none)", (z.ifaces||[]).join(", ")]), r => r[1]==="(none)"?"warn":"");
+  if (hits && hits.length){
+    const ht = document.createElement("div"); box.append(ht);
+    const h2=document.createElement("h2"); h2.textContent="Rule hit counts"; box.insertBefore(h2, ht);
+    tableHtml(ht, ["Rule","Hits","Last hit"], hits.map(h => [h.rule,h.hits,h.last]), r => r[1]===0||r[1]==="0"?"warn":"");
+  }
+}
+
+function showRawFile(f){
+  const view = $("#rawview");
+  const actions = $("#rawactions");
+  const btn = $("#btn-loadmore");
+  if (actions) actions.hidden = !(f && f.loadable);
+  if (btn){
+    btn.disabled = false;
+    btn.dataset.name = f && f.name || "";
+    btn.textContent = "Load more of this file";
+  }
+  if (!f){ if (view) view.textContent = "Select a file on the left to view it. Binary and core dumps are listed but not opened."; return; }
+  let body;
+  if (f.skip && !f.text) body = D(f.name) + "\n\nListed only: " + f.skip + "\nSize: " + fmtBytes(f.size) + (f.loadable ? "\n\nYou can re-read a larger slice of this file without keeping the whole bundle in memory." : "");
+  else if (!f.text) body = D(f.name) + "\n\nNot found or empty.";
+  else {
+    const note = [
+      f.partial ? "Partial view: start, matching issue lines, and end were kept so a large log did not fill memory." : "",
+      f.note || "",
+      f.budgeted ? "This file was trimmed to stay within the memory budget." : ""
+    ].filter(Boolean).join(" ");
+    body = D(f.name) + " (" + fmtBytes(f.size) + ")" + (note ? "\n(" + note + ")\n" : "\n") + D(f.text.slice(0, 400000)) + (f.text.length>400000?"\n\n[truncated for display]":"");
+  }
+  if (view) view.textContent = body;
+}
+function renderRaw(files){
+  const tree = $("#rawtree");
+  const view = $("#rawview");
+  renderTree(tree, treeFromFiles(files), "", (f, el) => {
+    $$(".item", tree).forEach(i => i.classList.remove("on"));
+    el.classList.add("on");
+    showRawFile(f);
+  });
+  showRawFile(null);
+}
+
+async function loadMoreRaw(){
+  const btn = $("#btn-loadmore");
+  const name = btn && btn.dataset.name;
+  if (!name || !STATE) return;
+  btn.disabled = true;
+  btn.textContent = "Re-reading from the original file…";
+  try {
+    onProgressExtract = (p) => {
+      btn.textContent = "Re-reading… " + (p.currentFile ? shortName(p.currentFile) : (p.stage || ""));
+    };
+    const more = await extractFromSource(name);
+    onProgressExtract = null;
+    if (more && STATE.files){
+      const i = STATE.files.findIndex(f => f.name === name || shortName(f.name) === shortName(name));
+      if (i >= 0){
+        const prev = STATE.files[i];
+        STATE.files[i] = Object.assign({}, prev, more, {text: more.text || prev.text, loadable: !!more.partial, skip: more.text ? null : prev.skip});
+        if (more.text && isLogFile(STATE.files[i].name) && STATE.lines){
+          parseLogFile(STATE.files[i], STATE.lines, 40000);
+        }
+        showRawFile(STATE.files[i]);
+      } else {
+        showRawFile(more);
+      }
+    } else {
+      btn.textContent = "Could not find that file in the bundle";
+      btn.disabled = false;
+    }
+  } catch (e){
+    onProgressExtract = null;
+    btn.disabled = false;
+    btn.textContent = "Could not re-read this file";
+    console.error(e);
+  }
+}
+
+function afterParse(parsed, fileNames, ms){
+  STATE = {
+    findings: parsed.findings,
+    health: parsed.health,
+    lines: parsed.lines,
+    files: parsed.files,
+    ctx: parsed.ctx,
+    info: parsed.info,
+    dtype: parsed.dtype,
+    config: parsed.config,
+    device: {fields: deviceFields(parsed), sources: deviceSources(parsed)},
+    loadedMs: ms,
+    fileNames,
+    displayRedact: null
+  };
+  STATE.displayRedact = currentRedactor();
+  $("#out").hidden = false;
+  $("#exportbar").hidden = false;
+  renderDevice(parsed, parsed.findings, parsed.health);
+  renderFindings(parsed.findings);
+  fillLogFilters(parsed.lines);
+  renderTree($("#logtree"), treeFromFiles(parsed.files.filter(f => isLogFile(f.name) || (f.text && /\/var\/log\//i.test(f.name)))), "", (f, el) => {
+    $$(".item", $("#logtree")).forEach(i => i.classList.remove("on"));
+    el.classList.add("on");
+    $("#ff").value = shortName(f.name);
+    HIT = new Set();
+    renderLogs();
+  }, f => !!(f.text || isLogFile(f.name)));
+  renderLogs();
+  renderSystem(parsed.ctx);
+  renderCounters(parsed.ctx.counters);
+  renderConfig(parsed.config, parsed.ctx.hits);
+  renderRaw(parsed.files);
+  showTab("dash");
+  const note = $("#filenote");
+  const stats = lastUnpackStats || {};
+  note.textContent = "Loaded " + fileNames.join(", ") + " — " + parsed.files.length + " files, " + parsed.lines.length + " log lines, " + parsed.findings.length + " findings, in " + (ms/1000).toFixed(1) + "s. Files stayed on this computer.";
+  const ban = $("#budgetnote");
+  if (ban){
+    if (stats.budgetHit){
+      ban.hidden = false;
+      ban.textContent = "Memory budget reached (" + fmtBytes(stats.retainedBytes||0) + " of " + fmtBytes(stats.budget||DEFAULT_BUDGET) + " kept). " + (stats.budgetedCount||0) + " large file(s) were listed by name and size only, or trimmed to matching issue lines. Open Raw files and use “Load more of this file” to re-read one from the original bundle. The rest of the triage still ran.";
+    } else ban.hidden = true;
+  }
+  window.__TSF = {
+    ready: true,
+    getReport(){
+      return {
+        health: STATE.health,
+        findings: STATE.findings.map(f => ({id:f.id, sev:f.sev, title:f.title, suggestion:!!f.suggestion, source:f.source, evidence: (f.evidence||[]).length})),
+        device: STATE.device.fields,
+        deviceSources: STATE.device.sources || {},
+        type: STATE.dtype,
+        model: STATE.info && STATE.info.model || null,
+        version: STATE.info && STATE.info.version || null,
+        fileCount: STATE.files.length,
+        lineCount: STATE.lines.length,
+        loadedMs: STATE.loadedMs,
+        unpack: lastUnpackStats || null,
+        partialCount: (STATE.files||[]).filter(f => f.partial).length,
+        indexedCount: (STATE.files||[]).filter(f => f.skip || f.indexed).length,
+        budgetHit: !!(lastUnpackStats && lastUnpackStats.budgetHit),
+        retainedBytes: lastUnpackStats && lastUnpackStats.retainedBytes || 0,
+        sections: [...parsed.sections.keys()]
+      };
+    },
+    showTab, jumpFirst(){ const f=STATE.findings[0]; if(f) jumpEvidence(f, f.evidence&&f.evidence[0]); },
+    exportHTML: (r)=>exportHTML(STATE, r?buildRedactor(STATE.ctx):null),
+    exportCSV: (r)=>exportCSV(STATE, r?buildRedactor(STATE.ctx):null),
+    redactPreview(s){ return buildRedactor(STATE.ctx)(s); },
+    fileMeta(){
+      return (STATE.files||[]).map(f => ({
+        base: shortName(f.name),
+        size: f.size||0,
+        skip: f.skip||null,
+        partial: !!f.partial,
+        budgeted: !!f.budgeted,
+        loadable: !!f.loadable,
+        hasText: !!f.text,
+        textLen: f.text ? f.text.length : 0
+      }));
+    }
+  };
+}
+
+async function runFiles(fileList, opts){
+  const files = [...fileList];
+  if (!files.length) return;
+  const t0 = performance.now();
+  $("#out").hidden = true;
+  HIT = new Set();
+  STATE = null;
+  loadCancelled = false;
+  lastUnpackStats = null;
+  lastSourceFiles = files;
+  try {
+    setProgress("Reading " + files.map(f=>f.name).join(", ") + "…", 2, {cancellable:true});
+    let all = [];
+    const budget = (opts && opts.budget) || currentBudget();
+    for (const file of files){
+      if (loadCancelled) throw Object.assign(new Error("Cancelled"), {cancelled:true});
+      const part = await loadArchive(file, (p) => {
+        const read = p.inBytes || 0;
+        const total = p.fileSize || file.size || 0;
+        const pct = total ? 5 + Math.min(70, (read/total)*70) : 8;
+        const cur = p.currentFile ? " · " + shortName(p.currentFile) : "";
+        const idx = p.filesIndexed != null ? " · " + p.filesIndexed + " files indexed" : "";
+        setProgress((p.stage||"Reading") + " " + fmtBytes(read) + (total? " of " + fmtBytes(total):"") + idx + cur, pct, {cancellable:true});
+      }, {budget});
+      all = all.concat(part);
+    }
+    setProgress("Parsing show commands and logs…", 80);
+    await new Promise(r => setTimeout(r, 0));
+    const parsed = parseBundle(all);
+    setProgress("Running triage…", 92);
+    await new Promise(r => setTimeout(r, 0));
+    const ms = performance.now() - t0;
+    afterParse(parsed, files.map(f=>f.name), ms);
+    const drop = $("#drop");
+    drop.classList.add("small");
+    drop.innerHTML = "📂 Loaded: " + files.map(f=>f.name).join(", ") + " — drop another file to replace<input id=\"fi\" type=\"file\" multiple hidden accept=\".tgz,.tar,.gz,.tar.gz,.zip,.txt,.xml,.log\">";
+    hideProgress();
+    wireDrop();
+  } catch (e){
+    hideProgress();
+    if (e && (e.cancelled || loadCancelled)){
+      const drop = $("#drop");
+      drop.classList.add("small");
+      drop.innerHTML = "⏹️ Cancelled. Drop a file to try again<input id=\"fi\" type=\"file\" multiple hidden accept=\".tgz,.tar,.gz,.tar.gz,.zip,.txt,.xml,.log\">";
+      wireDrop();
+      return;
+    }
+    console.error(e);
+    $("#drop").innerHTML = "❌ Could not read this file: " + (e && e.message ? e.message : e) + "<br><small>Try a .tgz / .tar.gz tech-support file. Missing pieces will say “Not found in this bundle.”</small><input id=\"fi\" type=\"file\" multiple hidden accept=\".tgz,.tar,.gz,.tar.gz,.zip,.txt,.xml,.log\">";
+    wireDrop();
+  }
+}
+
+function wireDrop(){
+  const dr = $("#drop");
+  const fi = $("#fi");
+  if (!dr || !fi) return;
+  dr.onclick = (e) => { if (e.target.closest && e.target.closest("button")) return; fi.click(); };
+  fi.onchange = e => runFiles(e.target.files);
+  dr.ondragover = e => { e.preventDefault(); dr.classList.add("over"); };
+  dr.ondragleave = () => dr.classList.remove("over");
+  dr.ondrop = e => { e.preventDefault(); dr.classList.remove("over"); runFiles(e.dataTransfer.files); };
+}
+
+function wireUi(){
+  wireDrop();
+  const c = $("#btn-cancel");
+  if (c) c.onclick = (e) => { e.preventDefault(); e.stopPropagation(); cancelUnpack(); };
+  const lm = $("#btn-loadmore");
+  if (lm) lm.onclick = (e) => { e.preventDefault(); e.stopPropagation(); loadMoreRaw(); };
+  $$(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  ["#ff","#sf","#qre"].forEach(s => { const el=$(s); if(el) el.onchange = renderLogs; });
+  ["#q","#tfrom","#tto"].forEach(s => { const el=$(s); if(el) el.oninput = renderLogs; });
+  $("#btn-dark").onclick = () => document.body.classList.toggle("dark");
+  $("#btn-print").onclick = () => window.print();
+  $("#btn-csv").onclick = () => { if(STATE) exportCSV(STATE, currentRedactor()); };
+  $("#btn-html").onclick = () => { if(STATE) exportHTML(STATE, currentRedactor()); };
+  $("#showsens").onchange = () => refreshRedaction();
+}
+
+document.addEventListener("DOMContentLoaded", wireUi);
+window.__TSF = {ready:false, loadFiles: runFiles};
+})();
+
+</script>
+</body>
+</html>
