@@ -130,7 +130,7 @@ sudo ./install.sh --uninstall            # removes the service, nginx site and p
 sudo ./install.sh --uninstall --purge    # also deletes /etc/paat, /var/lib/paat and the paat user
 ```
 
-`--purge` cannot be undone. nginx itself is left installed.
+`--purge` cannot be undone. nginx itself is left installed. If you used a port other than 80, the stock nginx default site may still be listening on port 80 with the welcome page; stop nginx only if you do not need it for anything else: `sudo systemctl disable --now nginx`.
 
 ### Running it again
 
@@ -157,16 +157,23 @@ PAAT ships a `Dockerfile` and a `docker-compose.yml`. They work the same with **
 ### Quick start with Docker Compose
 
 ```bash
-# 1. the first admin's password goes in a file, not on a command line
+# 1. the first admin's password goes in a file, not on a command line.
+#    Put your own password in the file, or leave the file empty (zero bytes)
+#    to have PAAT generate a one-time password into /etc/paat/INITIAL_ADMIN_PASSWORD
+#    inside the config volume (read it with: docker compose exec paat cat /etc/paat/INITIAL_ADMIN_PASSWORD).
 mkdir -p docker/secrets
 ( umask 077; printf '%s\n' 'choose-a-long-password' > docker/secrets/admin_password.txt )
 sudo chown 10001 docker/secrets/admin_password.txt     # the container user must be able to read it
 sudo chmod 400 docker/secrets/admin_password.txt
+# rootless Podman: use `podman unshare chown 10001 ...` instead of `sudo chown 10001 ...`
 
 # 2. build and start
 docker compose up -d --build
 
 # 3. open http://SERVER:8080 and sign in as "admin"
+#    To bind a high port on localhost only, put this in a .env file next to docker-compose.yml:
+#      PAAT_HTTP_PORT=18080
+#      PAAT_BIND=127.0.0.1
 ```
 
 The admin is created only on the **first** start, while there are no users. After that the password file is no longer used.
@@ -186,11 +193,11 @@ The admin is created only on the **first** start, while there are no users. Afte
 
 ```bash
 docker/make-self-signed-cert.sh paat.example.com        # or put your own paat.crt and paat.key in docker/tls/
-docker compose --profile tls up -d --build
+docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
 # open https://SERVER:8443
 ```
 
-The `tls` profile adds an nginx container. Set `PAAT_BIND=127.0.0.1` if only nginx should be reachable from outside.
+The TLS override adds an nginx container. It is a second compose file, not a Compose profile, so `podman-compose` (which on Ubuntu 24.04 ignores profiles) will not start nginx on a default `up`. Set `PAAT_BIND=127.0.0.1` if only nginx should be reachable from outside.
 
 ### Settings you may want
 
@@ -199,7 +206,7 @@ Set these in a `.env` file next to `docker-compose.yml` (never commit it):
 | Setting | Default | Meaning |
 |---|---|---|
 | `PAAT_HTTP_PORT` | `8080` | Published web port. |
-| `PAAT_HTTPS_PORT` | `8443` | Published HTTPS port (tls profile). |
+| `PAAT_HTTPS_PORT` | `8443` | Published HTTPS port (TLS override file). |
 | `PAAT_BIND` | `0.0.0.0` | Address the ports bind to. |
 | `PAAT_ADMIN_USER` | `admin` | Name of the first admin. |
 | `TZ` | `UTC` | Time zone for the container. |
@@ -232,16 +239,17 @@ docker run -d --name paat -p 8080:8080 \
 Everything above works with `podman` in place of `docker`, and with `podman compose` (or `podman-compose`).
 
 ```bash
-podman build -t localhost/paat:latest .
-podman compose up -d
+podman build --format docker -t localhost/paat:latest .
+podman compose up -d          # or: podman-compose up -d
 ```
 
 Notes for Podman:
 
-- **Rootless Podman.** The container's uid 10001 maps to a sub-uid on the host, so `chown 10001` on the secret file is not enough. Use a Podman secret instead:
+- **Rootless Podman.** The container's uid 10001 maps to a sub-uid on the host, so `sudo chown 10001` on the secret file is not enough (the container cannot read it and will refuse to start). Use a Podman secret instead:
   `printf '%s\n' 'choose-a-long-password' | podman secret create paat_admin_password -`
   and run with `--secret paat_admin_password -e PAAT_ADMIN_PASSWORD_FILE=/run/secrets/paat_admin_password`. Or run `podman unshare chown 10001 docker/secrets/admin_password.txt`.
-- Add `--format docker` to `podman build` if you want the health check recorded in the image (compose also defines it).
+- Build with `--format docker` (or `BUILDAH_FORMAT=docker`) so the image health check is recorded. `podman-compose up --build` rebuilds without that flag unless you export `BUILDAH_FORMAT=docker` first.
+- Ubuntu 24.04's `podman-compose` 1.0.6 ignores Compose profiles. That is why TLS nginx lives in `docker-compose.tls.yml` rather than a profile: a default `up` starts only PAAT.
 - **Run as a service.** `podman generate systemd --new --name paat` (or a Quadlet `.container` file) turns the container into a systemd service that starts at boot.
 - **SELinux hosts** (Rocky/RHEL): add `:Z` to bind mounts, for example `-v ./docker/tls:/etc/nginx/tls:ro,Z`.
 

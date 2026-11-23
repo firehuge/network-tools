@@ -144,6 +144,8 @@ if [ "$MODE" = uninstall ]; then
     rm -f "$site" /etc/nginx/sites-enabled/paat
     if command -v nginx >/dev/null && nginx -t >/dev/null 2>&1; then systemctl reload nginx 2>/dev/null || true; fi
     ok "nginx site removed (nginx itself is left installed)"
+    echo "    If the stock default site is still enabled, nginx may listen on port 80 with the welcome page."
+    echo "    Stop that only if you do not need nginx for anything else: sudo systemctl disable --now nginx"
   fi
   rm -rf "$APP_ROOT" /usr/local/bin/paat /usr/bin/paat; ok "removed $APP_ROOT and the paat command"
   if [ "$PURGE" -eq 1 ]; then
@@ -418,8 +420,9 @@ if [ "$NGINX" -eq 1 ]; then
   mv "$site.new" "$site"
   if [ "$FAMILY" = debian ]; then
     ln -sf "$site" /etc/nginx/sites-enabled/paat
-    # The stock "Welcome to nginx" site would win port 80; disable it only if it is the untouched default.
-    if [ -L /etc/nginx/sites-enabled/default ] && [ "$HTTP_PORT" = 80 ]; then rm -f /etc/nginx/sites-enabled/default; ok "disabled the stock nginx default site"; fi
+    # The stock "Welcome to nginx" site occupies port 80 even when PAAT uses another port.
+    # Disable it only if it is still the untouched default symlink.
+    if [ -L /etc/nginx/sites-enabled/default ]; then rm -f /etc/nginx/sites-enabled/default; ok "disabled the stock nginx default site"; fi
   else
     # RHEL's nginx.conf has a built-in port-80 server; conf.d is read first, so PAAT answers by IP as well.
     if command -v getenforce >/dev/null && [ "$(getenforce)" = Enforcing ]; then

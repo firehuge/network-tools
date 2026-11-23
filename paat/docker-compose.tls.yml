@@ -1,0 +1,20 @@
+# Optional HTTPS front end for PAAT. Used with the main compose file:
+#   docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
+#   (same with podman compose / podman-compose)
+# Needs docker/tls/paat.crt and docker/tls/paat.key (see docker/make-self-signed-cert.sh).
+# Kept in a separate file so a default `up` never starts nginx. Some compose
+# implementations (notably podman-compose 1.0.6 on Ubuntu 24.04) ignore
+# Compose profiles and would otherwise start this service and crash-loop
+# without the certificate files.
+#
+# Set PAAT_BIND=127.0.0.1 if only nginx should be reachable from outside.
+services:
+  nginx:
+    image: docker.io/library/nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on: [paat]
+    ports:
+      - "${PAAT_BIND:-0.0.0.0}:${PAAT_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./docker/nginx-tls.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/tls:/etc/nginx/tls:ro

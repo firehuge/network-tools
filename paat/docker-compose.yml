@@ -4,7 +4,8 @@
 #   mkdir -p docker/secrets && (umask 077; printf '%s\n' 'choose-a-long-password' > docker/secrets/admin_password.txt)
 #   sudo chown 10001 docker/secrets/admin_password.txt    (the container runs as uid 10001; rootless Podman: see INSTALL.md)
 #   docker compose up -d --build                      -> http://SERVER:8080
-#   docker compose --profile tls up -d --build        -> also https://SERVER:8443 (needs docker/tls/paat.crt + paat.key)
+#   docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
+#       -> also https://SERVER:8443 (needs docker/tls/paat.crt + paat.key)
 name: paat
 
 services:
@@ -19,7 +20,7 @@ services:
     environment:
       PAAT_ADMIN_USER: "${PAAT_ADMIN_USER:-admin}"
       PAAT_ADMIN_PASSWORD_FILE: /run/secrets/paat_admin_password
-      PAAT_FORWARDED_ALLOW_IPS: "*"   # trust X-Forwarded-* from the nginx container (TLS profile)
+      PAAT_FORWARDED_ALLOW_IPS: "*"   # trust X-Forwarded-* from the nginx container (TLS override)
       # PAAT_UPGRADE_EXECUTE: "1"     # allow live OS upgrade steps (off by default)
       TZ: "${TZ:-UTC}"
     secrets:
@@ -34,18 +35,6 @@ services:
     cap_drop: [ALL]
     security_opt:
       - no-new-privileges:true
-
-  # Optional HTTPS front end:  docker compose --profile tls up -d
-  nginx:
-    profiles: ["tls"]
-    image: docker.io/library/nginx:1.27-alpine
-    restart: unless-stopped
-    depends_on: [paat]
-    ports:
-      - "${PAAT_BIND:-0.0.0.0}:${PAAT_HTTPS_PORT:-8443}:443"
-    volumes:
-      - ./docker/nginx-tls.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./docker/tls:/etc/nginx/tls:ro
 
 secrets:
   paat_admin_password:

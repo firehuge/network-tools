@@ -29,6 +29,7 @@ if [ "$n" = 0 ]; then
   if [ -n "${PAAT_ADMIN_PASSWORD_FILE:-}" ] && [ -e "$PAAT_ADMIN_PASSWORD_FILE" ] && [ ! -r "$PAAT_ADMIN_PASSWORD_FILE" ]; then
     echo "paat: cannot read $PAAT_ADMIN_PASSWORD_FILE as uid $(id -u). On the host run:" >&2
     echo "      sudo chown 10001 docker/secrets/admin_password.txt && sudo chmod 400 docker/secrets/admin_password.txt" >&2
+    echo "      (rootless Podman: podman unshare chown 10001 docker/secrets/admin_password.txt && chmod 400 docker/secrets/admin_password.txt)" >&2
     exit 1
   fi
   if [ -n "${PAAT_ADMIN_PASSWORD_FILE:-}" ] && [ -s "$PAAT_ADMIN_PASSWORD_FILE" ]; then
