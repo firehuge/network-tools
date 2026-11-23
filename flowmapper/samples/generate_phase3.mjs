@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Synthetic samples for FlowMapper Phase 3 (BGP inference, pasted route tables, shared / overlapping address space).
  * All names, addresses and serials are made up (RFC 1918 / documentation ranges, 0099... serials). Run: node samples/generate_phase3.mjs */
 import fs from "node:fs";

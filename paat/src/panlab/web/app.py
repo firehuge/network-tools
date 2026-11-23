@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """PAAT web GUI (package panlab): prep area (upload FCRs, preview) and the separate push area.
 
 Login required (local users, see ``auth.py``). viewer: read change sets;

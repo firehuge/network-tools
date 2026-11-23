@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Decommission flow: resolve items, plan edits/deletes, CR plan, CLI, and gated push."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """PAAT branding: titles, logo, favicon, About page, OpenAPI title, CLI names, PAAT_* settings (synthetic only)."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """panlab.activity: the shared 'is anything mid-flight?' check run before every PAAT restart."""
 
 import json

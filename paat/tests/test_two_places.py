@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """A flow checked by security policy in two places on one firewall (synthetic hairpin).
 
 One vsys, three virtual routers, no next-vr: the flow leaves VR-A toward an

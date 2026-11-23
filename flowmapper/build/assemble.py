@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Splice style.css + core.js + render.js + decom.js + app.js + decom-ui.js (+ embedded synthetic demo config) into pan-flowmapper.html."""
 from pathlib import Path
 import json, re

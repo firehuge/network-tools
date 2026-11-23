@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Optional live confirmation of a FlowMapper trace against the running device.
 
 For each traced hop this asks the firewall (or the firewall through Panorama)

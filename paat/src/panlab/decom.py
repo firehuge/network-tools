@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Decommission: build a removal (or stop-traffic) change set from the shared FlowMapper engine.
 
 The engine (vendor/flowmapper/decom.js) grades every reference Exact, Highly likely or Possible, and

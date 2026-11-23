@@ -1,12 +1,16 @@
-PAAT (Policy Automation and Analysis Tool)
-Copyright (c) PAAT maintainers
+PAAT (Policy Automation and Analysis Tool) is part of network-tools.
+Copyright 2026 Matthew McHugh and network-tools contributors
 
-DRAFT: pending legal review. See ../LEGAL.md and ../THIRD_PARTY_NOTICES.md.
+Licensed under the Apache License, Version 2.0. See ../LICENSE, ../NOTICE
+and ../LEGAL.md.
 
-PAAT includes code adapted from the FlowMapper tool in this repository (../flowmapper):
+PAAT includes code from the FlowMapper tool in this repository (../flowmapper),
+under the same license:
 
-- src/panlab/netmodel.py: Python port of FlowMapper build/core.js config loading.
-- src/panlab/placement.py: routing-first lookup adapted from FlowMapper.
-- vendor/flowmapper/: verbatim copies of FlowMapper build/core.js, render.js and decom.js.
+- src/panlab/netmodel.py and src/panlab/placement.py: a Python port of
+  FlowMapper build/core.js config loading and route lookup.
+- vendor/flowmapper/: verbatim copies of FlowMapper build/core.js, render.js
+  and decom.js.
 
-No customer or real configuration is included.
+No customer or real configuration is included. Third-party dependency notices
+are in ../THIRD_PARTY_NOTICES.md.

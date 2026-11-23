@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """URL filter self-service: validation, diff, stale detection, change plan, push gating, scope. Fake devices only."""
 from __future__ import annotations
 

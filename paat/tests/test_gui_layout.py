@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared layout: Home dashboard, permission-filtered sidebar and top bar, breadcrumbs (synthetic data only)."""
 from __future__ import annotations
 

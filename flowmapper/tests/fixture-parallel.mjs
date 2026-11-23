@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 export function fwXml(host, ifs, routes, rules) {
   const e = (n, x) => `<entry name="${n}">${x}</entry>`;
   const eth = ifs.map(([n, ip]) => e(n, `<layer3><ip>${e(ip, "")}</ip></layer3>`)).join("");

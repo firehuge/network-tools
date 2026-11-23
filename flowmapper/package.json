@@ -11,7 +11,7 @@
     "test:core": "node tests/test_core.mjs && node tests/test_fcr_path.mjs && node tests/test_phase3.mjs && node tests/test_scope.mjs && node tests/test_decom.mjs",
     "test:ui": "node tests/test_ui.mjs && node tests/test_decom_ui.mjs"
   },
-  "license": "SEE LICENSE IN ../LICENSE",
+  "license": "Apache-2.0",
   "devDependencies": {
     "playwright-core": "^1.65.0"
   },

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Per-customer profiles, data directories, and target credentials.
 
 A customer is one environment: only standalone firewalls, only Panorama,

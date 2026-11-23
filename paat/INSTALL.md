@@ -22,7 +22,7 @@ repository; you add your own:
 The repository's `tests/` folder has synthetic customers and configurations for the unit tests only; they are not installed
 into a running system (the container image leaves `tests/` out).
 
-> **Before you install:** read [`../LEGAL.md`](../LEGAL.md) (draft). In particular: use only legally licensed Palo Alto Networks
+> **Before you install:** read [`../LEGAL.md`](../LEGAL.md). In particular: use only legally licensed Palo Alto Networks
 > products, do not use PAAT to violate any vendor terms, and have your organization's security team approve it before
 > you install or use it.
 

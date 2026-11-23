@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 /* PAN TSF Triage Viewer — runs entirely in the browser. Nothing is uploaded. */
 (() => {
 "use strict";

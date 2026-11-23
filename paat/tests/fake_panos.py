@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """In-memory fake PAN-OS XML API for upgrade tests. Never touches a real device."""
 
 from __future__ import annotations

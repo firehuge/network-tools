@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """PAN-OS version parsing, ordering, trains, recommended hotfix, and upgrade paths.
 
 A PAN-OS version looks like ``11.1.6``, ``11.1.6-h32`` or (rarely) ``10.2.0-c123``.

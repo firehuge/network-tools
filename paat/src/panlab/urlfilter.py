@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """URL filter self-service: requesters ask for URL Filtering changes, approvers review and push.
 
 One URL Filtering profile per customer, in that customer's device group (Panorama) or vsys

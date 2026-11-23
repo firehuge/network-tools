@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 // Synthetic, deliberately messy Panorama export for the decommission engine.
 // Invented names, RFC 1918/5737 addresses and example.test hostnames only. Run: node samples/generate_decom.mjs
 import { writeFileSync } from "fs";

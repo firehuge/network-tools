@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Normalized network model for standalone firewalls and Panorama exports.
 
 Loads a PAN-OS running-config export (firewall) or a Panorama export and

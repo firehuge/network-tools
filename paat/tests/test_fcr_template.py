@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """The FCR request template (templates/customer-rule-request-form.xlsx), built by tools/make_fcr_template.py.
 
 Covers: the importer still reads it as the standard form, validation exists on every column, the

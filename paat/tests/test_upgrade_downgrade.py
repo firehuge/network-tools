@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """RS-43: firewall downgrade inside a train, and the progress/result panels on the upgrade pages (fake device API only)."""
 
 from __future__ import annotations

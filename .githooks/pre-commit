@@ -1,3 +1,4 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 # Template pre-commit hook. Enable with:  git config core.hooksPath .githooks
 exec python3 "$(git rev-parse --show-toplevel)/scripts/public_guard.py" --staged

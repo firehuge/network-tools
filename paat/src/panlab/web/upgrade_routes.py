@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """GUI for OS upgrades: /upgrade wizard (discover -> pick -> plan) and the red-bar run page.
 
 Permissions: ``upgrade_plan`` runs read-only discovery and builds dry-run plans;

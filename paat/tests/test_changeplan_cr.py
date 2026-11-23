@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """CR-template change plans, profile overrides, and standalone vs Panorama wording."""
 
 from __future__ import annotations

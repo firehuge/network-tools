@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Port-to-App-ID advisor: config parsing, log aggregation, suggestions, CR plan, GUI permissions (fake API, read-only)."""
 
 from __future__ import annotations

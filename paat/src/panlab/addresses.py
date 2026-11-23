@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Parse and compare address literals used in rule requests."""
 
 from __future__ import annotations

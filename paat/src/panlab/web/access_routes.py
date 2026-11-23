@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Users page: per-user permission checkboxes and customer/device scope (MSP/NOC model).
 
 Needs ``user_admin``. Create users (initial password, changed at first login), edit

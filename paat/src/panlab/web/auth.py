@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Local users and signed session cookies for the panlab GUI.
 
 Users live in a YAML file outside the repo (``PANLAB_USERS_FILE``, default

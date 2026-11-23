@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Uploaded firewall / Panorama backup files used as a plan-only config source.
 
 Files live under ``$PANLAB_DATA_DIR/<customer>/configs/`` (never under the

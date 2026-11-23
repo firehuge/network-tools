@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """FCR-to-plan-to-approval-to-push stepper shown on change-set pages."""
 
 from __future__ import annotations

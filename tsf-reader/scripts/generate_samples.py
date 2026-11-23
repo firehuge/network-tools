@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Build synthetic Palo Alto tech-support (.tgz) bundles for the triage tool.
 
 These are realistic-looking stand-ins, not captures from a live device.

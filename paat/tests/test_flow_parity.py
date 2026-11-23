@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """RS-44 parity with the offline FlowMapper page: diagrams and exports on /flow, the multi-place box, rule-order advice
 and the on-firewall test commands. Synthetic fixtures only."""
 from __future__ import annotations

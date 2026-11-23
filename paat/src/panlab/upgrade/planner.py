@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Customer-wide discovery snapshot and the ordered, checked upgrade plan.
 
 Snapshot (read-only): every target in the customer profile, plus every

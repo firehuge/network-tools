@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Port-to-App-ID advisor pages (read-only; nothing is pushed).
 
 Running an analysis needs the ``fcr`` permission; reading saved results needs ``view`` or ``fcr``. The customer must be in

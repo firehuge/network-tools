@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Progress, phase and result panels for the OS upgrade pages (pure HTML helpers, no I/O).
 
 Kept apart from ``upgrade_routes`` so the run page can show, in plain words: how far along the plan is, which

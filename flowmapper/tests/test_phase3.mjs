@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Phase 3: BGP in path tracing (legacy + advanced routing), pasted route tables, shared / overlapping address space.
  * Synthetic configs only (samples/generate_phase3.mjs). */
 import fs from "node:fs";

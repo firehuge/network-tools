@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Merge FCR rule requests into one change set, placed and grouped by target.
 
 - dedupe identical requests across files (tickets and origins are unioned)

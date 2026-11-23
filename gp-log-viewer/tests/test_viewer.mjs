@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 // Minimal tests: load the viewer's script in a stubbed DOM and feed it the synthetic samples.
 import fs from "node:fs";
 import vm from "node:vm";

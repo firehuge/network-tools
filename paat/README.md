@@ -9,7 +9,7 @@ and a read-only API.
 PAAT is the server companion of [FlowMapper](../flowmapper/README.md), the offline single-page tracer: both run the same
 path-tracing engine (`vendor/flowmapper/`, synced from `../flowmapper/build`).
 
-> **Read [`../LEGAL.md`](../LEGAL.md) first (draft).** Provided AS IS, no warranty. Use only legally licensed Palo Alto Networks
+> **Read [`../LEGAL.md`](../LEGAL.md) first.** Provided AS IS, no warranty. Use only legally licensed Palo Alto Networks
 > products and do not use PAAT to violate any vendor terms. If you use it for a business or a government body, your
 > security team must review and approve it before you install or use it. PAAT is not affiliated with or endorsed by Palo Alto Networks.
 
@@ -58,4 +58,4 @@ pytest
 ```
 
 Contributing: see [../CONTRIBUTING.md](../CONTRIBUTING.md). Security: [../SECURITY.md](../SECURITY.md).
-License: [../LICENSE](../LICENSE) (placeholder, pending legal review).
+License: [Apache License 2.0](../LICENSE). Copyright 2026 Matthew McHugh and network-tools contributors; see [../NOTICE](../NOTICE) and [../LEGAL.md](../LEGAL.md).

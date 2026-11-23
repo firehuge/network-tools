@@ -1,8 +1,8 @@
-# Third-party notices (DRAFT)
+# Third-party notices
 
-> DRAFT pending legal review. Companion to [LEGAL.md](LEGAL.md). Texts below are copied from the installed distributions of each
+> Companion to [LEGAL.md](LEGAL.md) and [NOTICE](NOTICE). Texts below are copied from the installed distributions of each
 > package (`pip-licenses --with-license-file --with-notice-file`) and from the npm package for `playwright-core`.
-> Copyright lines are those in the license files. Packages with identical texts are grouped.
+> Copyright lines are those in the license files. Packages with identical texts are grouped. This file is not legal advice.
 
 ## 1. annotated-doc 0.0.7
 

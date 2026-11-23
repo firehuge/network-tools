@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """EDL manager: validation, safety, approval, revert, expiry, hosted feed, S3 publishing, firewall objects, roles.
 Synthetic data only (documentation ranges, example.* domains); fake devices and moto / fake S3."""
 from __future__ import annotations

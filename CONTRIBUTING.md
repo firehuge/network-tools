@@ -30,7 +30,7 @@ The pre-commit hook runs `scripts/public_guard.py`, which blocks private address
 
 - Keep changes focused and add or update a test.
 - Run the test suite before you open the PR.
-- By contributing you agree your contribution may be distributed under this project's license (see `LICENSE`; the license is still to be decided: TBD pending legal review). A DCO or CLA may be required, to be decided by the maintainers.
+- By contributing you agree your contribution is licensed under the [Apache License 2.0](LICENSE) (see also section 5 of that license). A DCO or CLA may be required, to be decided by the maintainers.
 - Be respectful. A code of conduct will be added before the public launch.
 
 ## Adding a tool

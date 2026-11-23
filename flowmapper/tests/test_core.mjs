@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Node tests for the trace engine against synthetic configs in samples/. */
 import fs from "node:fs";
 import path from "node:path";

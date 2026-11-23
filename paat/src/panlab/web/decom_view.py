@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Decommission plan page: findings by tier with checkboxes, red callouts, the plan in push order, stop traffic.
 
 Exact items are pre-ticked. Highly likely items need one click. Possible items are advice only (no checkbox):

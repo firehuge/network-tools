@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Splice style.css + unpack-worker.js + app.js into pan-tsf-triage.html."""
 from pathlib import Path
 import json

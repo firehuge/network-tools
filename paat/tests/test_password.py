@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """GUI change-password and admin reset: hashing, validation, CSRF, audit (no secrets)."""
 
 from __future__ import annotations

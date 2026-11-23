@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Human-readable change-set reports (Markdown and HTML) and dry-run set commands."""
 
 from __future__ import annotations

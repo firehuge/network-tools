@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Push a validated plan to the firewall candidate config. Default is dry-run."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """In-app help: the user manual (docs/user-manual/*.md) rendered as GUI pages at /help.
 
 Every signed-in user can read it. The renderer covers the Markdown the manual uses (headings,

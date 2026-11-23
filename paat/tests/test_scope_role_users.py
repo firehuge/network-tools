@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Customer scope must be honored for users created from a legacy role, not only from explicit checkboxes.
 
 Regression: ``auth.add_user(name, role, pw, customers=[...])`` used to drop ``customers``/``devices`` for a

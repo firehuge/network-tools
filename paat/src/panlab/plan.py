@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Render a dry-run plan: objects and rules that would be created versus an offline config."""
 
 from __future__ import annotations

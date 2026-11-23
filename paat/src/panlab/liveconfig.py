@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Read-only live config snapshot: Panorama running/candidate plus managed firewalls.
 
 Pulls are cached under the customer's data directory with a timestamp. A

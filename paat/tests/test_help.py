@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """In-app help (/help): every role can read the manual, links stay inside it, nothing escapes the folder."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Export the running configuration to backups/ before a commit."""
 
 from __future__ import annotations

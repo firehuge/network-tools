@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Build templates/customer-rule-request-form.xlsx (the FCR request form customers fill in).
 
 Run from the repo root:  python tools/make_fcr_template.py [output.xlsx]

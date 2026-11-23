@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Push a saved change set to a standalone firewall: backup, re-validate, diff, apply, commit, verify, rollback.
 
 Flow (GUI and CLI share it):

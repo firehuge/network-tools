@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 # PAAT container entrypoint: first-start setup, then the web app (or any paat command).
 #   serve (default)      start the web GUI on 0.0.0.0:$PAAT_PORT
 #   paat <args>          run a PAAT command, e.g.  docker compose exec paat paat users list

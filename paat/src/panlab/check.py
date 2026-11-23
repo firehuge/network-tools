@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Read-only connectivity test against the configured firewall."""
 
 from __future__ import annotations

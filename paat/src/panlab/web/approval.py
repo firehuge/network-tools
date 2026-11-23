@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Optional two-person approval for FCR and push, stored next to the change set.
 
 Default off per customer (``two_person_approval``). The sidecar is

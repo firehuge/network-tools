@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Is anything mid-flight that a PAAT restart would cut off? Shared check for every deploy.
 
 Looks at the files the long-running features keep under the data root (all customers):

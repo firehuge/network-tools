@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Panorama-managed firewalls are upgraded only through Panorama; direct mode is for standalone firewalls.
 
 All against the in-memory fake XML API (tests/fake_panos.py). Never touches a real device.

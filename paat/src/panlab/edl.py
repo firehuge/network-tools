@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """EDL manager: External Dynamic Lists that security teams edit without touching a firewall.
 
 A list is a plain-text file (one IP, domain or URL per line) that PAN-OS firewalls fetch on a schedule

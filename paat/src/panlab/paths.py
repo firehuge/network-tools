@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Resolve repo-relative paths without assuming a fixed install layout."""
 
 from __future__ import annotations

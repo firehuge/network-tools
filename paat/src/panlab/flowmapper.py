@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Run the vendored FlowMapper engine (core.js) with Node.
 
 The JavaScript in vendor/flowmapper/core.js is the single source for path

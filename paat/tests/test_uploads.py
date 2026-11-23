@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Uploaded backup files: parse, store, expire, plan-only import, push refusal.
 
 Synthetic fixtures only. Never reads real or scrambled customer configs.

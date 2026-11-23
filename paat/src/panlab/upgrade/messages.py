@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Plain-English explanations for PAN-OS API errors and update-server messages."""
 
 from __future__ import annotations

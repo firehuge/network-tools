@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Site roles, scope (Production only), DR mirror advisory, Panorama HA pair. Synthetic configs only (samples/generate_scope.mjs). */
 import fs from "node:fs";
 import path from "node:path";

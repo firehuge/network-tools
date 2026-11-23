@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """OS upgrade wizard: versions, safety, plan order, runner — all against a fake device API."""
 
 from __future__ import annotations

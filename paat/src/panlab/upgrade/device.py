@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Thin XML-API access for the upgrade wizard.
 
 Everything goes through two calls so a fake device can stand in for tests:

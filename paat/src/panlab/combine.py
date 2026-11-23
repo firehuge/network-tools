@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Combine similar proposed rules and suggest adding objects to existing rules.
 
 Runs after placement and per-request rule construction:

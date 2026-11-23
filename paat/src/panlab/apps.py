@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Port -> App-ID hints and app/port mismatch checks.
 
 PAN-OS predefined App-IDs are not part of a config export, so this uses a

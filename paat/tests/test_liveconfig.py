@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Read-only live snapshot, rate limit, and RO-key preference. Synthetic devices only."""
 from __future__ import annotations
 

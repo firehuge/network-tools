@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Broad-route placement, named-vsys device-group binding, and visible no-rule-needed callouts.
 
 All names, serials, and addresses are synthetic (RFC 1918 / RFC 5737).

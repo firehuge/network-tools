@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Decommission engine (build/decom.js): tiers, plan safety, ordering and stop-traffic mode.
  * Synthetic configs only (samples/generate_decom.mjs and the small inline firewall below). */
 import fs from "node:fs";

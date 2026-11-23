@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """What a device really is: the hostname and serial number it reports.
 
 Profile target names (``pano-1``) are labels someone typed into a customer

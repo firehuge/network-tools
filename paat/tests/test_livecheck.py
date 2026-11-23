@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Live hop checks vs a config trace. Synthetic devices and flows only."""
 from __future__ import annotations
 

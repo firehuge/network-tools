@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from types import SimpleNamespace
 
 from panlab.backup import export_running_config, write_backup, xapi_xml_text

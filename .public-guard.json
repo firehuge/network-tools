@@ -26,6 +26,11 @@
     "scripts/public_guard.py"
   ],
   "skip_terms_paths": [
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "NOTICE",
+    "paat/NOTICE",
+    "LEGAL.md",
+    "README.md",
+    "paat/README.md"
   ]
 }

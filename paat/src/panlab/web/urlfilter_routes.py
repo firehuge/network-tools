@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """URL filter self-service pages.
 
 ``urlfilter_request``: see the customer's URL Filtering profile (live) and submit change requests.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """The 'rule needed in more than one place' warning shown on plan, change-plan and push pages.
 
 A flow that crosses two firewalls, two vsys, or the same firewall twice

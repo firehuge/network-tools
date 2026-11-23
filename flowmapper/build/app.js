@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 /* PAN-OS FlowMapper UI. Depends on window.FM (core.js). No network access. */
 (function () {
 "use strict";

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """POST endpoints for optional FCR and push approval."""
 
 from __future__ import annotations

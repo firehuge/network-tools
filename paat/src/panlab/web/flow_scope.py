@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Scope chip, site-role editor, DR-copy advice and Panorama HA card for the flow trace page.
 
 Pure HTML builders: the routes that use them live in flowmapper_routes.py. Roles belong to firewalls

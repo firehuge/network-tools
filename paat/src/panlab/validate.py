@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Validate a rule request against the schema, naming rules, and an optional offline config."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """GUI FCR import of several spreadsheets at once (synthetic files only)."""
 from __future__ import annotations
 

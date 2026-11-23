@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Traffic-log deny lookup: query, summary, explanation, evidence in plan and GUI (fake API, read-only)."""
 
 from __future__ import annotations

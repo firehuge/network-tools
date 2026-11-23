@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Push area: re-validation, apply/commit/verify, rollback, audit, CR check, CLI guards, GUI login and roles."""
 
 from __future__ import annotations

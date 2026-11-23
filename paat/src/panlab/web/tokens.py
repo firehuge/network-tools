@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """API Bearer tokens with the same permission and customer scope as the user.
 
 The plaintext token is shown once. Only a hash is stored, in a file

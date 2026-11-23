@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Combine similar FCR rows into one rule, group hosts, and reuse existing rules."""
 
 from __future__ import annotations

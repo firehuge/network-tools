@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """CR-template change plan for an OS upgrade plan (same section headings as the rule change plans)."""
 
 from __future__ import annotations

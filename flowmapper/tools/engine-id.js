@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /** Print the FlowMapper engine version and sha256 of build/core.js. */
 "use strict";
 const fs = require("fs");

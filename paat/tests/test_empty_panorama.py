@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """A brand-new Panorama export has no device groups or templates yet."""
 from __future__ import annotations
 

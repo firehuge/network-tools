@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Phase 1 quick wins: layers, Home, search, blast-radius, approval, API v1."""
 from __future__ import annotations
 

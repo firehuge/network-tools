@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Build synthetic FCR workbooks with the same layout and headers as the customer form."""
 
 from __future__ import annotations

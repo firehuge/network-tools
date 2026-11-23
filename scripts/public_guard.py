@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Public-release guard: blocks customer markers, private addresses and other
 site-specific data from being committed to this repository.
 

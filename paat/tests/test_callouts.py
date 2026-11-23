@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Assessment callouts (routing, app/port, near-match objects), rule notes, plan export, push audit report."""
 
 from __future__ import annotations

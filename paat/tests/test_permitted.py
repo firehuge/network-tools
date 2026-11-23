@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Already-permitted detection: first-match policy evaluation per requested flow (synthetic configs only)."""
 
 from __future__ import annotations

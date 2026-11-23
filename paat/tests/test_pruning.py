@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Candidate pruning, multi-hop stitching, Panorama collapse, and the needs-local-backup note."""
 
 from __future__ import annotations

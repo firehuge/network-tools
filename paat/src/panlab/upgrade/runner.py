@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Execute an upgrade plan one confirmed step at a time.
 
 * A plan starts in **dry-run**. ``arm`` switches it to live and needs: an

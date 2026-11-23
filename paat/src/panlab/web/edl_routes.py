@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """EDL manager pages (``/edls``) and the hosted feed (``/edl/<token>.txt``).
 
 Permissions: ``edl_view`` read lists; ``edl_edit`` add / remove / import / revert (staged for a second person when the

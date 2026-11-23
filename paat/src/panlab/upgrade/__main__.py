@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """CLI for the OS upgrade wizard (same code as the GUI).
 
   python -m panlab.upgrade discover <customer> [--no-refresh] [--no-managed]

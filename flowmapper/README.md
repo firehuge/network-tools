@@ -1,6 +1,6 @@
 # PAN-OS FlowMapper
 
-> **Read [../LEGAL.md](../LEGAL.md) first (draft).** Provided AS IS, no warranty; use only legally licensed Palo Alto Networks products and do not use it to violate any vendor terms; organizations must have their security team approve it before use. Not affiliated with Palo Alto Networks.
+> **Read [../LEGAL.md](../LEGAL.md) first.** Provided AS IS, no warranty; use only legally licensed Palo Alto Networks products and do not use it to violate any vendor terms; organizations must have their security team approve it before use. Not affiliated with Palo Alto Networks.
 
 A single offline HTML page that reads a Palo Alto Networks **firewall config XML** or a **Panorama export** and answers: *"If 10.1.1.10 talks to 10.2.2.20 on tcp/1433, which firewalls, vsys, zones and rules does it cross, and what must change so it works?"*
 

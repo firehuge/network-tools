@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared look and navigation for every PAAT GUI page: design tokens, one stylesheet,
 a grouped left sidebar, a top bar with breadcrumbs, the user/role chip and Help.
 

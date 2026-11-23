@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Generates synthetic PAN-OS configs (documentation/private ranges only, no real data). */
 import fs from "node:fs";
 import path from "node:path";

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 # PAAT (Policy Automation and Analysis Tool) server installer.
 # For Palo Alto Networks PAN-OS firewalls and Panorama. Supports Ubuntu 22.04/24.04 and RHEL/Rocky/Alma 9.
 #

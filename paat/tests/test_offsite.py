@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Off-box backup destinations: git (local bare repo), S3 (moto), SFTP and FTPS (in-memory fakes)."""
 
 from __future__ import annotations

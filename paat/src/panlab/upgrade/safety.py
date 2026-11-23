@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Safety rules for an OS upgrade plan. Red blocks; yellow must be acknowledged.
 
 Rules are enforced in the planner and again by the runner before each step:

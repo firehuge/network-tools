@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Site roles and the Production only scope in the trace page, the CLI and the saved per-customer roles. Synthetic data only."""
 from __future__ import annotations
 

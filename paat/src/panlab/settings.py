@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Load firewall connection settings from the environment or a local .env file."""
 
 from __future__ import annotations

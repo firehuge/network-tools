@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Phase 2: config model, placement, FCR import, change sets, customers (all synthetic data)."""
 
 from __future__ import annotations

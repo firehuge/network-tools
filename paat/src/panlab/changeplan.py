@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Change-plan generator: CR-template GUI steps, set CLI, rollback, and verification.
 
 Output is plain Markdown filled into a template so it can be pasted into a

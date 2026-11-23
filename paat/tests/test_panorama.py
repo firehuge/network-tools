@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Panorama: device-group hierarchy, template route callouts, change plan and dry-run push (synthetic only)."""
 
 from __future__ import annotations

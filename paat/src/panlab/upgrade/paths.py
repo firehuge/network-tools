@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Which path an OS upgrade takes to a device: through its Panorama, or the device's own API.
 
 Rule: a firewall that a Panorama in the customer manages is

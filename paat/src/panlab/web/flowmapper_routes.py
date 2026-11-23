@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """FlowMapper path-tracing pages in the PAAT web GUI.
 
 The engine is the vendored FlowMapper core.js (run with Node). This module

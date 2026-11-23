@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Import the customer's Firewall Change Request (FCR) spreadsheet as-is.
 
 Layout (templates/customer-rule-request-form.xlsx): sheet 'Firewall Rules',

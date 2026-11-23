@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """PAAT (Policy Automation and Analysis Tool) for Palo Alto Networks PAN-OS firewalls and Panorama.
 
 The package keeps its original name ``panlab``. Settings may use either prefix:

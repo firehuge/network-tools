@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """FlowMapper engine (vendored core.js) and the PAAT GUI trace page. Synthetic data only."""
 from __future__ import annotations
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Off-box copies of tool backups (upgrade backups, pre-push running configs).
 
 Opt-in per customer, configured by an admin. With no configuration the tool

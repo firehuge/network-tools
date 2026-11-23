@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Change-set status and Home dashboard counts (read-only; reads the files the other pages already write).
 
 Status of a change set, newest evidence first:

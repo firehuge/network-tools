@@ -1,6 +1,6 @@
 # GlobalProtect Log Viewer
 
-> **Read [../LEGAL.md](../LEGAL.md) first (draft).** Provided AS IS, no warranty; use only legally licensed Palo Alto Networks products and do not use it to violate any vendor terms; organizations must have their security team approve it before use. Not affiliated with Palo Alto Networks.
+> **Read [../LEGAL.md](../LEGAL.md) first.** Provided AS IS, no warranty; use only legally licensed Palo Alto Networks products and do not use it to violate any vendor terms; organizations must have their security team approve it before use. Not affiliated with Palo Alto Networks.
 
 A single web page that reads the log bundle from the Palo Alto Networks **GlobalProtect** VPN app and tells you, in plain English, what went wrong.
 

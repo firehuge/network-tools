@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Read-only /api/v1 for change sets and the signed-in user.
 
 Write actions stay on the existing HTML form routes until a later phase.

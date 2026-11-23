@@ -6,7 +6,7 @@
     "test": "node tests/test_tool.mjs"
   },
   "author": "PAAT maintainers",
-  "license": "SEE LICENSE IN ../LICENSE",
+  "license": "Apache-2.0",
   "type": "commonjs",
   "private": true,
   "devDependencies": {

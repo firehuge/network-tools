@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Headless browser test for the Decommission tab in pan-flowmapper.html (system Chrome + playwright-core). Synthetic sample only. */
 import { chromium } from "playwright-core";
 import fs from "node:fs";

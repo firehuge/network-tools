@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Site roles and the trace scope (Production only) for the flow tracer.
 
 A role (Production, DR, Lab, Test, Other, or one you add) belongs to a FIREWALL or a site,

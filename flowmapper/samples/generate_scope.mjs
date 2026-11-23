@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Synthetic sample for the site-role / scope feature: one Panorama export (two copies, as exported from each peer of a Panorama HA pair)
  * managing production, DR, lab and unclassified firewalls. All names, addresses and serials are made up. Run: node samples/generate_scope.mjs
  *

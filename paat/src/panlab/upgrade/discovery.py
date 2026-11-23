@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Read-only discovery for OS upgrades.
 
 Every probe is an operational *show/check/request info* command; nothing here

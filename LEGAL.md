@@ -1,11 +1,12 @@
-# LEGAL (DRAFT)
+# LEGAL
 
-> **DRAFT. NOT YET REVIEWED BY COUNSEL.** This document is a working draft pending legal review by the project owner.
-> It is not legal advice and may change before the first release. Nothing here grants any license; see [LICENSE](LICENSE)
-> (placeholder: *TBD pending legal review*).
+> **This document is not legal advice.** It describes the terms on which this software is offered. The software is
+> licensed under the [Apache License 2.0](LICENSE). See also [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 This repository ("network-tools") contains four independent tools: **PAAT**, **FlowMapper**, **TSF Reader** and
-**GP Log Viewer**. This document applies to all of them.
+**GP Log Viewer**. This document applies to all of them. The Apache License 2.0 is the license that governs use, copying,
+modification and distribution of the software. The provisions below are additional terms and notices. If any provision of
+this document is unenforceable, the rest remain in effect.
 
 ## 1. Use at your own risk; provided AS IS
 
@@ -16,21 +17,33 @@ plans) can be wrong or incomplete. Review everything before acting on it.
 
 ## 2. No liability
 
-To the maximum extent permitted by law, the owner and the maintainers ("PAAT maintainers") and contributors are **not liable
-for any damages, outages, security incidents, data loss, or legal issues** arising from the use of, or inability to use,
-these tools on any network, whether in contract, tort or otherwise, even if advised of the possibility. This includes (without
-limitation) misconfiguration or outage of firewalls, Panorama or other devices; exposure of configuration or customer data; and
-regulatory, contractual or licensing consequences.
+To the maximum extent permitted by law, the authors (Matthew McHugh and network-tools contributors) and any other copyright
+holders, maintainers and contributors are **not liable for any damages, outages, security incidents, data loss, or legal issues**
+arising from the use of, or inability to use, these tools on any network, whether in contract, tort or otherwise, even if
+advised of the possibility. This includes (without limitation) misconfiguration or outage of firewalls, Panorama or other
+devices; exposure of configuration or customer data; and regulatory, contractual or licensing consequences.
 
-## 3. Organizations and governments: security review first
+## 3. Indemnification
+
+To the extent permitted by law, anyone who uses, copies, modifies, distributes or otherwise deals with these tools agrees
+**to indemnify and hold harmless the authors** (Matthew McHugh and network-tools contributors) from and against any claims,
+damages, losses, costs and expenses (including reasonable legal fees) arising out of or relating to that use, including any
+use on a network or with third-party products or data.
+
+## 4. Governing terms; severability
+
+These terms and your use of the tools are **governed by the Apache License 2.0** in [LICENSE](LICENSE). If any provision of
+this document or of the license is held unenforceable, the remaining provisions remain in full force and effect.
+
+## 5. Organizations and governments: security review first
 
 **Anyone using these tools to support a corporation, business, or a state, local or federal government must have their
 organization's security team review and approve the tools before installing or using them.** That review should cover at least:
-the source, the dependencies in section 7, the install method (server or container), network exposure, credential handling,
+the source, the dependencies in section 9, the install method (server or container), network exposure, credential handling,
 data retention, and any live-push or OS-upgrade features (which are off by default). Do not install or run them on a
 production or customer network until that approval is in writing.
 
-## 4. Licensed products and vendor terms
+## 6. Licensed products and vendor terms
 
 - **Use only legally licensed versions of Palo Alto Networks products** (firewalls, Panorama, VM-Series, GlobalProtect, and any other
   Palo Alto Networks product or service the tools touch). Do not use these tools with unlicensed, pirated, cracked, expired or
@@ -46,21 +59,21 @@ production or customer network until that approval is in writing.
   logs and configurations, which can contain secrets, personal data and customer data. Remove or protect sensitive data
   before sharing any sample or support file.
 
-## 5. Not affiliated; trademarks
+## 7. Not affiliated; trademarks
 
 These tools are independent projects. They are **not affiliated with, endorsed by, sponsored by or supported by Palo Alto Networks**,
 Inc. or any other vendor named in them. "Palo Alto Networks", "PAN-OS", "Panorama", "GlobalProtect", "VM-Series", "App-ID"
 and other product names are trademarks or registered trademarks of their respective owners. Names are used only to describe
 what the tools work with.
 
-## 6. Data in this repository
+## 8. Data in this repository
 
 The repository contains **synthetic** data only (documentation-range IP addresses such as 192.0.2.0/24, 198.51.100.0/24,
 203.0.113.0/24 and 2001:db8::/32, private-range examples, and `example.com` names). It does not include any customer's
 configuration, logs, support files or credentials. Do not commit yours. The repository's `.gitignore`, the pre-commit hook and
 the CI guard exist to help prevent that, but they are not a guarantee.
 
-## 7. Third-party and open-source components
+## 9. Third-party and open-source components
 
 Generated from the actual dependency files (`paat/pyproject.toml`, `paat/requirements.txt`, `tsf-reader/package-lock.json`,
 `flowmapper/package-lock.json`, the `Dockerfile` and `docker-compose.yml`) and from `pip-licenses` run against a clean
@@ -68,7 +81,27 @@ virtual environment with `pip install ".[web,offsite]"` (runtime) and `".[web,of
 texts and notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). **Licenses are as reported by each package's
 metadata; verify before relying on them.**
 
-### 7.1 PAAT: Python packages (runtime: installed by `install.sh` and in the container image)
+### Apache-2.0 compatibility
+
+Every Python and npm package listed below is **compatible with the Apache License 2.0** when used as an unmodified
+dependency installed from PyPI or npm:
+
+- Permissive licenses (MIT, MIT-0, BSD-2-Clause, BSD-3-Clause, ISC, Apache-2.0, PSF-2.0, and the Python Software Foundation
+  License) may be combined with Apache-2.0 without change to this project's license.
+- **paramiko** (LGPL-2.1, optional SFTP destination) and **certifi** (MPL-2.0, development only) use weak, file- or
+  library-level copyleft. They are used unmodified from their package registries and are compatible with Apache-2.0; those
+  copyleft terms apply only to those components, not to this repository. See the notes under 9.1 and 9.2.
+- **No Python or npm dependency in this project is licensed under the GPL** (or another license that would require this
+  repository to be distributed under the GPL).
+
+Container base images and OS packages pulled at install or build time (section 9.5) are **not redistributed in this
+repository**. They include Debian, Alpine and other system packages, some of which are under GPL, LGPL or other licenses.
+Those components stay under their own licenses; they do not change the license of this repository's source. Check the image
+or OS package copyright files if you redistribute a built container or a packaged install.
+
+If you add a dependency, confirm its license is Apache-2.0-compatible and update this section and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+### 9.1 PAAT: Python packages (runtime: installed by `install.sh` and in the container image)
 
 | Name | Version | License | URL | Relationship |
 |---|---|---|---|---|
@@ -115,17 +148,18 @@ metadata; verify before relying on them.**
 | urllib3 | 2.8.0 | MIT | https://github.com/urllib3/urllib3/blob/main/CHANGES.rst | transitive |
 | uvicorn | 0.54.0 | BSD-3-Clause | https://uvicorn.dev/ | direct |
 
-Notes for the reviewer:
+Notes:
 
-- **paramiko (5.1.0) is LGPL-2.1.** It is installed from PyPI as an unmodified, dynamically imported library and is not
-  copied into this repository. Check that this fits your organization's policy. It is only needed for the optional SFTP
-  backup destination (`pip install ".[offsite]"`).
+- **paramiko (5.1.0)** is licensed under LGPL-2.1. It is used unmodified, as a dynamically imported PyPI dependency, and
+  is not copied into this repository. Used this way, it is compatible with the Apache License 2.0: paramiko itself stays
+  under LGPL-2.1, and this project stays under Apache-2.0. It is only needed for the optional SFTP backup destination
+  (`pip install ".[offsite]"`).
 - `cryptography` is dual-licensed (Apache-2.0 OR BSD-3-Clause); `python-dateutil` is dual-licensed (Apache-2.0 and BSD).
 - `pan-os-python` and `pan-python` are third-party community SDKs (ISC). Palo Alto Networks is named as their upstream; that
   does not imply endorsement of this project.
-- PAAT itself (package `panlab`) has no license yet (placeholder).
+- PAAT itself (package `panlab`) is licensed under Apache-2.0, as is the rest of this repository.
 
-### 7.2 PAAT: development and test only (not installed in the container image, not installed by `install.sh`)
+### 9.2 PAAT: development and test only (not installed in the container image, not installed by `install.sh`)
 
 | Name | Version | License | URL |
 |---|---|---|---|
@@ -145,9 +179,9 @@ Notes for the reviewer:
 | responses | 0.26.3 | Apache-2.0 | https://github.com/getsentry/responses |
 | xmltodict | 1.0.4 | MIT | https://github.com/martinblech/xmltodict |
 
-Note: `certifi` is MPL-2.0 (file-level copyleft; installed unmodified from PyPI by `moto`/`requests`, development only).
+Note: `certifi` is MPL-2.0 (file-level copyleft; installed unmodified from PyPI by `moto`/`requests`, development only). MPL-2.0 is compatible with Apache-2.0; the MPL terms apply only to certifi's own files.
 
-### 7.3 npm packages (tests only; not shipped inside any tool)
+### 9.3 npm packages (tests only; not shipped inside any tool)
 
 | Tool | Name | Version | License | URL |
 |---|---|---|---|---|
@@ -158,17 +192,17 @@ Note: `certifi` is MPL-2.0 (file-level copyleft; installed unmodified from PyPI 
 `playwright-core` is a dev dependency that is downloaded by `npm install`; it is **not** committed to or bundled in this
 repository. Its own bundled third-party notices ship inside the npm package as `ThirdPartyNotices.txt`.
 
-### 7.4 Vendored, bundled or copied code
+### 9.4 Vendored, bundled or copied code
 
 | Item | Where | License / status |
 |---|---|---|
-| FlowMapper engine (`core.js`, `render.js`, `decom.js`) | `flowmapper/build/`, copied verbatim to `paat/vendor/flowmapper/` | This repository (license TBD). Same project; not third-party. |
-| Python port of the FlowMapper engine | `paat/src/panlab/netmodel.py`, `placement.py` | This repository (license TBD). |
-| Single-file HTML tools (`pan-flowmapper.html`, `pan-tsf-triage.html`, `gp-log-viewer.html`) | tool roots | This repository. **No third-party JavaScript, CSS, fonts, icons or images are bundled** (checked: no `<script src>`, `<link href>`, `@font-face` or CDN references; icons are inline SVG drawn for the project; the web GUI uses system fonts). |
+| FlowMapper engine (`core.js`, `render.js`, `decom.js`) | `flowmapper/build/`, copied verbatim to `paat/vendor/flowmapper/` | Apache-2.0 (this repository). Same project; not third-party. |
+| Python port of the FlowMapper engine | `paat/src/panlab/netmodel.py`, `placement.py` | Apache-2.0 (this repository). |
+| Single-file HTML tools (`pan-flowmapper.html`, `pan-tsf-triage.html`, `gp-log-viewer.html`) | tool roots | Apache-2.0 (this repository). **No third-party JavaScript, CSS, fonts, icons or images are bundled** (checked: no `<script src>`, `<link href>`, `@font-face` or CDN references; icons are inline SVG drawn for the project; the web GUI uses system fonts). |
 | Sample data | `*/samples`, `paat/tests/fixtures` | Synthetic; generated by scripts in the repository. |
 | FCR request form (`paat/templates/customer-rule-request-form.xlsx`) | generated by `paat/tools/make_fcr_template.py` (openpyxl) | This repository. |
 
-### 7.5 Container base images and system packages (pulled by you at build time; not redistributed here)
+### 9.5 Container base images and system packages (pulled by you at build time; not redistributed here)
 
 | Image / package | Where used | License (as published) | URL |
 |---|---|---|---|
@@ -178,14 +212,8 @@ repository. Its own bundled third-party notices ship inside the npm package as `
 | Node.js (nodejs.org build) | downloaded by `paat/install.sh` if the server has no Node 18+ | MIT and bundled licenses (as above) | https://nodejs.org |
 | nginx, openssl, python3, venv, pip | installed by `paat/install.sh` from the OS package manager (apt/dnf) | per OS package | your OS vendor |
 
-### 7.6 Other tools and services referenced
+### 9.6 Other tools and services referenced
 
 Palo Alto Networks documentation links (for example Applipedia) are links only. No Palo Alto Networks content is copied into the
 repository.
 
-## 8. Open items for the owner (remove this section when resolved)
-
-1. Choose and add a license (LICENSE is a placeholder); then update the `license` fields and this document.
-2. Confirm the legal entity and contact for SECURITY.md and for "owner and maintainers" above.
-3. Have counsel review sections 1-5 and the LGPL note (paramiko).
-4. Re-run the notices generation if dependencies change (see CONTRIBUTING.md).

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 /* PAN-OS FlowMapper: Decommission tab (offline). Depends on window.FM, FM.decom (decom.js) and window.__FM (app.js). */
 (function () {
 "use strict";

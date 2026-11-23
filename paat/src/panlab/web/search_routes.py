@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Search saved change sets and ticket numbers, limited to the user's scope."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Traffic-log deny lookup (read-only): find the block, name the rule, and say whether the new rule fixes it.
 
 For each rule in a change set (or an ad-hoc src/dst/port), on a standalone firewall:

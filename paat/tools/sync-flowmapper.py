@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Copy FlowMapper build/core.js, build/render.js and build/decom.js into vendor/flowmapper and record their hashes.
 
 PAAT and `paat flowtrace` run this vendored file with Node. Do not

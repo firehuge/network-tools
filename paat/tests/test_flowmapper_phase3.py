@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """FlowMapper 1.6.0 in the fwtest: BGP-inferred labels, pasted route tables, shared-IP picker,
 pins and saved next-hop links, on /flow and in `panlab flowtrace`. Synthetic configs only."""
 from __future__ import annotations

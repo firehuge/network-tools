@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Per-user permission checkboxes and customer/device scope (MSP/NOC model). Fake devices only."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Command-line interface (paat, also installed as panlab): import | decom | validate | plan | push | backup | check | customers."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Opt-in live Panorama apply is off by default and works only when the flag is set."""
 from __future__ import annotations
 

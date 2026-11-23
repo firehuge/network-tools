@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Is a requested flow already permitted by the existing security policy? (read-only, plan time)
 
 A flow is one source endpoint x one destination endpoint x one requested service (proto/port or range) x the requested

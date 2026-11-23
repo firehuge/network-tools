@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # PAAT (Policy Automation and Analysis Tool) container image.
 # For Palo Alto Networks PAN-OS firewalls and Panorama. Slim, non-root, with Node.js for the shared FlowMapper engine.
 #   docker build -t paat .        (or: podman build -t paat .)
@@ -9,7 +10,8 @@ FROM ${NODE_IMAGE} AS node
 
 FROM ${PYTHON_IMAGE}
 LABEL org.opencontainers.image.title="PAAT" \
-      org.opencontainers.image.description="PAAT: Policy Automation and Analysis Tool, for Palo Alto Networks PAN-OS firewalls and Panorama"
+      org.opencontainers.image.description="PAAT: Policy Automation and Analysis Tool, for Palo Alto Networks PAN-OS firewalls and Panorama" \
+      org.opencontainers.image.licenses="Apache-2.0"
 
 # Node.js runs the vendored FlowMapper path engine (flow tracing). Only the binary is copied.
 COPY --from=node /usr/local/bin/node /usr/local/bin/node

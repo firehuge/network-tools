@@ -1,19 +1,23 @@
 # network-tools
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 Practical tools for people who run **Palo Alto Networks** firewalls and Panorama: plan and trace firewall changes, triage
 tech-support files, and read GlobalProtect logs. Each tool lives in its own folder with its own README, install and usage guide.
 
-> ## Read first: [LEGAL.md](LEGAL.md) (DRAFT, pending legal review)
+> ## Read first: [LEGAL.md](LEGAL.md)
 >
-> - **Use at your own risk. Provided AS IS, without warranty of any kind.** The owner and maintainers are not liable for any damages,
->   outages, security incidents or legal issues arising from use on any network.
+> Licensed under the [Apache License 2.0](LICENSE). This summary is not legal advice.
+> - **Use at your own risk. Provided AS IS, without warranty of any kind.** The authors are not liable for any damages,
+>   outages, security incidents or legal issues arising from use on any network. Users assume all risk and, to the extent
+>   permitted by law, **agree to indemnify and hold harmless the authors**.
 > - **Corporations, businesses, and state, local or federal governments:** your organization's **security team must review and approve**
 >   these tools before you install or use them.
 > - **Use only legally licensed Palo Alto Networks products** (firewalls, Panorama, VM-Series, GlobalProtect, and so on). **Do not use these
 >   tools to violate any Palo Alto Networks terms of service, EULA or support agreement**, or the terms of any other vendor.
 > - You are responsible for following your own policies and every vendor's terms.
 > - Not affiliated with or endorsed by Palo Alto Networks. All trademarks belong to their owners.
-> - Third-party credits: [LEGAL.md section 7](LEGAL.md#7-third-party-and-open-source-components) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+> - Third-party credits: [LEGAL.md section 9](LEGAL.md#9-third-party-and-open-source-components) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Tools
 
@@ -42,7 +46,7 @@ gp-log-viewer/   GP Log Viewer (single HTML + tests)
 scripts/         public_guard.py: blocks private addresses, serials and customer markers
 .githooks/       pre-commit hook template (enable: git config core.hooksPath .githooks)
 .github/         CI: secret scan + guard + per-tool tests (path-filtered)
-LEGAL.md  THIRD_PARTY_NOTICES.md  LICENSE  SECURITY.md  CONTRIBUTING.md
+LICENSE  NOTICE  LEGAL.md  THIRD_PARTY_NOTICES.md  SECURITY.md  CONTRIBUTING.md
 ```
 
 ## Quick start
@@ -52,7 +56,8 @@ LEGAL.md  THIRD_PARTY_NOTICES.md  LICENSE  SECURITY.md  CONTRIBUTING.md
 
 ## License
 
-**TBD pending legal review.** See [LICENSE](LICENSE). Until a license is published, no permission to use, copy or distribute is granted.
+[Apache License 2.0](LICENSE). Copyright 2026 Matthew McHugh and network-tools contributors; see [NOTICE](NOTICE).
+Additional terms and disclaimers (AS IS, no liability, indemnification, vendor terms) are in [LEGAL.md](LEGAL.md).
 
 ## Security and contributing
 

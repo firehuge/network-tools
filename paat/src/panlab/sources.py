@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Load a customer's configs: --config files, --live (read-only export), profile offline file, or cache.
 
 All caches are under the customer's own data directory; one customer's run

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Generate synthetic GlobalProtect log bundles in samples/ (made-up data only).
 
 All names use example.com and all addresses are documentation addresses

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Routing-first rule placement.
 
 For each requested source/destination (IP, CIDR or range) find which

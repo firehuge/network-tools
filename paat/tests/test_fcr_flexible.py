@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Forgiving FCR importer: synonyms, CSV, mapping, and non-template layouts (synthetic only)."""
 from __future__ import annotations
 

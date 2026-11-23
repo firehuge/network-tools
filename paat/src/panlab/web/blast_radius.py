@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Short blast-radius summary for a saved change set.
 
 Computed only from the change set JSON. It does not talk to a device and

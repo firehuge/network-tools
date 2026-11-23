@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Engine tests for static-route path fallbacks, filename-serial merge, same-box
    re-entry through an unknown network, vsys-level map, FCR paste/CSV, and
    device-group vsys join. Fixtures use generic lab names only. */

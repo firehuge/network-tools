@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: Apache-2.0 */
 /* Streaming TSF unpacker. Runs in a Web Worker. Never holds the whole archive. */
 "use strict";
 

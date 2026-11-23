@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Product name and wording in one place.
 
 The product is PAAT (Policy Automation and Analysis Tool). The Python package,

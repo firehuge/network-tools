@@ -1,6 +1,6 @@
 # PAN Tech-Support Triage Viewer (tsf-reader)
 
-> **Read [../LEGAL.md](../LEGAL.md) first (draft).** Provided AS IS, no warranty; use only legally licensed Palo Alto Networks products and do not use it to violate any vendor terms; organizations must have their security team approve it before use. Not affiliated with Palo Alto Networks.
+> **Read [../LEGAL.md](../LEGAL.md) first.** Provided AS IS, no warranty; use only legally licensed Palo Alto Networks products and do not use it to violate any vendor terms; organizations must have their security team approve it before use. Not affiliated with Palo Alto Networks.
 
 A single HTML page that reads a Palo Alto Networks **tech support file** (TSF) from a firewall or Panorama and highlights problems in plain English.
 

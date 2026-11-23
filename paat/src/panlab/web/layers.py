@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Named job layers (presets) on top of permission checkboxes.
 
 Checkboxes stay the source of truth. A layer is an exact match to a known

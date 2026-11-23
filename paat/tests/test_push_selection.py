@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tick a subset of planned rules on the gated Push page and prepare only those."""
 
 from __future__ import annotations

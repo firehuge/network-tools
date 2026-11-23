@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 # Make a self-signed certificate for the compose TLS profile: docker/tls/paat.crt and paat.key.
 # usage: docker/make-self-signed-cert.sh [server-name]
 set -eu

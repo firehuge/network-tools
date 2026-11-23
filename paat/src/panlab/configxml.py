@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Parse an offline PAN-OS config XML for validation and planning."""
 
 from __future__ import annotations

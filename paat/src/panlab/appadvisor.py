@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Port-to-App-ID advisor (read-only): turn port-based allow rules into App-ID rules, from the traffic logs.
 
 For each port-based rule (application ``any`` with explicit service ports; or the rules you name):

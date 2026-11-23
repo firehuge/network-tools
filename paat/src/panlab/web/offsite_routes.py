@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Admin page: per-customer off-box backup destinations (git, SFTP, FTPS, S3).
 
 Needs the backup_admin permission (and the customer in scope). Secrets are written to /etc/panlab/backup-destinations/<customer>.env
