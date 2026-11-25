@@ -7,8 +7,8 @@
     "samples": "node -e \"for (const d of ['samples/routes','samples/scope-conflict']) require('fs').mkdirSync(d,{recursive:true})\" && node samples/generate_samples.mjs && node samples/generate_decom.mjs && node samples/generate_phase3.mjs && node samples/generate_scope.mjs",
     "build": "npm run samples && python3 build/assemble.py",
     "pretest": "npm run samples",
-    "test": "node tests/test_core.mjs && node tests/test_fcr_path.mjs && node tests/test_phase3.mjs && node tests/test_scope.mjs && node tests/test_decom.mjs && node tests/test_ui.mjs && node tests/test_decom_ui.mjs",
-    "test:core": "node tests/test_core.mjs && node tests/test_fcr_path.mjs && node tests/test_phase3.mjs && node tests/test_scope.mjs && node tests/test_decom.mjs",
+    "test": "node tests/test_core.mjs && node tests/test_fcr_path.mjs && node tests/test_fcr_import.mjs && node tests/test_phase3.mjs && node tests/test_scope.mjs && node tests/test_decom.mjs && node tests/test_ui.mjs && node tests/test_decom_ui.mjs",
+    "test:core": "node tests/test_core.mjs && node tests/test_fcr_path.mjs && node tests/test_fcr_import.mjs && node tests/test_phase3.mjs && node tests/test_scope.mjs && node tests/test_decom.mjs",
     "test:ui": "node tests/test_ui.mjs && node tests/test_decom_ui.mjs"
   },
   "license": "Apache-2.0",

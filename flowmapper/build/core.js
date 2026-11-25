@@ -4590,15 +4590,56 @@ function splitCsvLine(line) {
   out.push(cur.trim());
   return out;
 }
+/* ---- FCR header recognition: underscores, brackets and spaces are all word breaks ("Destination_IP", "Protocol(TCP/UDP)", "source ip") ---- */
+function fcrHeaderWords(h) {
+  return String(h || "").trim().toLowerCase().replace(/\(\s*s\s*\)/g, "s").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+}
+const FCR_ADDR_WORDS = /\b(ip|ips|address|addresses|addr|cidr)\b/;
+const FCR_LABEL_WORDS = /\b(vlan|vnet|vpc|name|names|segment|site)\b/;
+/* 0 = header says IP/address, 1 = plain "source", 2 = a network *name* label. Lower wins when two columns claim the same role. */
+function fcrHeaderRank(h) {
+  const x = fcrHeaderWords(h);
+  return FCR_ADDR_WORDS.test(x) ? 0 : 1;
+}
 function fcrHeaderKey(h) {
-  const x = String(h || "").trim().toLowerCase().replace(/[_\s-]+/g, " ");
-  if (/^(src|source|src ?ip|source ?address|from)$/.test(x)) return "src";
-  if (/^(dst|dest|destination|dst ?ip|dest ?address|destination ?address|to)$/.test(x)) return "dst";
-  if (/^(proto|protocol|ip ?proto)$/.test(x)) return "proto";
-  if (/^(port|dst ?port|dest ?port|destination ?port|service)$/.test(x)) return "port";
-  if (/^(app|application|app-?id)$/.test(x)) return "app";
-  if (/^(ticket|id|fcr|request|change ?request|ref)$/.test(x)) return "ticket";
+  const x = fcrHeaderWords(h);
+  if (!x) return null;
+  if (/^(rule name|policy name|security rule name|proposed rule name|fcr rule name|rule)$/.test(x)) return "ruleName";
+  if (/\busage\b/.test(x)) return "usage";
+  if (/\b(dns|hostname|fqdn)\b/.test(x)) return null;
+  if (/\b(source|src)\b/.test(x) && /\b(port|ports)\b/.test(x)) return null;
+  if (/^(src|source|from)( (ip|ips|address|addresses|addr|host|network|cidr))*$/.test(x)) return "src";
+  if (/^(dst|dest|destination|to|target)( (ip|ips|address|addresses|addr|host|network|cidr))*$/.test(x)) return "dst";
+  if (/^(source|src) .*\b(vlan|vnet|vpc|name|names|segment|site)\b/.test(x) && !FCR_ADDR_WORDS.test(x)) return "srcLabel";
+  if (/^(destination|dest|dst) .*\b(vlan|vnet|vpc|name|names|segment|site)\b/.test(x) && !FCR_ADDR_WORDS.test(x)) return "dstLabel";
+  if (/^(proto|protocol|ip proto|ip protocol|destination protocol|dest protocol)( tcp udp)?$/.test(x)) return "proto";
+  if (/^((dst|dest|destination) )?(tcp udp )?(port|ports|port number|port numbers|service|services)$/.test(x)) return "port";
+  if (/^(app|apps|application|applications|app id)( if known)?$/.test(x)) return "app";
+  if (/^(ticket|id|fcr|request|change request|ref|project|project number|project id|prj|prj number)$/.test(x)) return "ticket";
+  if (/^(notes?|justification|comments?|reason|description)$/.test(x)) return "notes";
   return null;
+}
+/* PRJ-style project / request numbers count as the ticket when the sheet has no ticket column. Configurable. */
+const FCR_PROJECT_RE = "(?:PRJ|PROJ|PRJT)[-_]?\\d{4,}";
+function fcrFindTicket(texts, pattern) {
+  let rx;
+  try { rx = new RegExp("(?<![A-Za-z])(?:" + (pattern || FCR_PROJECT_RE) + ")(?!\\d)", "i"); } catch (e) { rx = new RegExp("(?<![A-Za-z])(?:" + FCR_PROJECT_RE + ")(?!\\d)", "i"); }
+  for (const t of texts) { const m = rx.exec(String(t || "")); if (m) return m[0].toUpperCase(); }
+  return null;
+}
+/* Application values the FCR may carry. Names that are not PAN-OS App-IDs (a system, project or team name) become
+   application "any" in the proposed rule and are kept in the rule description instead. */
+const FCR_APP_IDS = new Set(("ssl web-browsing ssh ms-rdp mssql-db mssql-mon mysql postgres oracle ldap ldaps dns dns-base ntp snmp snmp-base snmp-trap syslog smtp ftp sftp kerberos ms-ds-smb ms-ds-smb-base vnc vnc-base radius telnet imap pop3 tftp http-proxy http-video http2 quic msrpc netbios-ns netbios-dg netbios-ss ping icmp traceroute ms-netlogon ms-update ms-scheduler ms-spooler ms-exchange sharepoint-base sharepoint-online office365-base tacacs tacacs-plus dhcp ipsec ike ipsec-esp ipsec-esp-udp gre bgp ospf rip git github-base mongodb redis cassandra ibm-db2 nfs rsync rtsp sip rdp-base windows-push-notifications apt-get yum docker kubernetes prometheus grafana splunk elasticsearch kafka rabbitmq ms-teams zoom-base webex-base slack-base").split(" "));
+function fcrClassifyApp(raw, extra) {
+  const known = extra && extra.length ? new Set(extra.map((x) => String(x).toLowerCase())) : null;
+  const ids = [], labels = [];
+  for (const a of String(raw || "").split(/[,;\n\r]+/).map((x) => x.trim()).filter(Boolean)) {
+    const l = a.toLowerCase();
+    if (l === "any" || l === "application-default") continue;
+    if (FCR_APP_IDS.has(l) || (known && known.has(l))) { if (!ids.includes(l)) ids.push(l); }
+    else if (!labels.includes(a)) labels.push(a);
+  }
+  return { ids, labels };
 }
 function parseFcrService(s) {
   const t = String(s || "").trim();
@@ -4626,32 +4667,239 @@ function parseFcrLine(line) {
   }
   return { error: "Could not parse FCR line: " + t, raw: t };
 }
-function parseFcr(text) {
-  const lines = String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !/^#/.test(l));
+/* RFC-4180-style records (quoted cells may hold line breaks); comma or tab separates cells. */
+function csvRecords(text) {
+  const recs = []; let row = [], cur = "", q = false, any = false;
+  const t = String(text || "").replace(/^\uFEFF/, "");
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; continue; }
+    if (c === '"') { q = true; any = true; }
+    else if (c === "," || c === "\t") { row.push(cur.trim()); cur = ""; any = true; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; if (any || cur.trim() || row.length) { row.push(cur.trim()); recs.push(row); } row = []; cur = ""; any = false; }
+    else { cur += c; any = true; }
+  }
+  if (any || cur.trim() || row.length) { row.push(cur.trim()); recs.push(row); }
+  return recs;
+}
+function csvText(table) {
+  const cell = (v) => { v = v == null ? "" : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  return table.map((r) => r.map(cell).join(",")).join("\r\n") + "\r\n";
+}
+function fcrSplitList(v) { return String(v == null ? "" : v).split(/[,;\n\r]+/).map((x) => x.trim()).filter(Boolean); }
+const FCR_MAX_EXPANSION = 500;
+/* One header row in the first 30 rows, any prose above it is skipped; blank source cells under a merged/continued request
+   inherit the request above; list cells (several destinations or ports) expand to one flow each. Returns null when no header row. */
+function parseFcrTable(table, opts) {
+  opts = opts || {};
+  let hi = -1, keys = null;
+  for (let i = 0; i < Math.min(table.length, 30); i++) {
+    const ks = table[i].map(fcrHeaderKey);
+    if (ks.includes("src") && ks.includes("dst") && ks.filter(Boolean).length >= 2) { hi = i; keys = ks; break; }
+  }
+  if (hi < 0) return null;
+  const hdr = table[hi];
+  const best = {};
+  keys.forEach((k, i) => { if (!k) return; const r = fcrHeaderRank(hdr[i]); if (!(k in best) || r < best[k].rank) best[k] = { i, rank: r }; });
+  const col = {}; for (const k in best) col[k] = best[k].i;
+  const pre = table.slice(0, hi).map((r) => r.join(" "));
+  const rows = [], errors = [];
+  const INHERIT = ["src", "proto", "port", "app", "ticket", "ruleName", "usage", "srcLabel", "dstLabel", "notes"];
+  let prev = null;
+  for (const cells of table.slice(hi + 1)) {
+    if (!cells.some((c) => c !== "" && c != null)) continue;
+    if (/^#/.test(String(cells[0] || ""))) continue;
+    const g = {}; for (const k in col) g[k] = cells[col[k]] == null ? "" : String(cells[col[k]]).trim();
+    const raw = cells.join(",");
+    if (!g.src && g.dst && prev) { for (const k of INHERIT) if (!g[k]) g[k] = prev[k] || ""; }
+    if (!g.src || !g.dst) { errors.push({ error: "CSV row needs a source and destination: " + raw, raw }); continue; }
+    prev = Object.assign({}, g);
+    const srcs = fcrSplitList(g.src), dsts = fcrSplitList(g.dst);
+    const protoCell = String(g.proto || "").toLowerCase();
+    const ports = fcrSplitList(g.port);
+    const protos = /\bboth\b/.test(protoCell) || (/tcp/.test(protoCell) && /udp/.test(protoCell)) ? ["tcp", "udp"] : [protoCell || null];
+    const ticket = g.ticket || fcrFindTicket([opts.fileName, g.notes].concat(pre), opts.projectPattern) || null;
+    const cls = fcrClassifyApp(g.app, opts.knownApps);
+    const portToks = ports.length ? ports : [""];
+    let n = 0;
+    for (const sIp of srcs) for (const dIp of dsts) for (const pt of portToks) for (const pr of protos) {
+      if (++n > FCR_MAX_EXPANSION) break;
+      const rec = { src: sIp, dst: dIp, proto: "tcp", port: null, app: cls.ids.length ? cls.ids.join(" ") : null, ticket, raw };
+      if (pt) {
+        const rng = /^(\d{1,5})\s*[-:]\s*(\d{1,5})$/.exec(pt);
+        if (rng) { rec.port = Number(rng[1]); rec.portRange = rng[1] + "-" + rng[2]; }
+        else { const svc = parseFcrService(pt); rec.proto = svc.proto; rec.port = svc.port; if (svc.service && !rec.app && !cls.labels.length) cls.labels = [svc.service]; }
+      }
+      if (pr) { if (pr.includes("/")) { const svc = parseFcrService(pr); rec.proto = svc.proto; if (rec.port == null) rec.port = svc.port; } else rec.proto = pr; }
+      if (g.ruleName) rec.ruleName = g.ruleName;
+      if (g.usage) rec.usage = g.usage;
+      if (g.srcLabel) rec.srcLabel = g.srcLabel;
+      if (g.dstLabel) rec.dstLabel = g.dstLabel;
+      if (g.notes) rec.notes = g.notes;
+      if (cls.labels.length) rec.appLabel = cls.labels.join(", ");
+      rows.push(rec);
+    }
+    if (n > FCR_MAX_EXPANSION) errors.push({ error: "A single request expanded to more than " + FCR_MAX_EXPANSION + " flows; only the first " + FCR_MAX_EXPANSION + " were kept: " + raw, raw });
+  }
+  return { rows, errors, headerRow: hi + 1, mapping: Object.fromEntries(Object.keys(col).map((k) => [k, String(hdr[col[k]])])) };
+}
+function parseFcr(text, opts) {
+  opts = opts || {};
+  const src = String(text || "").replace(/^\uFEFF/, "");
+  if (!src.trim()) return { rows: [], errors: [{ error: "Nothing to parse." }] };
+  const viaTable = parseFcrTable(csvRecords(src), opts);
+  if (viaTable) return viaTable;
+  const lines = src.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !/^#/.test(l));
   const rows = [], errors = [];
   if (!lines.length) return { rows, errors: [{ error: "Nothing to parse." }] };
-  const first = splitCsvLine(lines[0]);
-  const keys = first.map(fcrHeaderKey);
-  const looksHeader = keys.filter(Boolean).length >= 2 && keys.includes("src") && keys.includes("dst");
-  const start = looksHeader ? 1 : 0;
-  if (looksHeader) {
-    for (const line of lines.slice(start)) {
-      const cols = splitCsvLine(line);
-      const rec = { src: null, dst: null, proto: "tcp", port: null, app: null, ticket: null, raw: line };
-      keys.forEach((k, i) => { if (!k || cols[i] == null || cols[i] === "") return; if (k === "port") { const svc = parseFcrService(cols[i]); rec.proto = rec.proto || svc.proto; rec.port = svc.port; if (svc.service) rec.app = rec.app || svc.service; } else if (k === "proto") rec.proto = cols[i].toLowerCase(); else rec[k] = cols[i]; });
-      if (rec.proto && rec.proto.includes("/")) { const svc = parseFcrService(rec.proto); rec.proto = svc.proto; if (rec.port == null) rec.port = svc.port; }
-      if (!rec.src || !rec.dst) errors.push({ error: "CSV row needs a source and destination: " + line, raw: line });
-      else rows.push(rec);
-    }
-    return { rows, errors };
-  }
   for (const line of lines) {
     const rec = parseFcrLine(line);
     if (!rec) continue;
     if (rec.error) errors.push(rec);
-    else rows.push(rec);
+    else {
+      if (rec.app) { const c = fcrClassifyApp(rec.app, opts.knownApps); rec.app = c.ids.join(" ") || null; if (c.labels.length) rec.appLabel = c.labels.join(", "); }
+      if (!rec.ticket) rec.ticket = fcrFindTicket([opts.fileName, line], opts.projectPattern) || null;
+      rows.push(rec);
+    }
   }
   return { rows, errors };
+}
+function fcrRuleName(raw) {
+  const s = String(raw || "").replace(/[^A-Za-z0-9_. -]+/g, "-").replace(/-{2,}/g, "-").replace(/^[ .-]+|[ .-]+$/g, "").slice(0, 63).replace(/[ .-]+$/, "");
+  return s.replace(/[^A-Za-z0-9]/g, "").length >= 2 ? s : null;
+}
+function fcrDescription(row) {
+  const bits = [];
+  if (row.ticket) bits.push(row.ticket);
+  if (row.appLabel) bits.push("FCR app: " + row.appLabel);
+  if (row.usage) bits.push("usage: " + row.usage);
+  if (row.srcLabel) bits.push("src net: " + row.srcLabel);
+  if (row.dstLabel) bits.push("dst net: " + row.dstLabel);
+  if (row.ruleName) bits.push("FCR rule: " + row.ruleName);
+  return bits.join(" | ").slice(0, 1023);
+}
+/* Carry the FCR row's own details into the proposed security rules: the requested rule name (sanitized, kept unique),
+   the application when it is a real App-ID (otherwise any, with the original name in the description), and a description. */
+function applyFcrExtras(res, row) {
+  if (!res || !row) return res;
+  const desc = fcrDescription(row);
+  res.fcrNote = desc || null;
+  const want = fcrRuleName(row.ruleName);
+  const appTok = row.app ? (row.app.includes(" ") ? "[ " + row.app + " ]" : row.app) : null;
+  const used = new Set();
+  for (const c of res.changes || []) {
+    if (c.kind !== "security" || !c.rule || !c.cli) continue;
+    const old = c.rule.name;
+    const sep = "security rules ";
+    const line = c.cli.find((l) => l.indexOf(sep + q(old) + " from ") > 0);
+    const prefix = line ? line.slice(0, line.indexOf(sep) + sep.length) : null;
+    if (want) {
+      let nm = want, i = 2;
+      while (used.has(nm)) { nm = (want.slice(0, 59) + "-" + i); i++; }
+      used.add(nm);
+      c.cli = c.cli.map((l) => l.split(q(old)).join(q(nm)));
+      c.rule.name = nm;
+    }
+    if (appTok && !/^\[ ping/.test(c.rule.application || "")) {
+      const nm = c.rule.name;
+      c.cli = c.cli.map((l) => (l.indexOf(q(nm) + " from ") > 0 ? l.replace(" application " + c.rule.application + " ", " application " + appTok + " ") : l));
+      c.rule.application = appTok;
+    }
+    if (desc && prefix) {
+      const at = c.cli.findIndex((l) => l.indexOf(sep + q(c.rule.name) + " from ") > 0);
+      c.cli.splice(at + 1, 0, prefix + q(c.rule.name) + " description " + q(desc));
+      c.rule.description = desc;
+    }
+  }
+  return res;
+}
+/* ---- .xlsx reader (offline, no libraries): zip central directory + DecompressionStream("deflate-raw") + the sheet XML ---- */
+async function zipEntries(buf) {
+  const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let e = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error("not a zip/xlsx file");
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  const out = new Map(), dec = new TextDecoder();
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+    const name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    const ds = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true);
+    out.set(name, { method, data: u8.subarray(ds, ds + csize) });
+    p += 46 + nl + xl + cl;
+  }
+  return { entries: out, async text(name) {
+    const en = out.get(name); if (!en) return null;
+    if (en.method === 0) return dec.decode(en.data);
+    if (en.method !== 8) throw new Error("unsupported zip compression " + en.method);
+    const ds = new DecompressionStream("deflate-raw");
+    const w = ds.writable.getWriter(); w.write(en.data); w.close();
+    return dec.decode(await new Response(ds.readable).arrayBuffer());
+  } };
+}
+function xlLocal(t) { return String(t).replace(/^.*:/, ""); }
+function xlKids(n, name) { return (n.c || []).filter((c) => xlLocal(c.t) === name); }
+function xlText(n) { let s = ""; (function w(x) { if (xlLocal(x.t) === "t") s += x.x || ""; for (const c of x.c || []) w(c); })(n); return s; }
+function xlColIndex(ref) { const m = /^([A-Z]+)(\d+)$/.exec(ref); if (!m) return null; let c = 0; for (const ch of m[1]) c = c * 26 + ch.charCodeAt(0) - 64; return { c: c - 1, r: Number(m[2]) - 1 }; }
+async function xlsxSheets(buf) {
+  const z = await zipEntries(buf);
+  const wb = parseXml(await z.text("xl/workbook.xml") || ""), rels = parseXml(await z.text("xl/_rels/workbook.xml.rels") || "");
+  const relMap = {}; (function w(n) { for (const c of n.c || []) { if (xlLocal(c.t) === "Relationship") relMap[c.a.Id] = c.a.Target; w(c); } })(rels);
+  const sst = []; const sx = await z.text("xl/sharedStrings.xml");
+  if (sx) (function w(n) { for (const c of n.c || []) { if (xlLocal(c.t) === "si") sst.push(xlText(c)); else w(c); } })(parseXml(sx));
+  const sheets = [];
+  const names = []; (function w(n) { for (const c of n.c || []) { if (xlLocal(c.t) === "sheet") names.push({ name: c.a.name, state: c.a.state || "visible", rid: c.a["r:id"] || c.a.id }); else w(c); } })(wb);
+  for (const sh of names) {
+    let target = relMap[sh.rid] || ""; target = target.replace(/^\//, "");
+    const path = target.startsWith("xl/") ? target : "xl/" + target;
+    const xml = await z.text(path); if (!xml) continue;
+    const doc = parseXml(xml), rows = [], merges = [];
+    (function w(n) {
+      for (const c of n.c || []) {
+        const t = xlLocal(c.t);
+        if (t === "c") {
+          const pos = xlColIndex(c.a.r || ""); if (!pos) continue;
+          let v = "";
+          const vn = xlKids(c, "v")[0], inl = xlKids(c, "is")[0];
+          if (c.a.t === "s") v = sst[Number(vn && vn.x)] || "";
+          else if (c.a.t === "inlineStr") v = inl ? xlText(inl) : "";
+          else if (c.a.t === "b") v = vn && vn.x === "1" ? "TRUE" : "FALSE";
+          else v = vn ? vn.x : "";
+          while (rows.length <= pos.r) rows.push([]);
+          const row = rows[pos.r]; while (row.length <= pos.c) row.push("");
+          row[pos.c] = v;
+        } else if (t === "mergeCell") merges.push(c.a.ref);
+        else w(c);
+      }
+    })(doc);
+    for (const ref of merges) {
+      const m = /^([A-Z]+\d+):([A-Z]+\d+)$/.exec(ref || ""); if (!m) continue;
+      const a = xlColIndex(m[1]), b = xlColIndex(m[2]); if (!a || !b || b.r <= a.r) continue;   // vertical merges only; titles stay put
+      const val = rows[a.r] && rows[a.r][a.c]; if (val === "" || val == null) continue;
+      for (let r = a.r + 1; r <= b.r; r++) { while (rows.length <= r) rows.push([]); for (let c = a.c; c <= b.c; c++) { while (rows[r].length <= c) rows[r].push(""); rows[r][c] = val; } }
+    }
+    sheets.push({ name: sh.name, hidden: sh.state !== "visible", table: rows.map((r) => r.map((x) => String(x == null ? "" : x).trim())) });
+  }
+  return sheets;
+}
+const FCR_SKIP_SHEET = /instruction|readme|read me|help|example|sample|legend|guide|how to/i;
+/* Pick the sheet that holds the requests: a sheet named like the rule list first, instruction or example sheets last. */
+async function readFcrXlsx(buf, opts) {
+  const sheets = await xlsxSheets(buf);
+  const cands = [];
+  for (const sh of sheets) {
+    const parsed = parseFcrTable(sh.table, opts);
+    if (!parsed) continue;
+    const nm = sh.name.toLowerCase();
+    const rank = FCR_SKIP_SHEET.test(nm) ? -1 : /firewall/.test(nm) && /rule/.test(nm) ? 2 : /rule|firewall|acl|request|fcr/.test(nm) ? 1 : 0;
+    cands.push({ sh, parsed, rank, score: Object.keys(parsed.mapping).length, n: parsed.rows.length });
+  }
+  if (!cands.length) return { error: "No sheet has a source and destination column (looked at: " + (sheets.map((s) => s.name).join(", ") || "none") + ")." };
+  cands.sort((a, b) => b.rank - a.rank || b.score - a.score || b.n - a.n);
+  const pick = cands[0];
+  return { sheet: pick.sh.name, table: pick.sh.table, skipped: sheets.filter((s) => s !== pick.sh).map((s) => s.name), csv: csvText(pick.sh.table) };
 }
 function hopVerdict(s) {
   if (!s) return { verdict: "unknown", deny: false };
@@ -5302,7 +5550,7 @@ function panoramaPair(pano, profile) {
   return out;
 }
 /* SCOPE:END */
-const FM = { ROLE_DEFS, ROLE_TOKENS, ROLE_WEAK_TOKENS, defaultProfile, normalizeProfile, parseScopeArg, roleModel, roleOf, roleHits, RULE_FIELDS, ruleFieldText, ruleApplies, firstRoleRule, rulePreview, ruleDescribe, scopeDevices, traceScoped, attachScope, hiddenPathCheck, scopeConflictCheck, drMirror, readPanoramaHa, panoramaPair, multiPlace, ruleOrderAdvice, bulkAcceptSuggestions, suggestionConflicts, conflictEntry, haGroups, pathStatus, devLabel, devParts, publicSpaceSuggestions, providerStatics, circuitLookup, noRuleInExport, inferDynamicRoutes, zoneOfAddr, zoneFindings, environment, envLayout, panoramaView, panoLayout, drawioXml, siteToken, vsysMap, vsysMapLayout, prepare: (devices, links) => getGraph(devices, links), parseRouteTable, applyRouteTables, invalidateCaches, overlapReport, sharedIpChoices, bgpSummary, bgpFilterAllows, prefixListPermits, siteOfDev, parseXml, parseXmlAsync, loadConfig, loadConfigAsync, buildPanoramaDevice, buildDevice, trace, parsePrefix, prefixStr, n2ip, ip2n, coverage, resolveAddrs, maskSecrets, deviceSummary, addressNames, listPanoramaContexts, dgChain, lookupRoute, mergeNodes, evalTagFilter, buildGraph, getGraph, findPaths, ownersOf, topology, diagnostics, replayCases, inboundDnatCases, dnatEntries, replayCase, replaySummary, ruleCase, internetZones, mergeLocalBackups, serialFromFilename, inferDgVsysJoin, parseFcr, explainVsysHops, annotateFcr, trafficLogFilters, prePushChecklist, combinedChangePlan, NO_NET_MSG, version: "1.9.2" };
+const FM = { ROLE_DEFS, ROLE_TOKENS, ROLE_WEAK_TOKENS, defaultProfile, normalizeProfile, parseScopeArg, roleModel, roleOf, roleHits, RULE_FIELDS, ruleFieldText, ruleApplies, firstRoleRule, rulePreview, ruleDescribe, scopeDevices, traceScoped, attachScope, hiddenPathCheck, scopeConflictCheck, drMirror, readPanoramaHa, panoramaPair, multiPlace, ruleOrderAdvice, bulkAcceptSuggestions, suggestionConflicts, conflictEntry, haGroups, pathStatus, devLabel, devParts, publicSpaceSuggestions, providerStatics, circuitLookup, noRuleInExport, inferDynamicRoutes, zoneOfAddr, zoneFindings, environment, envLayout, panoramaView, panoLayout, drawioXml, siteToken, vsysMap, vsysMapLayout, prepare: (devices, links) => getGraph(devices, links), parseRouteTable, applyRouteTables, invalidateCaches, overlapReport, sharedIpChoices, bgpSummary, bgpFilterAllows, prefixListPermits, siteOfDev, parseXml, parseXmlAsync, loadConfig, loadConfigAsync, buildPanoramaDevice, buildDevice, trace, parsePrefix, prefixStr, n2ip, ip2n, coverage, resolveAddrs, maskSecrets, deviceSummary, addressNames, listPanoramaContexts, dgChain, lookupRoute, mergeNodes, evalTagFilter, buildGraph, getGraph, findPaths, ownersOf, topology, diagnostics, replayCases, inboundDnatCases, dnatEntries, replayCase, replaySummary, ruleCase, internetZones, mergeLocalBackups, serialFromFilename, inferDgVsysJoin, parseFcr, parseFcrTable, csvRecords, csvText, fcrHeaderKey, fcrClassifyApp, fcrRuleName, applyFcrExtras, readFcrXlsx, explainVsysHops, annotateFcr, trafficLogFilters, prePushChecklist, combinedChangePlan, NO_NET_MSG, version: "1.9.3" };
 /* Rule-matching helpers for the decommission engine (build/decom.js). */
 Object.assign(FM, { addrMatch, svcMatch, zoneOk, normAction, resolveServices });
 if (typeof module !== "undefined" && module.exports) module.exports = FM;

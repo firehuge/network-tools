@@ -1,10 +1,10 @@
 {
   "source_repo": "flowmapper/ (this repository)",
   "source_commit": null,
-  "engine_version": "1.9.2",
+  "engine_version": "1.9.3",
   "file": "core.js",
-  "sha256": "06676bdd77b667410861c024a91f5419f79471bf948bf8b4741191c16093a111",
-  "bytes": 432040,
+  "sha256": "84bbd66e3279c47b4c8c0bf576c0f1902b15358e12029c91c782bd6f08297f59",
+  "bytes": 447980,
   "render": {
     "file": "render.js",
     "sha256": "5c183bd12dc3578c3bed96a413657bed6b23561e238e312ab6f9d51fc011bb58",
@@ -16,6 +16,6 @@
     "bytes": 71451,
     "version": "1.0.0"
   },
-  "synced": "2026-11-23T10:49:24-06:00",
+  "synced": "2026-11-25T11:46:58-06:00",
   "note": "Vendored single source for path tracing, diagrams and decommission plans. Do not edit these copies; run tools/sync-flowmapper.py."
 }

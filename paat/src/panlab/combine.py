@@ -262,6 +262,7 @@ def _combine_key(rule: dict, reqs: dict[str, dict], across_tickets: bool, kind: 
         _set(rule.get("to")),
         (rule.get("action") or "allow"),
         _targets_key(rule),
+        rule.get("requested_name") or "",
     )
     tix = () if across_tickets else _ticket_key(rule, reqs)
     if kind == "svc":

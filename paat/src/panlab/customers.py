@@ -49,7 +49,8 @@ DEFAULT_NAMING = {
     "address_group_source": "{project}-{src}-SRC-GRP",
     "max_rule_len": 63,
 }
-DEFAULT_TICKETS = {"ritm": r"RITM\d+", "sctask": r"SCTASK\d+", "cr": r"(?:CHG|CR)\d+"}
+DEFAULT_TICKETS = {"ritm": r"RITM\d+", "sctask": r"SCTASK\d+", "cr": r"(?:CHG|CR)\d+",
+                   "project": r"(?:PRJ|PROJ|PRJT)[-_]?\d{4,}"}
 DEFAULT_CHANGE_PLAN = {
     "log_forwarding": "LOG-FWD-DEFAULT",
     "profile_group": "PROFILE-GROUP-DEFAULT",
@@ -123,6 +124,7 @@ class Profile:
     naming: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_NAMING))
     tickets: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_TICKETS))
     default_tags: list[str] = field(default_factory=list)
+    known_apps: list[str] = field(default_factory=list)  # extra App-ID names the FCR App column may use
     object_scope: str = "local"  # local (device group / vsys) | shared
     broad_prefix_len: int = 8
     mgmt_ports: list[int] = field(default_factory=lambda: [22, 3389, 5900])
@@ -317,6 +319,7 @@ def load_profile(name: str) -> Profile:
     return Profile(name=name, path=path, targets=targets, display_name=raw.get("display_name", name),
                    env_file=raw.get("env_file"), vpn_landing_zones=list(raw.get("vpn_landing_zones") or []),
                    naming=naming, tickets=tickets, default_tags=list(raw.get("default_tags") or []),
+                   known_apps=[str(a) for a in (raw.get("known_apps") or [])],
                    object_scope=raw.get("object_scope", "local"), broad_prefix_len=int(raw.get("broad_prefix_len", 8)),
                    mgmt_ports=[int(p) for p in raw.get("mgmt_ports", [22, 3389, 5900])],
                    change_plan=resolve_change_plan(raw.get("change_plan"), name),

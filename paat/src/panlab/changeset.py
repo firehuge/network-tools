@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 
 from panlab import permitted
 from panlab.customers import Profile
-from panlab.apps import app_flags
+from panlab.apps import app_flags, split_app_ids
 from panlab.fcr import Endpoint, Flag, PortSpec, RuleRequest, Tickets
 from panlab.netmodel import Device, Environment, ObjectScope, parse_range
 from panlab.placement import Placement, place
@@ -185,6 +185,29 @@ def _location(p: Placement, profile: Profile, multi_vsys: bool) -> dict[str, Any
 
 
 
+def demote_non_app_ids(requests: list[RuleRequest], profile: Profile) -> None:
+    """Move FCR application values that are not PAN-OS App-IDs into app_labels (rule uses application any)."""
+    extra = list(getattr(profile, "known_apps", None) or [])
+    for r in requests:
+        if not r.applications:
+            continue
+        ids, labels = split_app_ids(list(r.applications), extra)
+        if not labels:
+            r.applications = ids
+            continue
+        r.applications = ids
+        for lab in labels:
+            if lab not in r.app_labels:
+                r.app_labels.append(lab)
+        shown = ", ".join(labels)
+        if not any(f.code == "app-not-appid" and shown in f.message for f in r.flags):
+            r.flags.append(Flag("yellow", "app-not-appid", (
+                f"application '{shown}' from the FCR is not a PAN-OS App-ID (system, project or team name?); "
+                + ("the rule keeps the App-ID(s) " + ", ".join(ids) + " and the name is in the description"
+                   if ids else "the rule uses application any on the listed ports and the name is in the description")
+                + ". Tighten it with the App-ID advisor, or add the name to this customer's known_apps if it is a real App-ID.")))
+
+
 def build_changeset(profile: Profile, envs: list[Environment], requests: list[RuleRequest], *,
                     files: list[dict] | None = None, name_overrides: dict[str, str] | None = None,
                     name_template: str | None = None, fallback_firewall: str | None = None,
@@ -196,6 +219,7 @@ def build_changeset(profile: Profile, envs: list[Environment], requests: list[Ru
         for e in envs:
             if e.target not in {t.name for t in profile.targets}:
                 raise ValueError(f"config for target {e.target!r} is not part of customer {profile.name!r}")
+    demote_non_app_ids(requests, profile)
     reqs = dedupe(requests)
     if path_placements is None and use_engine_path:
         # Follow the same hops Trace a flow would. The older zone picker can
@@ -415,6 +439,18 @@ def build_changeset(profile: Profile, envs: list[Environment], requests: list[Ru
                 desc = [r.tickets.label() or "no ticket"]
                 if r.requester:
                     desc.append(f"requester: {r.requester}")
+                ctx_bits = []
+                if r.app_labels:
+                    ctx_bits.append("FCR app: " + ", ".join(r.app_labels))
+                if r.usage:
+                    ctx_bits.append("usage: " + r.usage)
+                if r.src_label:
+                    ctx_bits.append("src net: " + r.src_label)
+                if r.dst_label:
+                    ctx_bits.append("dst net: " + r.dst_label)
+                if r.rule_name:
+                    ctx_bits.append("FCR rule: " + r.rule_name)
+                desc.extend(ctx_bits)
                 desc.append("from " + ", ".join(r.origins))
                 rule["description"] = " | ".join(desc)[:1023]
                 mg_flags = []
@@ -456,7 +492,12 @@ def build_changeset(profile: Profile, envs: list[Environment], requests: list[Ru
                 if sibling is not None:
                     suffix = (p.device if sibling["target_devices"] and sibling["target_devices"][0]["device"] != p.device
                               else f"hop{p.hop}" if p.hop else p.vsys)
-                rule["name"] = _rule_name(template, rq, (name_overrides or {}).get(rid), used_names[gk], suffix)
+                want = (name_overrides or {}).get(rid) or _requested_name(rq)
+                rule["name"] = _rule_name(template, rq, want, used_names[gk], suffix)
+                if want:
+                    # the requester named this rule: combining must not fold it into a differently named one
+                    rule["name_locked"] = True
+                    rule["requested_name"] = want
             if s is not None:
                 n = ctx.address(s)
                 if n not in rule["source"]:
@@ -661,6 +702,12 @@ def _req_dict(r: RuleRequest) -> dict[str, Any]:
     return d
 
 
+def _requested_name(r: RuleRequest) -> str | None:
+    """The FCR's own rule name, when it has one worth keeping (at least two letters or digits)."""
+    n = (r.rule_name or "").strip()
+    return n if len(re.sub(r"[^A-Za-z0-9]", "", n)) >= 2 else None
+
+
 def _rule_name(template: str, r: RuleRequest, override: str | None, used: set[str], suffix: str | None = None) -> str:
     if override:
         base = _sanitize(override)
@@ -700,7 +747,8 @@ def requests_from_changeset(cs: dict[str, Any]) -> list[RuleRequest]:
                 proto, _, port = str(p).partition("/")
                 services.append(PortSpec(proto, port or None))
         tix = rq.get("tickets") or {}
-        tickets = Tickets(list(tix.get("ritm") or []), list(tix.get("sctask") or []), list(tix.get("cr") or []))
+        tickets = Tickets(list(tix.get("ritm") or []), list(tix.get("sctask") or []), list(tix.get("cr") or []),
+                          list(tix.get("project") or []))
         flags = [Flag(f["level"], f["code"], f["message"]) for f in rq.get("flags") or []
                  if f.get("code") not in _BUILD_FLAGS]
         out.append(RuleRequest(
@@ -717,5 +765,10 @@ def requests_from_changeset(cs: dict[str, Any]) -> list[RuleRequest]:
             requester=rq.get("requester") or "",
             flags=flags,
             origins=list(rq.get("origins") or []),
+            rule_name=rq.get("rule_name") or "",
+            usage=rq.get("usage") or "",
+            src_label=rq.get("src_label") or "",
+            dst_label=rq.get("dst_label") or "",
+            app_labels=list(rq.get("app_labels") or []),
         ))
     return out
