@@ -5,7 +5,9 @@ import { chromium } from "playwright-core";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { startStaticServer, isLocalTestUrl } from "./static-server.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const srv = await startStaticServer(ROOT);
 const chrome = process.env.CHROME_PATH || ["/usr/bin/google-chrome-stable", "/usr/bin/google-chrome", "/usr/bin/chromium"].find((p) => fs.existsSync(p));
 let failed = 0;
 const ok = (c, m) => { if (c) console.log("  ok  :", m); else { failed++; console.error("  FAIL:", m); } };
@@ -13,8 +15,8 @@ const browser = await chromium.launch({ executablePath: chrome, args: ["--no-san
 const page = await (await browser.newContext({ viewport: { width: 1500, height: 1000 }, acceptDownloads: true })).newPage();
 const errors = [], requests = [];
 page.on("pageerror", (e) => errors.push(String(e)));
-page.on("request", (r) => { if (!/^(file|blob|data):/.test(r.url())) requests.push(r.url()); });
-await page.goto("file://" + path.join(ROOT, "pan-flowmapper.html"));
+page.on("request", (r) => { if (!isLocalTestUrl(r.url(), srv.port)) requests.push(r.url()); });
+await page.goto(srv.url("/pan-flowmapper.html"));
 await page.waitForFunction(() => window.__FM && window.__FM.ready);
 console.log("\n== Decommission tab ==");
 await page.locator("#fi").setInputFiles([path.join(ROOT, "samples", "panorama-decom-messy.xml")]);
@@ -44,5 +46,6 @@ ok(/decommission-plan\.csv/.test(dl.suggestedFilename()), "CSV export downloads"
 ok(errors.length === 0, "no page errors" + (errors.length ? ": " + errors.join(" | ") : ""));
 ok(requests.length === 0, "no network requests");
 await browser.close();
+await srv.close();
 console.log(failed ? "\n" + failed + " failed" : "\nall passed");
 process.exit(failed ? 1 : 0);
