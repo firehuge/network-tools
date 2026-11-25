@@ -15,8 +15,7 @@ const S = (n) => path.join(ROOT, "samples", n);
 const browser = await chromium.launch({ executablePath: chrome, args: ["--no-sandbox", "--disable-dev-shm-usage"], headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1500, height: 1000 }, acceptDownloads: true });
 // Older tests trace every firewall in samples whose names contain role words (a device group called "...-Lab"); they run with scope All sites.
-// The scope tests below set sessionStorage fm-scope-real so the real default (Production only) applies.
-await ctx.addInitScript(() => { try { if (!sessionStorage.getItem("fm-scope-real")) localStorage.setItem("pan-flowmapper-site-roles", JSON.stringify({ scope: { mode: "all" } })); } catch (e) {} });
+await ctx.addInitScript(() => { try { localStorage.setItem("pan-flowmapper-site-roles", JSON.stringify({ scope: { mode: "all" } })); } catch (e) {} });
 const page = await ctx.newPage();
 const errors = [], requests = [];
 page.on("pageerror", (e) => errors.push(String(e)));
@@ -713,9 +712,25 @@ console.log("\n== path status error banner ==");
 }
 console.log("\n== site roles, Production only scope, DR copy advice, Panorama HA pair ==");
 {
+  // Earlier tests share a context whose init script writes scope=all (so device names with "Lab" still trace).
+  // That flag used to be flipped here with sessionStorage + reload, but sessionStorage on file:// does not
+  // always survive the reload, so the init script re-applied All sites and these assertions failed
+  // (chip "All sites, nothing hidden", then a timeout waiting for #scope-via [data-scope-all]).
+  // A fresh context with no such init script gets the real default: Production only.
+  const scopeCtx = await browser.newContext({ viewport: { width: 1500, height: 1000 }, acceptDownloads: true });
+  const page = await scopeCtx.newPage();
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+  page.on("request", (r) => { if (!r.url().startsWith("file:") && !r.url().startsWith("blob:") && !r.url().startsWith("data:")) requests.push(r.url()); });
+  async function loadFiles(files) {
+    await page.evaluate(() => (window.__FM.ready = false));
+    await page.locator("#fi").setInputFiles(files);
+    await page.waitForFunction(() => window.__FM.ready === true && window.__FM.getDevices().length > 0, null, { timeout: 60000 });
+    await page.waitForFunction((n) => window.__FM.state.files.length >= n && window.__FM.ready === true, files.length, { timeout: 60000 });
+  }
+  async function trace(q) { return page.evaluate((q) => { const r = window.__FM.runTrace(q); return { status: r.status, segs: r.segments.map((s) => s.device + ":" + s.vsys), changes: r.changes.filter((c) => !c.optional).map((c) => c.kind + ":" + c.device + ":" + c.vsys), ms: r.ms }; }, q); }
   await page.goto(url);
-  await page.evaluate(() => { sessionStorage.setItem("fm-scope-real", "1"); localStorage.removeItem("pan-flowmapper-site-roles"); });
-  await page.reload(); await page.waitForFunction(() => window.__FM && window.__FM.ready);
+  await page.waitForFunction(() => window.__FM && window.__FM.ready);
   await loadFiles([S("panorama-prod-dr-a.xml")]);
   const chip = () => page.evaluate(() => document.querySelector("#scope-chip").textContent);
   ok(await page.locator("#scopebar").isVisible(), "scope bar is visible once a config is loaded");
@@ -782,7 +797,7 @@ console.log("\n== site roles, Production only scope, DR copy advice, Panorama HA
   ok(stB === "ip:10.2.250.1=,ip:10.1.250.1=active", "the other peer's export shows the same Panorama roles and states: " + stB);
   ok((await chip()) === "Scope: Production only, 3 firewalls hidden (2 DR, 1 Lab)", "and the same firewall scope");
   await page.locator("#pano-ha").screenshot({ path: path.join(ROOT, "tests/_out/panorama-ha.png") });
-  await page.evaluate(() => { sessionStorage.removeItem("fm-scope-real"); localStorage.removeItem("pan-flowmapper-site-roles"); });
+  await scopeCtx.close();
 }
 const realDir = path.join(ROOT, "real");
 if (fs.existsSync(realDir)) {
