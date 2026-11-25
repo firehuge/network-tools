@@ -36,6 +36,9 @@ COLUMNS = {  # key -> header keywords (all must appear, lower-case)
     "notes": ("notes",),
     "application": ("application",),
 }
+# PRJ-style project / request numbers (PRJ0012345, PROJ-123456). Configurable per customer as tickets.project.
+DEFAULT_PROJECT_TICKET = r"(?:PRJ|PROJ|PRJT)[-_]?\d{4,}"
+RULE_NAME_SYNS = ("rule name", "policy name", "security rule name", "proposed rule name", "fcr rule name", "rule")
 SPLIT_RE = re.compile(r"[,;\n\r]+|\s{2,}")
 FQDN_RE = re.compile(r"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})+\.?$")
 
@@ -62,7 +65,7 @@ PORT_SYNS = (
 )
 PROTO_SYNS = ("protocol", "proto", "transport")
 APP_SYNS = ("application", "applications", "app", "apps")
-NOTES_SYNS = ("notes", "note")
+NOTES_SYNS = ("notes", "note", "justification")
 ADDR_FORBID = frozenset({
     "dns", "port", "ports", "zone", "user", "users", "interface", "nat",
     "proto", "protocol", "service", "services", "app", "application", "apps",
@@ -122,15 +125,16 @@ class Tickets:
     ritm: list[str] = field(default_factory=list)
     sctask: list[str] = field(default_factory=list)
     cr: list[str] = field(default_factory=list)
+    project: list[str] = field(default_factory=list)  # PRJ-style project / request numbers
 
     def all(self) -> list[str]:
-        return self.ritm + self.sctask + self.cr
+        return self.ritm + self.sctask + self.cr + self.project
 
     def label(self) -> str:
         return " / ".join(self.all())
 
     def merge(self, other: "Tickets") -> None:
-        for k in ("ritm", "sctask", "cr"):
+        for k in ("ritm", "sctask", "cr", "project"):
             cur = getattr(self, k)
             for t in getattr(other, k):
                 if t not in cur:
@@ -152,6 +156,11 @@ class RuleRequest:
     requester: str = ""
     flags: list[Flag] = field(default_factory=list)
     origins: list[str] = field(default_factory=list)  # file:row of every merged duplicate
+    rule_name: str = ""  # name the requester asked for (FCR "Rule Name" column), if any
+    usage: str = ""  # e.g. Temporary / Permanent
+    src_label: str = ""  # requester's name for the source network / VLAN
+    dst_label: str = ""
+    app_labels: list[str] = field(default_factory=list)  # FCR application values that are not PAN-OS App-IDs
 
     def key(self) -> tuple:
         return (tuple(sorted((e.kind, e.value) for e in self.sources)),
@@ -376,8 +385,11 @@ def parse_endpoints(addr_cell: Any, dns_cell: Any, side: str) -> tuple[list[Endp
 
 def find_tickets(texts: list[str], patterns: dict[str, str]) -> Tickets:
     t = Tickets()
-    for k in ("ritm", "sctask", "cr"):
-        rx = re.compile(r"(?<![A-Za-z])" + patterns[k] + r"(?!\d)", re.I)
+    for k in ("ritm", "sctask", "cr", "project"):
+        pat = patterns.get(k) or (DEFAULT_PROJECT_TICKET if k == "project" else None)
+        if not pat:
+            continue
+        rx = re.compile(r"(?<![A-Za-z])" + pat + r"(?!\d)", re.I)
         for s in texts:
             for m in rx.finditer(s or ""):
                 v = m.group(0).upper()
@@ -393,7 +405,7 @@ def _norm(h: Any) -> str:
 def _canon(h: Any) -> str:
     s = str(h or "").strip().lower()
     s = re.sub(r"\(\s*s\s*\)", "s", s)
-    s = re.sub(r"[^\w]+", " ", s, flags=re.UNICODE)
+    s = re.sub(r"[\W_]+", " ", s, flags=re.UNICODE)  # underscore separates words too (Destination_IP)
     return re.sub(r"\s+", " ", s).strip()
 
 
@@ -439,10 +451,29 @@ def _load_xlsx(path: Path) -> list[_Sheet]:
             ws = wb[name]
             max_r, max_c = ws.max_row or 0, ws.max_column or 0
             rows = [[ws.cell(r, c).value for c in range(1, max_c + 1)] for r in range(1, max_r + 1)]
+            _fill_merged_down(ws, rows)
             sheets.append(_Sheet(name=name, rows=rows))
         return sheets
     finally:
         wb.close()
+
+
+def _fill_merged_down(ws: Any, rows: list[list[Any]]) -> None:
+    """Repeat the top-left value of every vertically merged range on the rows it spans.
+
+    Excel keeps the value only in the first cell of a merge, so a request whose source and
+    ports are merged over several destination rows would otherwise read as blank rows.
+    Single-row (horizontal) merges, such as titles, are left alone.
+    """
+    for rng in list(ws.merged_cells.ranges):
+        if rng.max_row <= rng.min_row:
+            continue
+        val = ws.cell(rng.min_row, rng.min_col).value
+        if val in (None, ""):
+            continue
+        for r in range(rng.min_row + 1, min(rng.max_row, len(rows)) + 1):
+            for c in range(rng.min_col, min(rng.max_col, len(rows[r - 1])) + 1):
+                rows[r - 1][c - 1] = val
 
 
 def _load_csv(path: Path) -> list[_Sheet]:
@@ -519,10 +550,26 @@ def _try_standard_layout(sheets: list[_Sheet]) -> _Layout | None:
                    seen_headers=_row_headers(ws, header_row))
 
 
+_ADDR_TOKENS = frozenset({"ip", "ips", "address", "addresses", "addr", "cidr"})
+_LABEL_TOKENS = frozenset({"vlan", "vnet", "vpc", "name", "names", "segment", "site"})
+
+
+def _addr_rank(canon: str) -> int:
+    """0 = header says IP/address, 1 = plain 'Source', 2 = a VLAN/network *name* label."""
+    tokens = set(canon.split())
+    if tokens & _ADDR_TOKENS:
+        return 0
+    if tokens & _LABEL_TOKENS:
+        return 2
+    return 1
+
+
 def _map_flexible_row(sheet: _Sheet, row: int) -> tuple[dict[str, int], dict[str, str], int | None, str]:
     cols: dict[str, int] = {}
     headers: dict[str, str] = {}
     port_candidates: list[tuple[int, int, str, int]] = []  # rank, col, text, col
+    src_cands: list[tuple[int, int, str]] = []
+    dst_cands: list[tuple[int, int, str]] = []
     source_port_col, source_port_header = None, ""
     for c in range(1, sheet.max_column + 1):
         raw = sheet.cell(row, c)
@@ -533,10 +580,10 @@ def _map_flexible_row(sheet: _Sheet, row: int) -> tuple[dict[str, int], dict[str
             if source_port_col is None:
                 source_port_col, source_port_header = c, text
             continue
-        if "source" not in cols and _matches_syn(canon, SOURCE_SYNS, ADDR_FORBID):
-            cols["source"], headers["source"] = c, text
-        elif "destination" not in cols and _matches_syn(canon, DEST_SYNS, ADDR_FORBID):
-            cols["destination"], headers["destination"] = c, text
+        if _matches_syn(canon, SOURCE_SYNS, ADDR_FORBID):
+            src_cands.append((_addr_rank(canon), c, text))
+        elif _matches_syn(canon, DEST_SYNS, ADDR_FORBID):
+            dst_cands.append((_addr_rank(canon), c, text))
         elif "protocol" not in cols and _matches_syn(canon, PROTO_SYNS):
             cols["protocol"], headers["protocol"] = c, text
         elif "source_dns" not in cols and "source" in canon.split() and "dns" in canon.split():
@@ -551,11 +598,22 @@ def _map_flexible_row(sheet: _Sheet, row: int) -> tuple[dict[str, int], dict[str
             cols["notes"], headers["notes"] = c, text
         elif "application" not in cols and _matches_syn(canon, APP_SYNS):
             cols["application"], headers["application"] = c, text
+        elif "rule_name" not in cols and canon in RULE_NAME_SYNS:
+            cols["rule_name"], headers["rule_name"] = c, text
+        elif "usage" not in cols and "usage" in canon.split():
+            cols["usage"], headers["usage"] = c, text
         else:
             for syn, rank in PORT_SYNS:
                 if _phrase_in(canon, syn):
                     port_candidates.append((rank, c, text, c))
                     break
+    for key, cands in (("source", src_cands), ("destination", dst_cands)):
+        if cands:
+            _, c, text = min(cands)  # best rank, then leftmost column
+            cols[key], headers[key] = c, text
+            labels = [x for x in cands if x[1] != c and x[0] == 2]
+            if labels and _addr_rank(_canon(text)) < 2:
+                cols[key + "_label"], headers[key + "_label"] = labels[0][1], labels[0][2]
     if port_candidates:
         port_candidates.sort()
         _, c, text, _ = port_candidates[0]
@@ -579,6 +637,21 @@ def _score_mapping(cols: dict[str, int], sheet_name: str) -> int:
     return score
 
 
+_NOT_DATA_SHEET = ("instruction", "readme", "read me", "help", "example", "sample", "legend", "guide", "how to")
+
+
+def _sheet_rank(name: str) -> int:
+    """Prefer the sheet that is named like the rule list; never prefer an instructions sheet."""
+    n = name.lower()
+    if any(w in n for w in _NOT_DATA_SHEET):
+        return -1
+    if "firewall" in n and "rule" in n:
+        return 2
+    if "rule" in n or "firewall" in n or "acl" in n:
+        return 1
+    return 0
+
+
 def _pick_flexible_layout(sheets: list[_Sheet]) -> tuple[_Layout | None, _Layout | None]:
     """Return (best complete layout or None, best attempt for error text)."""
     best: _Layout | None = None
@@ -597,7 +670,7 @@ def _pick_flexible_layout(sheets: list[_Sheet]) -> tuple[_Layout | None, _Layout
                 source_port_col=src_port_c, source_port_header=src_port_h,
                 score=score, seen_headers=seen,
             )
-            key = (score, -r, -si)
+            key = (_sheet_rank(sheet.name), score, -r, -si)
             if all(k in cols for k in ("source", "destination", "ports")):
                 if best_key is None or key > best_key:
                     best, best_key = layout, key
@@ -652,6 +725,10 @@ def _source_port_note(layout: _Layout) -> str | None:
     )
 
 
+def _cell_text(v: Any) -> str:
+    return re.sub(r"\s+", " ", str(v)).strip() if v not in (None, "") else ""
+
+
 def read_fcr(path: str | Path, *, ticket_patterns: dict[str, str], override: Tickets | None = None,
              requester: str = "") -> tuple[list[RuleRequest], dict[str, Any]]:
     """Read one FCR workbook or CSV. Returns (requests, file metadata)."""
@@ -695,7 +772,7 @@ def read_fcr(path: str | Path, *, ticket_patterns: dict[str, str], override: Tic
         notes_all.append(str(cell.get("notes") or ""))
     file_tickets = find_tickets([path.name, project] + notes_all, ticket_patterns)
     if override:
-        for k in ("ritm", "sctask", "cr"):
+        for k in ("ritm", "sctask", "cr", "project"):
             if getattr(override, k):
                 setattr(file_tickets, k, list(getattr(override, k)))
     out = []
@@ -711,11 +788,14 @@ def read_fcr(path: str | Path, *, ticket_patterns: dict[str, str], override: Tic
         req = RuleRequest(file=path.name, row=r, project=project, sources=src, destinations=dst, services=svcs,
                           applications=apps, firewall=(str(cell.get("firewall")).strip() or None) if cell.get("firewall") else None,
                           notes=str(cell.get("notes") or "").strip(), tickets=Tickets(**asdict(file_tickets)),
-                          requester=requester, flags=flags, origins=[f"{path.name}:{r}"])
+                          requester=requester, flags=flags, origins=[f"{path.name}:{r}"],
+                          rule_name=_cell_text(cell.get("rule_name")), usage=_cell_text(cell.get("usage")),
+                          src_label=_cell_text(cell.get("source_label")), dst_label=_cell_text(cell.get("destination_label")))
         out.append(req)
     mapping = {k: layout.headers[k] for k in
                ("source", "destination", "ports", "protocol",
-                "source_dns", "destination_dns", "firewall", "notes", "application")
+                "source_dns", "destination_dns", "firewall", "notes", "application",
+                "rule_name", "usage", "source_label", "destination_label")
                if k in layout.headers}
     return out, {
         "file": path.name,

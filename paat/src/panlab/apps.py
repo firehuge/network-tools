@@ -22,6 +22,43 @@ APP_PORTS: dict[str, list[tuple[str, str]]] = {
     "imap": [("tcp", "143")], "pop3": [("tcp", "110")], "tftp": [("udp", "69")], "http-proxy": [("tcp", "8080"), ("tcp", "3128")],
     "msrpc": [("tcp", "135")], "netbios-ns": [("udp", "137")], "ping": [], "icmp": [],
 }
+# More common PAN-OS App-IDs (names only; ports are not checked for these).
+EXTRA_APP_IDS = frozenset({
+    "any", "application-default", "dns-base", "ldap", "ldaps", "ms-netlogon", "ms-ds-smb-base", "ms-ds-smb", "ms-update",
+    "ms-scheduler", "ms-spooler", "ms-rdp", "ms-exchange", "sharepoint-base", "sharepoint-online", "office365-base",
+    "tacacs", "tacacs-plus", "dhcp", "netbios-dg", "netbios-ss", "traceroute", "ipsec", "ike", "ipsec-esp", "ipsec-esp-udp",
+    "gre", "bgp", "ospf", "rip", "git", "github-base", "mongodb", "redis", "cassandra", "ibm-db2", "nfs", "rsync", "rtsp", "sip",
+    "sftp", "ssl", "web-browsing", "http-video", "http2", "quic", "icmp", "ping", "vnc-base", "rdp-base", "smtp", "imap", "pop3",
+    "ntp", "snmp", "snmp-base", "snmp-trap", "syslog", "telnet", "tftp", "ftp", "ssh", "kerberos", "radius", "mysql",
+    "postgres", "oracle", "mssql-db", "mssql-mon", "windows-push-notifications", "apt-get", "yum", "docker", "kubernetes",
+    "prometheus", "grafana", "splunk", "elasticsearch", "kafka", "rabbitmq", "ms-teams", "zoom-base", "webex-base", "slack-base",
+})
+KNOWN_APP_IDS = frozenset(APP_PORTS) | EXTRA_APP_IDS
+
+
+def split_app_ids(apps: list[str], extra: list[str] | None = None) -> tuple[list[str], list[str]]:
+    """Split FCR application values into (App-IDs PAN-OS knows, other labels).
+
+    A value counts as an App-ID only when PAAT's table, the customer's ``known_apps`` list, or an
+    application-default/any keyword has it. Anything else (a system, project or team name such as
+    "Billing") becomes a label: the rule then uses application ``any`` on the listed ports and the label
+    is kept in the rule description, so a push cannot fail on an App-ID that does not exist.
+    """
+    known = KNOWN_APP_IDS | {x.lower() for x in (extra or [])}
+    ids: list[str] = []
+    labels: list[str] = []
+    for a in apps:
+        a_l = a.strip().lower()
+        if not a_l:
+            continue
+        if a_l in known:
+            if a_l not in ids:
+                ids.append(a_l)
+        elif a.strip() not in labels:
+            labels.append(a.strip())
+    return ids, labels
+
+
 # predefined PAN-OS service objects
 PREDEFINED_SERVICE_PORTS = {"service-https": [("tcp", "443")], "service-http": [("tcp", "80"), ("tcp", "8080")]}
 

@@ -465,9 +465,10 @@ $$("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.da
 const NOINTRA_KEY = "pan-flowmapper-ignore-intrazone-default";
 try { $("#q-nointra").checked = localStorage.getItem(NOINTRA_KEY) === "1"; } catch (e) {}
 $("#q-nointra").addEventListener("change", () => { try { localStorage.setItem(NOINTRA_KEY, $("#q-nointra").checked ? "1" : "0"); } catch (e) {} if (state.last && state.last.query && state.last.query.src) runTrace(null, true); });
-$("#qform").addEventListener("submit", (e) => { e.preventDefault(); state.choices = {}; state.pathIndex = 0; runTrace(); });
+$("#qform").addEventListener("submit", (e) => { e.preventDefault(); state.fcrRow = null; state.fcrTicket = null; state.choices = {}; state.pathIndex = 0; runTrace(); });
 function applyFcrRow(row) {
   state.fcrTicket = row.ticket || null;
+  state.fcrRow = row;
   $("#q-src").value = row.src || "";
   $("#q-dst").value = row.dst || "";
   $("#q-proto").value = ["tcp", "udp", "icmp", "any"].includes(row.proto) ? row.proto : "tcp";
@@ -493,8 +494,12 @@ function renderFcrBatch(parsed, results) {
     applyFcrRow(x.row); state.choices = {}; state.pathIndex = 0; runTrace();
   }));
 }
+const FCR_PAT_KEY = "pan-flowmapper-fcr-ticket-pattern";
+try { $("#fcr-pattern").value = localStorage.getItem(FCR_PAT_KEY) || ""; } catch (e) {}
+$("#fcr-pattern").addEventListener("change", () => { try { localStorage.setItem(FCR_PAT_KEY, $("#fcr-pattern").value.trim()); } catch (e) {} });
+function fcrOpts() { return { fileName: state.fcrFileName || "", projectPattern: $("#fcr-pattern").value.trim() || null }; }
 function runFcr() {
-  const parsed = FM.parseFcr($("#fcr-text").value);
+  const parsed = FM.parseFcr($("#fcr-text").value, fcrOpts());
   $("#fcr-status").textContent = parsed.rows.length ? parsed.rows.length + " flow" + (parsed.rows.length === 1 ? "" : "s") + " parsed" : "nothing parsed";
   if (!parsed.rows.length) { renderFcrBatch(parsed, []); return; }
   if (!state.devices.length) { flash("Load a config first."); renderFcrBatch(parsed, []); return; }
@@ -520,10 +525,20 @@ $("#fcr-run").addEventListener("click", runFcr);
 $("#fcr-file").addEventListener("change", (e) => {
   const f = e.target.files && e.target.files[0]; e.target.value = "";
   if (!f) return;
+  state.fcrFileName = f.name;
+  if (/\.xlsx$/i.test(f.name)) {
+    f.arrayBuffer().then((b) => FM.readFcrXlsx(b, fcrOpts())).then((x) => {
+      if (x.error) { flash(x.error); $("#fcr-status").textContent = x.error; return; }
+      $("#fcr-text").value = x.csv; $("#fcr-box").open = true; runFcr();
+      $("#fcr-status").textContent += " (sheet " + x.sheet + (x.skipped.length ? "; skipped " + x.skipped.join(", ") : "") + ")";
+    }).catch((err) => flash("Could not read the .xlsx file: " + err.message));
+    return;
+  }
   f.text().then((t) => { $("#fcr-text").value = t; $("#fcr-box").open = true; runFcr(); });
 });
 $("#btn-swap").addEventListener("click", () => { const a = $("#q-src").value; $("#q-src").value = $("#q-dst").value; $("#q-dst").value = a; $("#q-ing").value = ""; });
 function runTrace(q, keepChoices) {
+  if (q) state.fcrRow = null;
   if (q && !keepChoices) { state.choices = {}; state.pathIndex = 0; }
   if (q) { $("#q-src").value = q.src || ""; $("#q-dst").value = q.dst || ""; $("#q-proto").value = q.proto || "tcp"; $("#q-port").value = q.port == null ? "" : q.port; if (q.deviceId != null) { $("#q-dev").value = q.deviceId; fillIngress(); } if (q.ingress != null) $("#q-ing").value = q.ingress; if (q.dstDeviceId != null) $("#q-ddev").value = q.dstDeviceId; if (q.via != null) $("#q-via").value = q.via; }
   if (!state.devices.length) { flash("Load a config first."); return null; }
@@ -535,6 +550,7 @@ function runTrace(q, keepChoices) {
   FM.attachScope(res, state.view, tq, topts, true);
   res.ms = Math.round(performance.now() - t0);
   FM.annotateFcr(res, V());
+  if (state.fcrRow) FM.applyFcrExtras(res, state.fcrRow);
   res.drMirror = FM.drMirror(res, state.devices, state.profile);
   if (state.fcrTicket) res.fcrTicket = state.fcrTicket;
   state.last = res;
@@ -726,6 +742,7 @@ function ticketHtml(r) {
   if (notes.length) h += "<h2>Notes</h2>" + notes.map((n) => '<div class="note">' + e(n.text) + "</div>").join("");
   if (r.fcr) {
     if (r.fcrTicket) h += "<p><b>FCR / ticket:</b> " + e(r.fcrTicket) + "</p>";
+    if (r.fcrNote) h += "<p><b>Rule description:</b> " + e(r.fcrNote) + "</p>";
     h += "<h2>Why these vsys</h2>" + (r.fcr.why.lines || [r.fcr.why.text]).map((l) => "<p>" + e(l) + "</p>").join("");
     h += multiPlaceHtml(r, true);
     h += "<h2>Per-hop verdicts</h2><table><tr><th>#</th><th>Firewall / vsys</th><th>Verdict</th><th>Rule</th><th>Zones</th></tr>" + r.fcr.hops.map((x) => "<tr><td>" + x.n + "</td><td>" + e(DL(x.device) + " " + (x.display && x.display !== x.vsys ? x.display + " (" + x.vsys + ")" : x.vsys)) + "</td><td>" + e(x.verdict) + "</td><td>" + e(x.rule || "") + "</td><td>" + e((x.fromZone || "") + " → " + (x.toZone || "")) + "</td></tr>").join("") + "</table>";
