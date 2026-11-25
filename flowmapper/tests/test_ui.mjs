@@ -5,8 +5,10 @@ import { chromium } from "playwright-core";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { startStaticServer, isLocalTestUrl } from "./static-server.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 fs.mkdirSync(path.join(ROOT, "tests/_out"), { recursive: true });
+const srv = await startStaticServer(ROOT);
 const chrome = process.env.CHROME_PATH || ["/usr/bin/google-chrome-stable", "/usr/bin/google-chrome", "/usr/bin/chromium"].find((p) => fs.existsSync(p));
 let failed = 0;
 const ok = (c, m) => { if (c) console.log("  ok  :", m); else { failed++; console.error("  FAIL:", m); } };
@@ -20,8 +22,8 @@ const page = await ctx.newPage();
 const errors = [], requests = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-page.on("request", (r) => { if (!r.url().startsWith("file:") && !r.url().startsWith("blob:") && !r.url().startsWith("data:")) requests.push(r.url()); });
-const url = "file://" + path.join(ROOT, "pan-flowmapper.html");
+page.on("request", (r) => { if (!isLocalTestUrl(r.url(), srv.port)) requests.push(r.url()); });
+const url = srv.url("/pan-flowmapper.html");
 async function loadFiles(files) {
   await page.evaluate(() => (window.__FM.ready = false));
   await page.locator("#fi").setInputFiles(files);
@@ -475,7 +477,7 @@ console.log("\n== public-space / circuit map (fw-multi-circuit.xml) ==");
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#ck-export")]);
   const jp2 = path.join(ROOT, "tests/_out_circuits.json"); await dl.saveAs(jp2);
   ok(JSON.parse(fs.readFileSync(jp2, "utf8")).circuits.length === 2, "map export JSON");
-  await page.reload(); await loadFiles([S("fw-multi-circuit.xml")]);
+  await page.reload(); await page.waitForFunction(() => window.__FM && window.__FM.ready); await loadFiles([S("fw-multi-circuit.xml")]);
   ok(await page.evaluate(() => window.__FM.state.circuits.length) === 2, "map survives a page reload");
   await page.evaluate(() => window.__FM.setCircuits([]));
   await page.locator("#ck-import-file").setInputFiles(jp2);
@@ -567,7 +569,7 @@ ps = await page.evaluate(() => { const b = document.querySelector("#path-status"
 ok(ps.st === "incomplete" && /Stopped at/.test(ps.txt) && /To finish it/.test(ps.txt), "incomplete banner names the stop and the fix");
 
 // ---- ignore intrazone-default toggle
-await page.goto(url); await page.evaluate(() => localStorage.removeItem("pan-flowmapper-ignore-intrazone-default")); await page.reload();
+await page.goto(url); await page.evaluate(() => localStorage.removeItem("pan-flowmapper-ignore-intrazone-default")); await page.reload(); await page.waitForFunction(() => window.__FM && window.__FM.ready);
 await loadFiles([S("panorama-67-devices.xml")]);
 await page.evaluate(() => window.__FM.setProfile({ scope: { mode: "all" } })); // this sample has a device group named like a lab; the trace tests want every firewall
 ok(await page.locator("#q-nointra").count() === 1 && !(await page.locator("#q-nointra").isChecked()), "ignore-intrazone-default control present, off by default");
@@ -581,7 +583,7 @@ let s1 = await dcSec();
 ok(s1.action === "deny" && s1.ign && s1.need && s1.chain === s0.chain, "on: retraces, DC hop needs an explicit rule, same path");
 ok(/ignored: would allow/.test(await page.locator("#checks").textContent()), "policy checks show the ignored default");
 await page.locator("#checks").screenshot({ path: path.join(ROOT, "tests/_out/ignore-intrazone.png") });
-await page.reload(); await loadFiles([S("panorama-67-devices.xml")]);
+await page.reload(); await page.waitForFunction(() => window.__FM && window.__FM.ready); await loadFiles([S("panorama-67-devices.xml")]);
 ok(await page.locator("#q-nointra").isChecked(), "setting survives a reload");
 r = await trace(iq); ok((await dcSec()).need, "after reload the trace still honors it");
 await page.uncheck("#q-nointra"); await page.waitForTimeout(200);
@@ -721,7 +723,7 @@ console.log("\n== site roles, Production only scope, DR copy advice, Panorama HA
   const page = await scopeCtx.newPage();
   page.on("pageerror", (e) => errors.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
-  page.on("request", (r) => { if (!r.url().startsWith("file:") && !r.url().startsWith("blob:") && !r.url().startsWith("data:")) requests.push(r.url()); });
+  page.on("request", (r) => { if (!isLocalTestUrl(r.url(), srv.port)) requests.push(r.url()); });
   async function loadFiles(files) {
     await page.evaluate(() => (window.__FM.ready = false));
     await page.locator("#fi").setInputFiles(files);
@@ -813,5 +815,6 @@ if (fs.existsSync(realDir)) {
 ok(errors.length === 0, "0 JS errors" + (errors.length ? ": " + errors.join(" | ") : ""));
 ok(requests.length === 0, "0 network requests" + (requests.length ? ": " + requests.join(", ") : ""));
 await browser.close();
+await srv.close();
 console.log(failed ? failed + " failed" : "all UI tests passed");
 process.exit(failed ? 1 : 0);
