@@ -121,6 +121,9 @@ function barCmd(cmd) {
 function licenseCaseCli(opts = {}) {
   const wfVer = opts.wildfireVersion ?? "0";
   const wfDateLine = opts.wildfireDate ? `wildfire-release-date: ${opts.wildfireDate}\n` : "";
+  const extraVersions = opts.extraVersions || `wf-private-version: 0
+global-protect-datafile-version: 0
+`;
   const includeLicenses = opts.licenses !== false;
   const licenseBody = opts.licenseBody || "";
   return [
@@ -145,7 +148,7 @@ threat-release-date: 2026/11/08 16:00:00 PDT
 wildfire-version: ${wfVer}
 ${wfDateLine}url-filtering-version: 20261108.40111
 url-filtering-release-date: 2026/11/08 00:00:00 PDT
-platform-family: 400
+${extraVersions}platform-family: 400
 operational-mode: normal
 system-mode: normal
 `,
@@ -256,6 +259,14 @@ async function main() {
   assert(onLogs, "clicking a finding opens the Logs tab");
   const hits = await page.locator("#log .row.hit").count();
   assert(hits >= 1, "at least one highlighted evidence line, got " + hits);
+  await page.evaluate(() => window.__TSF.showTab("findings"));
+  await page.waitForTimeout(150);
+  const findingsText = await page.locator("#issues").innerText();
+  assert(findingsText.includes("running-config.xml"), "redaction does not treat running-config.xml as a hostname");
+  assert(!/sslmgr\.\[HOST\]/.test(findingsText), "redaction does not treat sslmgr.log as a hostname");
+  if (/sslmgr/.test(findingsText)) {
+    assert(findingsText.includes("sslmgr.log"), "sslmgr.log remains visible in a finding source");
+  }
 
   // regex search (clear any issue-line filter first)
   await page.evaluate(() => { window.__TSF.showTab("logs"); });
@@ -360,6 +371,9 @@ async function main() {
   assert(hasTitle(report, /not licensed:\s*WildFire/i), "unlicensed WildFire is an informational Not licensed note");
   const unlicNote = finding(report, /not licensed:\s*WildFire/i);
   assert(unlicNote && unlicNote.sev === "info", "Not licensed: WildFire is severity info");
+  assert(!/GlobalProtect data file|WildFire private cloud/i.test(unlicNote.title), "unlicensed default-zero GP data file / WF private cloud are not listed");
+  assert(!hasTitle(report, /not licensed:.*GlobalProtect data file/i), "no Not licensed note for default-zero GP data file");
+  assert(!hasTitle(report, /not licensed:.*WildFire private cloud/i), "no Not licensed note for default-zero WF private cloud");
 
   const licensedMissingPath = writeMiniTsf("wf-licensed-missing", licenseCaseCli({
     wildfireVersion: "0",
@@ -393,6 +407,33 @@ async function main() {
   assert(unknown && unknown.sev === "info", "no license section downgrades missing WildFire content to info with license status unknown");
   assert(!report.findings.some((f) => f.sev === "warning" && /security content is not installed/i.test(f.title)), "no license section does not warn about missing content");
   assert(!hasTitle(report, /license expired:.*wildfire/i), "no license section is not reported as an expired WildFire license");
+
+  const coreOkAncillaryZeroPath = writeMiniTsf("wf-ancillary-zero", licenseCaseCli({
+    wildfireVersion: "911108",
+    wildfireDate: "2026/11/08 08:00:00 PDT",
+    licenseBody: LIC_THREAT_URL + "\n" + LIC_WF_ACTIVE,
+  }));
+  ({ report, errors } = await loadTsf(page, coreOkAncillaryZeroPath));
+  assert(errors.length === 0, "no JS errors when only ancillary packages are version 0 (" + errors.join(" | ") + ")");
+  assert(!hasTitle(report, /not licensed/i), "licensed core content with default-zero GP data file / WF private is not a Not licensed finding");
+  assert(!hasTitle(report, /security content is not installed/i), "default-zero unlicensed ancillary packages do not warn about missing content");
+
+  const wfPrivateLicensedPath = writeMiniTsf("wf-private-licensed-missing", licenseCaseCli({
+    wildfireVersion: "911108",
+    wildfireDate: "2026/11/08 08:00:00 PDT",
+    extraVersions: `wf-private-version: 0
+global-protect-datafile-version: 0
+`,
+    licenseBody: LIC_THREAT_URL + "\n" + LIC_WF_ACTIVE + `\nLicense entry:
+Feature: WildFire Private Cloud
+Expires: November 10, 2028
+Expired: No
+`,
+  }));
+  ({ report, errors } = await loadTsf(page, wfPrivateLicensedPath));
+  assert(errors.length === 0, "no JS errors on licensed+missing WF private cloud (" + errors.join(" | ") + ")");
+  const privMissing = finding(report, /^Security content is not installed$/i);
+  assert(privMissing && privMissing.sev === "warning", "licensed+missing WildFire private cloud raises a content warning");
 
   await browser.close();
   server.close();
