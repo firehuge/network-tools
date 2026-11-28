@@ -280,8 +280,35 @@ def test_gui_login_roles_and_tamper(tmp_path, monkeypatch, fwtest):
     assert r.status_code == 303 and r.headers["location"] == "/changesets"
     assert c.get("/decom").status_code == 403  # FCR pages need the fcr permission
     assert c.get("/push/fwtest/cs-test").status_code == 403
-    c.cookies.set(auth.COOKIE, c.cookies.get(auth.COOKIE)[:-2] + "00")
+    # The login cookie is stored quoted (the token contains "=") under domain
+    # testserver.local. cookies.set() would add a second cookie instead of
+    # replacing it; which value Starlette then uses depends on the Python /
+    # Starlette version. Send only a signature-flipped token.
+    token = c.cookies.get(auth.COOKIE) or ""
+    if token.startswith('"') and token.endswith('"'):
+        token = token[1:-1]
+    tampered = token[:-1] + ("0" if token[-1] != "0" else "1")
+    c.cookies.clear()
+    c.cookies.set(auth.COOKIE, tampered)
     assert c.get("/changesets", follow_redirects=False).status_code == 303
+
+
+def test_read_cookie_rejects_tampered_signature(tmp_path, monkeypatch):
+    """A changed HMAC is rejected even when the old test suffix ("00") would be a no-op."""
+    monkeypatch.setenv("PANLAB_USERS_FILE", str(tmp_path / "users.yaml"))
+    monkeypatch.setenv("PANLAB_SESSION_KEY_FILE", str(tmp_path / "session.key"))
+    auth.add_user("viewer1", "viewer", "pw-viewer", tmp_path / "users.yaml")
+    token = auth.make_cookie("viewer1")
+    assert auth.read_cookie(token)
+    # The previous GUI test replaced the last two hex digits with "00", which
+    # left a real signature unchanged about 1 in 256 runs.
+    same = token[:-2] + "00"
+    if same == token:
+        assert auth.read_cookie(same)
+    else:
+        assert auth.read_cookie(same) is None
+    flipped = token[:-1] + ("0" if token[-1] != "0" else "1")
+    assert flipped != token and auth.read_cookie(flipped) is None
 
 
 def test_gui_push_flow(tmp_path, monkeypatch, fwtest):
