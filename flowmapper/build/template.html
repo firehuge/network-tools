@@ -125,6 +125,7 @@
         <label>Destination firewall<select id="q-ddev"><option value="">Auto</option></select></label>
         <label>Must pass through<input id="q-via" list="devlist" placeholder="optional: fw-core, fw-dmz"></label>
         <label class="qchk" title="Treat same-zone traffic that only the predefined intrazone-default rule allows as needing an explicit rule. Explicit rules (including rule-type intrazone) still count."><span><input type="checkbox" id="q-nointra"> Ignore intrazone-default allow</span><small class="muted">same-zone traffic needs an explicit rule</small></label>
+        <label class="qchk" title="Optional. Name of a security profile group that already exists on your firewall or Panorama. It is added to every generated allow rule. Leave blank to add none. Every generated allow rule always logs at session end."><span>Profile group for new rules <input id="q-pgroup" maxlength="63" placeholder="blank = none" autocomplete="off" style="width:11em"></span><small class="muted">new allow rules always log at session end</small></label>
         <div class="qbtns"><button class="primary" id="btn-trace" type="submit">Trace</button><button type="button" id="btn-swap" title="Swap source and destination">Swap</button></div>
       </form>
       <datalist id="addrlist"></datalist><datalist id="devlist"></datalist>

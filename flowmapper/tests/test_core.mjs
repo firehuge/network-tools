@@ -758,6 +758,31 @@ console.log("\n== hostnames a template stack pushes (one firewall per stack only
   M = mk(base); ok(M.ds.every((d) => !d.hostname && FM.devLabel(d) === d.serial + " \u00b7 " + d.stack), "no hostname anywhere: label is serial \u00b7 stack, no blank");
 }
 
+console.log("\n== safe defaults on generated allow rules ==");
+{
+  const dd = load("fw-single-vsys.xml"), pdev = load("panorama-dmz-mpls-core.xml");
+  const ruleLine = (c) => c.cli.find((l) => / rules /.test(l) && / action allow/.test(l));
+  FM.setRuleDefaults({ profileGroup: "" });
+  let rr = T(dd, "10.10.0.50", "172.16.10.20", "tcp", 3389);
+  let c = sec(rr)[0];
+  ok(/ action allow log-end yes$/.test(ruleLine(c)) && c.rule.logEnd === true && c.rule.profileGroup === null, "allow rule logs at session end; no profile group when blank");
+  ok(!c.cli.some((l) => /profile-setting/.test(l)), "blank profile group adds no profile-setting");
+  rr = FM.trace(dd, { src: "10.10.0.50", dst: "172.16.10.20", proto: "tcp", port: 3389 }, { profileGroup: "PG-Standard" });
+  c = sec(rr)[0];
+  ok(/ action allow log-end yes profile-setting group PG-Standard$/.test(ruleLine(c)) && c.rule.profileGroup === "PG-Standard", "per-trace profile group lands in the rule CLI and rule object");
+  rr = T(dd, "10.10.0.50", "172.16.10.20", "tcp", 3389);
+  ok(!/profile-setting/.test(ruleLine(sec(rr)[0])), "a per-trace group does not leak into the next trace");
+  ok(FM.setRuleDefaults({ profileGroup: ' My "Group"<x> ' }).profileGroup === "My Groupx", "group name is cleaned of quotes, angle brackets and edge spaces");
+  rr = T(dd, "10.10.0.50", "172.16.10.20", "tcp", 3389);
+  ok(/profile-setting group "My Groupx"$/.test(ruleLine(sec(rr)[0])), "saved default applies to every trace and is quoted when it has a space");
+  ok(FM.setRuleDefaults({ profileGroup: "x".repeat(100) }).profileGroup.length === 63, "group name capped at 63 characters");
+  FM.setRuleDefaults({ profileGroup: "PG-Standard" });
+  const pr = FM.trace(pdev, { src: "172.18.10.50", dst: "10.30.2.20", proto: "tcp", port: 1433 }, {});
+  const pl = sec(pr).map(ruleLine).filter(Boolean);
+  ok(pl.length > 0 && pl.every((l) => / log-end yes profile-setting group PG-Standard$/.test(l) && /^set device-group /.test(l)), "Panorama pre-rulebase rules get the same defaults (" + pl.length + " rules)");
+  FM.setRuleDefaults({ profileGroup: "" });
+}
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 
 // Optional: real configs under real/ (never committed). Only counts are printed.

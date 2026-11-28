@@ -462,6 +462,10 @@ function showTab(name) {
 $$("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 
 /* ---------------- trace ---------------- */
+const PGROUP_KEY = "pan-flowmapper-profile-group";
+try { $("#q-pgroup").value = localStorage.getItem(PGROUP_KEY) || ""; } catch (e) {}
+FM.setRuleDefaults({ profileGroup: $("#q-pgroup").value });
+$("#q-pgroup").addEventListener("change", () => { const g = FM.setRuleDefaults({ profileGroup: $("#q-pgroup").value }).profileGroup; $("#q-pgroup").value = g; try { localStorage.setItem(PGROUP_KEY, g); } catch (e) {} if (state.last && state.last.query && state.last.query.src) runTrace(null, true); });
 const NOINTRA_KEY = "pan-flowmapper-ignore-intrazone-default";
 try { $("#q-nointra").checked = localStorage.getItem(NOINTRA_KEY) === "1"; } catch (e) {}
 $("#q-nointra").addEventListener("change", () => { try { localStorage.setItem(NOINTRA_KEY, $("#q-nointra").checked ? "1" : "0"); } catch (e) {} if (state.last && state.last.query && state.last.query.src) runTrace(null, true); });
@@ -720,9 +724,9 @@ function multiPlaceHtml(r, forTicket) {
 }
 function csvCell(v) { v = v == null ? "" : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
 function ticketCsv(r) {
-  const head = ["#", "Firewall", "vsys", "Where", "Type", "Required", "Change", "Why", "Rule name", "From zone", "To zone", "Source", "Destination", "Application", "Service", "Place before", "Rule order", "Alternative (modify existing rule)", "CLI", "Alternative CLI"];
+  const head = ["#", "Firewall", "vsys", "Where", "Type", "Required", "Change", "Why", "Rule name", "From zone", "To zone", "Source", "Destination", "Application", "Service", "Log at session end", "Profile group", "Place before", "Rule order", "Alternative (modify existing rule)", "CLI", "Alternative CLI"];
   const lines = [head];
-  r.changes.forEach((c, i) => lines.push([i + 1, DL(c.device), c.vsys || "", c.where || c.vr || "", c.kind, c.optional ? "verify" : "yes", c.summary, c.why || "", c.rule && c.rule.name, c.rule && c.rule.from, c.rule && c.rule.to, c.rule && c.rule.source, c.rule && c.rule.destination, c.rule && c.rule.application, c.rule && c.rule.service, c.rule && c.rule.placeBefore, c.order ? c.order.text : "", c.modify ? c.modify.summary.replace(/^or /, "") : "", c.cli.join("\n"), c.modify ? c.modify.cli.join("\n") : ""]));
+  r.changes.forEach((c, i) => lines.push([i + 1, DL(c.device), c.vsys || "", c.where || c.vr || "", c.kind, c.optional ? "verify" : "yes", c.summary, c.why || "", c.rule && c.rule.name, c.rule && c.rule.from, c.rule && c.rule.to, c.rule && c.rule.source, c.rule && c.rule.destination, c.rule && c.rule.application, c.rule && c.rule.service, c.rule && (c.rule.logEnd ? "yes" : ""), c.rule && (c.rule.profileGroup || ""), c.rule && c.rule.placeBefore, c.order ? c.order.text : "", c.modify ? c.modify.summary.replace(/^or /, "") : "", c.cli.join("\n"), c.modify ? c.modify.cli.join("\n") : ""]));
   const meta = [["Flow", r.query.src + " -> " + r.query.dst + " " + r.query.svc], ["Result", (STATUS[r.status] || [0, r.status])[1]], ["Path", r.segments.map((x) => DL(x.device) + ":" + x.vsys).join(" > ")], ...(r.ambiguous ? [["Ambiguous", ambText(r.ambiguous) + ". " + ambRules(r.ambiguous)]] : []), ...(r.fcr && r.fcr.enforcement && r.fcr.enforcement.multi ? [["Places checked by security policy", r.fcr.enforcement.text]] : []), ["Generated", new Date().toISOString()], ...(r.exportNote ? [["Note", r.exportNote]] : []), []];
   return meta.concat(lines).map((l) => l.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
@@ -781,7 +785,7 @@ function changesHtml(r) {
       const kindTxt = { security: "Security rule", route: "Route", zone: "Zone" }[c.kind] || c.kind;
       h += '<div class="chg ' + (c.optional ? "opt " : "") + esc(c.kind) + '" data-kind="' + esc(c.kind) + '" data-idx="' + i + '"><label class="chg-pick"><input type="checkbox" data-chg="' + i + '" checked> Include in export / copy</label><h4><span class="pill ' + (c.optional ? "y" : c.kind === "security" ? "r" : "b") + '">' + esc(kindTxt) + (c.optional ? " - verify" : "") + "</span> " + esc(c.summary) + "</h4>" +
         (c.why ? '<div class="muted">' + esc(c.why) + "</div>" : "") +
-        (c.rule ? '<div class="muted">From <b>' + esc(c.rule.from) + "</b> to <b>" + esc(c.rule.to) + "</b> &middot; source " + esc(c.rule.source) + " &middot; destination " + esc(c.rule.destination) + " &middot; service " + esc(c.rule.service) + " &middot; app " + esc(c.rule.application) + (c.rule.placeBefore ? " &middot; place above <b>" + esc(c.rule.placeBefore) + "</b>" : "") + "</div>" : "") +
+        (c.rule ? '<div class="muted">From <b>' + esc(c.rule.from) + "</b> to <b>" + esc(c.rule.to) + "</b> &middot; source " + esc(c.rule.source) + " &middot; destination " + esc(c.rule.destination) + " &middot; service " + esc(c.rule.service) + " &middot; app " + esc(c.rule.application) + " &middot; log at session end: yes" + (c.rule.profileGroup ? " &middot; profile group <b>" + esc(c.rule.profileGroup) + "</b>" : "") + (c.rule.placeBefore ? " &middot; place above <b>" + esc(c.rule.placeBefore) + "</b>" : "") + "</div>" : "") +
         (c.order && c.order.text ? '<div class="muted order-advice" data-order="' + esc(c.order.mode) + '"><b>Rule order:</b> ' + esc(c.order.text) + "</div>" : "") +
         '<pre class="cli">' + esc(c.cli.join("\n")) + '</pre><button class="sm" data-copy="' + i + '">Copy</button>' +
         (c.modify ? '<div class="modalt"><b>Alternative:</b> ' + esc(c.modify.summary.replace(/^or /, "")) + '<pre class="cli">' + esc(c.modify.cli.join("\n")) + "</pre></div>" : "") + "</div>";
