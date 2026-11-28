@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+<config version="10.2.0" urldb="paloaltonetworks" detail-version="10.2.10">
+  <mgt-config><users><entry name="admin"><phash>$5$synthetic$notarealhash</phash><permissions><role-based><superuser>yes</superuser></role-based></permissions></entry></users></mgt-config>
+  <shared>
+    <address><entry name="srv-web"><ip-netmask>10.20.30.10/32</ip-netmask></entry></address>
+    <certificate>
+      <entry name="gp-portal-cert"><common-name>vpn.example.com</common-name><public-key>-----BEGIN CERTIFICATE-----SYNTHETIC-----END CERTIFICATE-----</public-key><private-key>-AQ==SYNTHETICENCRYPTEDKEY==</private-key><algorithm>RSA</algorithm></entry>
+    </certificate>
+    <ssl-tls-service-profile><entry name="gp-tls"><certificate>gp-portal-cert</certificate><protocol-settings><min-version>tls1-2</min-version><max-version>max</max-version></protocol-settings></entry></ssl-tls-service-profile>
+    <authentication-profile><entry name="radius-auth"><method><radius><server-profile>corp-radius</server-profile></radius></method><allow-list><member>all</member></allow-list></entry></authentication-profile>
+    <server-profile><radius><entry name="corp-radius"><server><entry name="r1"><ip-address>10.30.0.5</ip-address><secret>-AQ==SYNTHETICRADIUSSECRET</secret></entry></server></entry></radius></server-profile>
+    <admin-role><entry name="api-ro"><role><device><webui><device><master-key>********</master-key></device></webui></device></role></entry></admin-role>
+  </shared>
+  <devices>
+    <entry name="localhost.localdomain">
+      <network>
+        <interface>
+          <ethernet>
+            <entry name="ethernet1/1"><layer3><ip><entry name="203.0.113.10/29"/></ip><interface-management-profile>allow-ping</interface-management-profile><lldp><enable>yes</enable></lldp></layer3><comment>ISP-A</comment></entry>
+            <entry name="ethernet1/2"><layer3><units>
+                <entry name="ethernet1/2.10"><tag>10</tag><ip><entry name="10.20.10.1/24"/></ip><interface-management-profile>mgmt-inside</interface-management-profile></entry>
+                <entry name="ethernet1/2.20"><tag>20</tag><ip><entry name="10.20.20.1/24"/></ip></entry>
+              </units></layer3><link-speed>1000</link-speed><comment>core trunk</comment></entry>
+            <entry name="ethernet1/3"><aggregate-group>ae1</aggregate-group></entry>
+            <entry name="ethernet1/4"><aggregate-group>ae1</aggregate-group></entry>
+            <entry name="ethernet1/5"><virtual-wire/></entry>
+            <entry name="ethernet1/6"><virtual-wire/></entry>
+            <entry name="ethernet1/7"><layer2><units><entry name="ethernet1/7.100"><tag>100</tag></entry></units></layer2></entry>
+            <entry name="ethernet1/8"><ha/></entry>
+            <entry name="ethernet1/17"><layer3><ip><entry name="172.16.50.1/24"/></ip></layer3><link-speed>10000</link-speed><comment>DMZ 10G</comment></entry>
+            <entry name="ethernet1/18"><layer3><dhcp-client><enable>yes</enable></dhcp-client></layer3><comment>ISP-B</comment></entry>
+          </ethernet>
+          <aggregate-ethernet>
+            <entry name="ae1"><layer3><ip><entry name="10.20.40.1/24"/></ip><lacp><enable>yes</enable></lacp><units><entry name="ae1.50"><tag>50</tag><ip><entry name="10.20.50.1/24"/></ip></entry></units></layer3></entry>
+          </aggregate-ethernet>
+          <vlan><units><entry name="vlan.100"><ip><entry name="10.20.100.1/24"/></ip></entry></units></vlan>
+          <loopback><units><entry name="loopback.1"><ip><entry name="10.255.255.1/32"/></ip></entry></units></loopback>
+          <tunnel><units><entry name="tunnel.1"><ip><entry name="169.254.10.1/30"/></ip></entry><entry name="tunnel.2"/></units></tunnel>
+        </interface>
+        <profiles>
+          <interface-management-profile>
+            <entry name="allow-ping"><ping>yes</ping></entry>
+            <entry name="mgmt-inside"><https>yes</https><ssh>yes</ssh><permitted-ip><entry name="10.20.10.0/24"/></permitted-ip></entry>
+          </interface-management-profile>
+          <monitor-profile><entry name="default"><interval>3</interval><threshold>5</threshold><action>wait-recover</action></entry></monitor-profile>
+          <zone-protection-profile><entry name="zpp-untrust"><flood><tcp-syn><enable>yes</enable></tcp-syn></flood></entry></zone-protection-profile>
+        </profiles>
+        <virtual-wire><entry name="vw-inline"><interface1>ethernet1/5</interface1><interface2>ethernet1/6</interface2></entry></virtual-wire>
+        <vlan><entry name="lab-vlan"><interface><member>ethernet1/7.100</member></interface><virtual-interface><interface>vlan.100</interface></virtual-interface></entry></vlan>
+        <virtual-router>
+          <entry name="default">
+            <interface><member>ethernet1/1</member><member>ethernet1/2.10</member><member>ethernet1/2.20</member><member>ae1</member><member>ae1.50</member><member>ethernet1/17</member><member>ethernet1/18</member><member>vlan.100</member><member>loopback.1</member><member>tunnel.1</member><member>tunnel.2</member></interface>
+            <ecmp><enable>yes</enable><max-path>2</max-path></ecmp>
+            <routing-table><ip><static-route>
+              <entry name="default-isp-a"><destination>0.0.0.0/0</destination><interface>ethernet1/1</interface><nexthop><ip-address>203.0.113.9</ip-address></nexthop>
+                <path-monitor><enable>yes</enable><monitor-destinations><entry name="pm1"><source>203.0.113.10/29</source><destination>198.51.100.53</destination><enable>yes</enable></entry></monitor-destinations></path-monitor></entry>
+              <entry name="to-branch"><destination>10.99.0.0/16</destination><interface>tunnel.1</interface></entry>
+              <entry name="inside-net"><destination>10.30.0.0/16</destination><interface>ethernet1/2.10</interface><nexthop><ip-address>10.20.10.254</ip-address></nexthop></entry>
+            </static-route></ip></routing-table>
+            <protocol>
+              <bgp><enable>yes</enable><router-id>10.255.255.1</router-id><local-as>65010</local-as>
+                <peer-group><entry name="core"><peer><entry name="core-sw"><peer-as>65020</peer-as><local-address><interface>ethernet1/2.10</interface><ip>10.20.10.1/24</ip></local-address><peer-address><ip>10.20.10.2</ip></peer-address></entry></peer></entry></peer-group>
+                <redist-rules><entry name="connected"><address-family-identifier>ipv4</address-family-identifier><enable>yes</enable><set-origin>incomplete</set-origin></entry></redist-rules></bgp>
+              <redist-profile><entry name="connected"><priority>1</priority><filter><type><member>connect</member></type></filter><action><redist/></action></entry></redist-profile>
+              <ospf><enable>yes</enable><router-id>10.255.255.1</router-id><area><entry name="0.0.0.0"><type><normal/></type><interface><entry name="ae1.50"><enable>yes</enable><passive>no</passive></entry><entry name="loopback.1"><enable>yes</enable><passive>yes</passive></entry></interface></entry></area></ospf>
+              <ospfv3><enable>no</enable><area><entry name="0.0.0.0"><type><normal/></type><interface><entry name="ethernet1/17"><enable>no</enable></entry></interface></entry></area></ospfv3>
+              <rip><enable>no</enable><interface><entry name="ethernet1/18"><enable>no</enable></entry></interface></rip>
+            </protocol>
+          </entry>
+        </virtual-router>
+        <ike>
+          <gateway><entry name="gw-branch"><local-address><interface>ethernet1/1</interface><ip>203.0.113.10/29</ip></local-address><peer-address><ip>198.51.100.20</ip></peer-address><authentication><pre-shared-key><key>-AQ==SYNTHETICPSK==</key></pre-shared-key></authentication><protocol><ikev1><ike-crypto-profile>default</ike-crypto-profile></ikev1><ikev2><ike-crypto-profile>default</ike-crypto-profile></ikev2></protocol></entry></gateway>
+          <crypto-profiles>
+            <ike-crypto-profiles><entry name="legacy-ike"><encryption><member>3des</member></encryption><hash><member>sha1</member></hash><dh-group><member>group2</member></dh-group></entry><entry name="default"><encryption><member>aes-128-cbc</member></encryption><hash><member>sha256</member></hash><dh-group><member>group14</member></dh-group><lifetime><hours>8</hours></lifetime></entry></ike-crypto-profiles>
+            <ipsec-crypto-profiles><entry name="default"><esp><encryption><member>aes-128-cbc</member></encryption><authentication><member>sha256</member></authentication></esp><dh-group>group14</dh-group><lifetime><hours>1</hours></lifetime></entry></ipsec-crypto-profiles>
+          </crypto-profiles>
+        </ike>
+        <tunnel><ipsec><entry name="ipsec-branch"><auto-key><ike-gateway><entry name="gw-branch"/></ike-gateway><ipsec-crypto-profile>default</ipsec-crypto-profile></auto-key><tunnel-interface>tunnel.1</tunnel-interface><tunnel-monitor><enable>yes</enable><destination-ip>10.99.0.1</destination-ip></tunnel-monitor></entry></ipsec></tunnel>
+        <dhcp><interface>
+          <entry name="ethernet1/2.20"><server><mode>enabled</mode><ip-pool><member>10.20.20.100-10.20.20.200</member></ip-pool></server></entry>
+          <entry name="ae1.50"><relay><ip><enabled>yes</enabled><server><member>10.20.10.5</member></server></ip></relay></entry>
+        </interface></dhcp>
+        <dns-proxy><entry name="inside-dns"><enabled>yes</enabled><interface><member>ethernet1/2.10</member><member>ethernet1/2.20</member></interface><default><primary>198.51.100.53</primary></default></entry></dns-proxy>
+        <qos><interface><entry name="ethernet1/1"><enabled>yes</enabled><interface-bandwidth><egress-max>500</egress-max></interface-bandwidth><regular-traffic><default-group><qos-profile>default</qos-profile></default-group></regular-traffic></entry></interface>
+          <profile><entry name="default"><class-bandwidth-type><mbps><class><entry name="class4"><priority>medium</priority></entry></class></mbps></class-bandwidth-type></entry></profile></qos>
+        <lldp><enable>yes</enable></lldp>
+      </network>
+      <deviceconfig>
+        <system>
+          <hostname>SYN-PA3220-A</hostname>
+          <ip-address>10.10.0.10</ip-address><netmask>255.255.255.0</netmask><default-gateway>10.10.0.1</default-gateway>
+          <panorama><local-panorama><panorama-server>10.10.0.50</panorama-server></local-panorama></panorama>
+          <route><service>
+            <entry name="dns"><source><interface>ethernet1/2.10</interface><address>10.20.10.1/24</address></source></entry>
+            <entry name="syslog"><source><interface>ethernet1/2.10</interface><address>10.20.10.1/24</address></source></entry>
+            <entry name="snmp"><source><interface>loopback.1</interface><address>10.255.255.1/32</address></source></entry>
+          </service>
+          <destination><entry name="10.50.0.10"><source><interface>ethernet1/17</interface><address>172.16.50.1/24</address></source></entry></destination></route>
+          <dns-setting><servers><primary>198.51.100.53</primary></servers></dns-setting>
+          <authentication-profile>radius-auth</authentication-profile>
+          <permitted-ip><entry name="10.10.0.10"/><entry name="10.20.10.0/24"/></permitted-ip>
+        </system>
+        <setting><session><jumbo-frame>yes</jumbo-frame></session></setting>
+        <high-availability>
+          <enabled>yes</enabled>
+          <group><group-id>1</group-id><peer-ip>10.254.1.2</peer-ip><mode><active-passive/></mode>
+            <monitoring><link-monitoring><enabled>yes</enabled><link-group><entry name="uplinks"><interface><member>ethernet1/1</member><member>ethernet1/2</member></interface></entry></link-group></link-monitoring></monitoring>
+          </group>
+          <interface>
+            <ha1><port>ha1-a</port><ip-address>10.254.1.1</ip-address><netmask>255.255.255.252</netmask></ha1>
+            <ha1-backup><port>ha1-b</port><ip-address>10.254.2.1</ip-address><netmask>255.255.255.252</netmask></ha1-backup>
+            <ha2><port>hsci</port></ha2>
+            <ha2-backup><port>ethernet1/8</port><ip-address>10.254.3.1</ip-address><netmask>255.255.255.252</netmask></ha2-backup>
+          </interface>
+        </high-availability>
+      </deviceconfig>
+      <vsys>
+        <entry name="vsys1">
+          <zone>
+            <entry name="untrust"><network><layer3><member>ethernet1/1</member><member>ethernet1/18</member></layer3><zone-protection-profile>zpp-untrust</zone-protection-profile></network></entry>
+            <entry name="inside"><network><layer3><member>ethernet1/2.10</member><member>ethernet1/2.20</member><member>ae1</member><member>ae1.50</member></layer3></network></entry>
+            <entry name="dmz"><network><layer3><member>ethernet1/17</member></layer3></network></entry>
+            <entry name="lab-l2"><network><layer2><member>ethernet1/7.100</member></layer2></network></entry>
+            <entry name="lab-l3"><network><layer3><member>vlan.100</member></layer3></network></entry>
+            <entry name="inline"><network><virtual-wire><member>ethernet1/5</member><member>ethernet1/6</member></virtual-wire></network></entry>
+            <entry name="vpn"><network><layer3><member>tunnel.1</member><member>tunnel.2</member></layer3></network></entry>
+          </zone>
+          <import><network><interface><member>ethernet1/1</member><member>ethernet1/2.10</member><member>ethernet1/2.20</member><member>ae1</member><member>ae1.50</member><member>ethernet1/5</member><member>ethernet1/6</member><member>ethernet1/7.100</member><member>ethernet1/17</member><member>ethernet1/18</member><member>vlan.100</member><member>loopback.1</member><member>tunnel.1</member><member>tunnel.2</member></interface></network></import>
+          <profiles>
+            <virus><entry name="av-default"/></virus>
+            <url-filtering><entry name="url-corp"/></url-filtering>
+            <wildfire-analysis><entry name="wf-all"/></wildfire-analysis>
+          </profiles>
+          <user-id-agent><entry name="dc1-agent"><host>10.30.0.20</host><port>5007</port></entry></user-id-agent>
+          <rulebase>
+            <security><rules>
+              <entry name="inside-out"><from><member>inside</member></from><to><member>untrust</member></to><source><member>any</member></source><destination><member>any</member></destination><application><member>any</member></application><service><member>application-default</member></service><action>allow</action><profile-setting><profiles><virus><member>av-default</member></virus><wildfire-analysis><member>wf-all</member></wildfire-analysis></profiles></profile-setting></entry>
+              <entry name="web-in"><from><member>untrust</member></from><to><member>dmz</member></to><source><member>any</member></source><destination><member>srv-web</member></destination><application><member>web-browsing</member></application><service><member>application-default</member></service><action>allow</action></entry>
+            </rules></security>
+            <nat><rules>
+              <entry name="outbound-pat"><from><member>inside</member></from><to><member>untrust</member></to><to-interface>ethernet1/1</to-interface><source><member>any</member></source><destination><member>any</member></destination><service>any</service>
+                <source-translation><dynamic-ip-and-port><interface-address><interface>ethernet1/1</interface><ip>203.0.113.10/29</ip></interface-address></dynamic-ip-and-port></source-translation></entry>
+              <entry name="web-dnat"><from><member>untrust</member></from><to><member>untrust</member></to><to-interface>ethernet1/1</to-interface><source><member>any</member></source><destination><member>any</member></destination><service>service-http</service><destination-translation><translated-address>srv-web</translated-address></destination-translation></entry>
+            </rules></nat>
+            <pbf><rules>
+              <entry name="guest-to-isp-b"><from><interface><member>ethernet1/2.20</member></interface></from><source><member>any</member></source><destination><member>any</member></destination><service><member>any</member></service><application/><action><forward><egress-interface>ethernet1/18</egress-interface><nexthop><ip-address>198.51.100.1</ip-address></nexthop><monitor><profile>default</profile><ip-address>198.51.100.1</ip-address></monitor></forward></action></entry>
+            </rules></pbf>
+          </rulebase>
+          <global-protect>
+            <global-protect-portal><entry name="gp-portal"><portal-config><ssl-tls-service-profile>gp-tls</ssl-tls-service-profile><custom-login-page>factory-default</custom-login-page><custom-home-page>factory-default</custom-home-page><local-address><interface>ethernet1/1</interface><ip><ipv4>203.0.113.10/29</ipv4></ip></local-address></portal-config></entry></global-protect-portal>
+            <global-protect-gateway><entry name="gp-gw"><ssl-tls-service-profile>gp-tls</ssl-tls-service-profile><tunnel-mode>yes</tunnel-mode><local-address><interface>ethernet1/1</interface><ip><ipv4>203.0.113.10/29</ipv4></ip></local-address><tunnel-interface>tunnel.2</tunnel-interface></entry></global-protect-gateway>
+          </global-protect>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>

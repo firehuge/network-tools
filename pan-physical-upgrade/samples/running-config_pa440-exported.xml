@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6">
+  <mgt-config>
+    <users>
+      <entry name="synadmin"><phash>$5$synsalt$abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG</phash><permissions><role-based><superuser>yes</superuser></role-based></permissions></entry>
+      <entry name="syn-readonly"><phash>$5$synsalt$abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG</phash><permissions><role-based><custom><profile>syn-ro</profile></custom></role-based></permissions></entry>
+    </users>
+    <admin-role><entry name="syn-ro"><role><device><webui>
+      <policies><sdwan-rulebase>enable</sdwan-rulebase><security-rulebase>read-only</security-rulebase></policies>
+      <network><sdwan-interface-profile>enable</sdwan-interface-profile></network>
+    </webui></device></role></entry></admin-role>
+  </mgt-config>
+  <shared>
+    <certificate>
+      <entry name="syn-server-cert"><private-key>-----BEGIN SYNTHETIC-----</private-key><common-name>syn.example.invalid</common-name></entry>
+      <entry name="syn-root-ca"><common-name>Synthetic Root CA</common-name></entry>
+      <entry name="syn-root-ca-2"><common-name>Synthetic Root CA 2</common-name></entry>
+    </certificate>
+  </shared>
+  <devices><entry name="localhost.localdomain">
+    <network>
+      <interface><ethernet>
+        <entry name="ethernet1/1"><layer3><ip><entry name="203.0.113.2/30"/></ip><sdwan-link-settings><enable>no</enable></sdwan-link-settings></layer3></entry>
+        <entry name="ethernet1/2"><layer3><ip><entry name="10.50.2.1/24"/></ip></layer3></entry>
+        <entry name="ethernet1/3"><layer3><ip><entry name="10.50.3.1/24"/></ip></layer3></entry>
+      </ethernet></interface>
+      <ike><gateway><entry name="syn-gw"><authentication><pre-shared-key><key>-AQ==syntheticpsk==</key></pre-shared-key></authentication><peer-address><ip>198.51.100.9</ip></peer-address></entry></gateway></ike>
+      <virtual-router><entry name="default"><interface><member>ethernet1/1</member><member>ethernet1/2</member><member>ethernet1/3</member></interface></entry></virtual-router>
+    </network>
+    <deviceconfig><system><hostname>SYN-PA440</hostname><ip-address>10.10.0.40</ip-address><netmask>255.255.255.0</netmask><default-gateway>10.10.0.1</default-gateway><route><service><entry name="radius"><source><address>10.10.0.40</address><interface>management</interface></source></entry></service></route></system></deviceconfig>
+    <vsys><entry name="vsys1">
+      <zone>
+        <entry name="untrust"><network><layer3><member>ethernet1/1</member></layer3></network></entry>
+        <entry name="trust"><network><layer3><member>ethernet1/2</member><member>ethernet1/3</member></layer3></network></entry>
+      </zone>
+      <server-profile><radius><entry name="syn-radius"><server><entry name="r1"><ip-address>198.51.100.20</ip-address><secret>-AQ==syntheticsecret==</secret></entry></server></entry></radius></server-profile>
+      <rulebase><security><rules>
+        <entry name="allow-out"><from><member>trust</member></from><to><member>untrust</member></to><source><member>any</member></source><destination><member>any</member></destination><application><member>any</member></application><service><member>application-default</member></service><action>allow</action></entry>
+      </rules></security></rulebase>
+      <import><network><interface><member>ethernet1/1</member><member>ethernet1/2</member><member>ethernet1/3</member></interface></network></import>
+    </entry></vsys>
+  </entry></devices>
+</config>

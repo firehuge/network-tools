@@ -1,0 +1,6021 @@
+{
+ "schema": 1,
+ "data_as_of": "2026-11-27",
+ "notes": [
+  "Throughput is the vendor 'appmix' figure (App-ID + logging). Threat Prevention throughput adds IPS, AV, anti-spyware, WildFire, file blocking and logging.",
+  "Interface lists come from datasheets. Port numbering (which ethernet1/N is which media) is assumed in datasheet order unless ports_verified is true. Check the hardware reference guide and edit the target port list in the tool if needed.",
+  "Status and end-of-sale dates are recomputed in the tool from eos_date against today's date.",
+  "Power supply counts (psu) and dedicated HA port types (ha_ports) come from hardware references and datasheets; where sources disagree the model's psu.note says so. A null means not in the sources we read.",
+  "HA ports: models with no dedicated HA port (PA-400, PA-500 and others) use a data port for HA links. HA1 is the control link, HA2 the data link; HSCI carries HA2/HA3 on models that have it.",
+  "Capacity limits (limits): from the Palo Alto datasheet capacity tables as copied on a reseller site (an older revision: some session counts differ from the current datasheet), plus Palo Alto KB articles for GlobalProtect tunnels and older rule counts. A missing key means not published in the sources we read; check the Product Comparison tool.",
+  "Rack facts (RU, size, weight, airflow, watts, BTU) are series figures from datasheets. Rail kits and mounting hardware are not in the sources: confirm on the quote. Power inlet type and wattage are in each model's psu block.",
+  "No prices. Quote quantities only."
+ ],
+ "sources": {
+  "summary": {
+   "title": "ML-Powered NGFW Specifications and Features Summary (PAN-OS 12.2, (c) 2026)",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fproduct-summary-specsheet"
+  },
+  "eol": {
+   "title": "Hardware End-of-Life Dates",
+   "url": "https://www.paloaltonetworks.com/services/support/end-of-life-announcements/hardware-end-of-life-dates"
+  },
+  "compat": {
+   "title": "Compatibility Matrix: Supported OS Releases by Model (NGFW)",
+   "url": "https://docs.paloaltonetworks.com/compatibility-matrix/supported-os-releases-by-model/palo-alto-networks-next-gen-firewalls"
+  },
+  "ds400": {
+   "title": "PA-400 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-400-series"
+  },
+  "ds1400": {
+   "title": "PA-1400 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-1400-series"
+  },
+  "ds5400": {
+   "title": "PA-5400 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-5400-series"
+  },
+  "ds3200": {
+   "title": "PA-3200 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-3200-series"
+  },
+  "ds5200": {
+   "title": "PA-5200 Series datasheet (PAN-OS 11.2)",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-5200-series-specsheet"
+  },
+  "ds800": {
+   "title": "PA-800 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-800-series-datasheet"
+  },
+  "ds220r": {
+   "title": "PA-220R datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-220r"
+  },
+  "ds7000": {
+   "title": "PA-7000 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-7000-series"
+  },
+  "hw400": {
+   "title": "PA-400 Series hardware reference: back panel and connect power",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-400-hardware-reference/pa-400-firewall-overview/pa-400-back-panel"
+  },
+  "hw500": {
+   "title": "PA-500 Series electrical specifications",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-500-hardware-reference/pa-500-series-firewall-specifications/pa-500-series-firewall-electrical-specifications"
+  },
+  "ds500": {
+   "title": "PA-500 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-500-series"
+  },
+  "hw1400": {
+   "title": "PA-1400 Series hardware reference: back panel",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-1400-hardware-reference/pa-1400-series-overview/back-panel-1400-series"
+  },
+  "hw3400": {
+   "title": "PA-3400 Series electrical specifications",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-3400-hardware-reference/pa-3400-series-specifications/electrical-specs-pa-3400-series"
+  },
+  "ds3400": {
+   "title": "PA-3400 Series datasheet",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fpa-3400-series"
+  },
+  "hw3200": {
+   "title": "PA-3200 Series electrical specifications",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-3200-hardware-reference/pa-3200-series-specifications/electrical-specs-pa-3200-series"
+  },
+  "hw5200": {
+   "title": "PA-5200 Series hardware reference",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-5200-hardware-reference"
+  },
+  "hw5400": {
+   "title": "PA-5400 Series electrical specifications",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-5400-hardware-reference/pa-5400-series-firewall-specifications/pa-5400-series-firewall-electrical-specifications"
+  },
+  "hw800": {
+   "title": "PA-800 Series electrical specifications",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-800-hardware-reference/pa-800-series-firewall-specifications/pa-800-series-electrical-specifications"
+  },
+  "hw7000": {
+   "title": "PA-7000 Series power configuration options",
+   "url": "https://docs.paloaltonetworks.com/hardware/pa-7000-hardware-reference/PA-7000-series-firewall-installation/connect-power-to-a-pa-7000-series-firewall/pa-7000-series-power-configuration-options"
+  },
+  "lim_mirror": {
+   "title": "Palo Alto Networks series datasheet capacity tables (copy on a reseller site, older revision; verify in the Product Comparison tool)",
+   "url": "https://jmeastern.com/it-products/palo-alto/next-generation-firewall/hardware/pa-3400-series/"
+  },
+  "kb_gp": {
+   "title": "KB: Maximum number of GlobalProtect VPN tunnels supported on firewall",
+   "url": "https://knowledgebase.paloaltonetworks.com/KCSArticleDetail?id=kA10g000000PPBCCA4&lang=en_US"
+  },
+  "kb_rules": {
+   "title": "KB: Maximum number of rule objects supported",
+   "url": "https://knowledgebase.paloaltonetworks.com/KCSArticleDetail?id=kA10g000000ClVuCAK&lang=en_US"
+  },
+  "pc_tool": {
+   "title": "Palo Alto Networks Product Comparison tool (all capacities, latest PAN-OS)",
+   "url": "https://www.paloaltonetworks.com/products/product-comparison"
+  },
+  "upgrade_path": {
+   "title": "Determine the Upgrade Path to PAN-OS 11.1 and later releases",
+   "url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-upgrade/upgrade-pan-os/upgrade-the-firewall-pan-os/determine-the-upgrade-path"
+  },
+  "upgrade_notes": {
+   "title": "Upgrade/Downgrade Considerations (PAN-OS 11.1 and later)",
+   "url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-upgrade/upgrade-pan-os/upgradedowngrade-considerations"
+  },
+  "upgrade_panorama": {
+   "title": "Upgrade Firewalls Using Panorama (PAN-OS 10.2)",
+   "url": "https://origin-docs.paloaltonetworks.com/pan-os/10-2/pan-os-upgrade/upgrade-pan-os/upgrade-the-firewall-pan-os/upgrade-firewalls-using-panorama"
+  },
+  "vm_lacp": {
+   "title": "VM-Series: Configure Link Aggregation Control Protocol (ESXi, KVM)",
+   "url": "https://docs.paloaltonetworks.com/vm-series/deployment/private-cloud/set-up-a-vm-series-firewall-on-an-esxi-server/install-a-vm-series-firewall-on-vmware-vsphere-hypervisor-esxi/configure-link-aggregation-control-protocol"
+  },
+  "vm_jumbo": {
+   "title": "Enable Jumbo Frames on the VM-Series Firewall",
+   "url": "https://docs.paloaltonetworks.com/vm-series/getting-started/enable-jumbo-frames-on-the-vm-series-firewall"
+  },
+  "decrypt_mirror": {
+   "title": "Decrypt Mirror Interface (PAN-OS 11.2)",
+   "url": "https://docs.paloaltonetworks.com/ngfw/help/11-2/network/network-interfaces/decrypt-mirror-interface"
+  },
+  "haports": {
+   "title": "HA Port and Processor Support (compatibility matrix)",
+   "url": "https://docs.paloaltonetworks.com/compatibility-matrix/reference/supported-os-releases-by-model/ha-port-and-processor-support"
+  },
+  "vsys": {
+   "title": "Platform Support and Licensing for Virtual Systems",
+   "url": "https://docs.paloaltonetworks.com/ngfw/administration/virtual-systems/platform-support-and-licensing-for-virtual-systems"
+  },
+  "vm_models": {
+   "title": "VM-Series Models (capacities)",
+   "url": "https://docs.paloaltonetworks.com/vm-series/activation-and-onboarding/vm-series-models"
+  },
+  "vm_req": {
+   "title": "VM-Series System Requirements",
+   "url": "https://docs.paloaltonetworks.com/vm-series/activation-and-onboarding/vm-series-models/vm-series-system-requirements"
+  },
+  "vm_mem": {
+   "title": "VM-Series Maximum Limits Based on Memory (11.2 and later)",
+   "url": "https://docs.paloaltonetworks.com/vm-series/activation-and-onboarding/software-ngfw/maximum-limits-based-on-memory"
+  },
+  "vm_vsys": {
+   "title": "Virtual Systems Support on VM-Series Firewall",
+   "url": "https://docs.paloaltonetworks.com/vm-series/getting-started/virtual-systems-support-on-vm"
+  },
+  "vm_ds": {
+   "title": "VM-Series datasheet (legacy fixed-model App-ID throughput)",
+   "url": "https://www.paloaltonetworks.com/apps/pan/public/downloadResource?pagePath=%2Fcontent%2Fpan%2Fen_US%2Fresources%2Fdatasheets%2Fvm-series-specsheet"
+  }
+ },
+ "hardware": [
+  {
+   "model": "PA-410",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 1400000000,
+   "tp_bps": 800000000,
+   "ipsec_bps": 500000000,
+   "cps": 11000,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 7,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (7)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.1.2",
+   "last_panos": "12.1",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "psu": {
+    "base": 1,
+    "max": 1,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": 25,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Single power adapter only; no redundant option.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "limits": {
+    "rules": 500,
+    "nat": 400,
+    "decrypt": 100,
+    "zones": 25,
+    "addr": 2500,
+    "addrgrp": 125,
+    "svc": 1000,
+    "ike": 1000,
+    "s2s": 1000,
+    "gp": 250,
+    "mroutes": 500,
+    "fib4": 5000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": null,
+    "dims": "1.63\" H x 6.42\" D x 9.53\" W",
+    "lbs": "3.1 / 5.9",
+    "airflow": "Fanless (no airflow)",
+    "max_w": 23,
+    "btu_hr": 78,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-415",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 1500000000,
+   "tp_bps": 800000000,
+   "ipsec_bps": 500000000,
+   "cps": 11000,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 1,
+     "media": "combo",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    }
+   ],
+   "ports_text": "1G SFP/RJ45 combo (1), 1G RJ45 (4), 1G RJ45/PoE (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "11.0",
+   "last_panos": "12.1",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one adapter; a second adapter (PWR 2) is bought separately for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "limits": {
+    "rules": 500,
+    "nat": 400,
+    "decrypt": 100,
+    "zones": 25,
+    "addr": 2500,
+    "addrgrp": 125,
+    "svc": 1000,
+    "ike": 1000,
+    "s2s": 1000,
+    "gp": 250,
+    "mroutes": 500,
+    "fib4": 5000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": null,
+    "dims": "1.73\" H x 9\" D x 13\" W",
+    "lbs": "7.85 / 12.2",
+    "airflow": "Fanless (no airflow)",
+    "max_w": 142,
+    "btu_hr": 117,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-415-5G",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 1500000000,
+   "tp_bps": 800000000,
+   "ipsec_bps": 500000000,
+   "cps": 11400,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 1,
+     "media": "combo",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    }
+   ],
+   "ports_text": "Embedded 5G, 1G SFP/RJ45 combo (1), 1G RJ45 (4), 1G RJ45/PoE (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400"
+   ],
+   "min_panos": "11.1",
+   "last_panos": "12.1",
+   "cellular": true,
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one adapter; a second adapter (PWR 2) is bought separately for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "rack": {
+    "ru": null,
+    "dims": "1.73\" H x 9\" D x 13\" W",
+    "lbs": "7.85",
+    "airflow": null,
+    "max_w": null,
+    "btu_hr": 150,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-440",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 2400000000,
+   "tp_bps": 1200000000,
+   "ipsec_bps": 1100000000,
+   "cps": 34000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (8)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.1",
+   "ports_verified": true,
+   "vsys_note": "Adding virtual systems needs PAN-OS 11.0 or later",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "last_panos": "12.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": 50,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one 50 W adapter; a second adapter (PWR 2) is bought separately for redundancy. The CLI does not report adapter status.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "limits": {
+    "rules": 2000,
+    "nat": 3000,
+    "decrypt": 300,
+    "zones": 50,
+    "addr": 10000,
+    "addrgrp": 250,
+    "svc": 1500,
+    "ike": 2800,
+    "s2s": 2800,
+    "gp": 1000,
+    "mroutes": 1000,
+    "fib4": 5000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": null,
+    "dims": "1.74\" H x 8.83\" D x 8.07\" W",
+    "lbs": "5.0 / 7.8",
+    "airflow": "Fanless (no airflow)",
+    "max_w": 34.3,
+    "btu_hr": 117,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null
+  },
+  {
+   "model": "PA-445",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 2700000000,
+   "tp_bps": 1250000000,
+   "ipsec_bps": 1100000000,
+   "cps": 34000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 1,
+     "media": "combo",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    }
+   ],
+   "ports_text": "1G SFP/RJ45 combo (1), 1G RJ45 (4), 1G RJ45/PoE (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "11.0",
+   "vsys_note": "Adding virtual systems needs PAN-OS 11.0 or later",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "last_panos": "12.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one adapter; a second adapter (PWR 2) is bought separately for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "limits": {
+    "rules": 2000,
+    "nat": 3000,
+    "decrypt": 300,
+    "zones": 50,
+    "addr": 10000,
+    "addrgrp": 250,
+    "svc": 1500,
+    "ike": 2800,
+    "s2s": 2800,
+    "gp": 1000,
+    "mroutes": 1000,
+    "fib4": 5000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": null,
+    "dims": "1.66\" H x 8.87\" D x 13\" W",
+    "lbs": "8.7 / 12.6",
+    "airflow": "Fanless (no airflow)",
+    "max_w": 146,
+    "btu_hr": 117,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-450",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 3300000000,
+   "tp_bps": 2100000000,
+   "ipsec_bps": 1700000000,
+   "cps": 48000,
+   "max_sessions": 300000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (8)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.1",
+   "vsys_note": "Adding virtual systems needs PAN-OS 11.0 or later",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "last_panos": "12.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": 50,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one 50 W adapter; a second adapter (PWR 2) is bought separately for redundancy. The CLI does not report adapter status.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "limits": {
+    "rules": 2500,
+    "nat": 3000,
+    "decrypt": 500,
+    "zones": 75,
+    "addr": 15000,
+    "addrgrp": 500,
+    "svc": 2000,
+    "ike": 2800,
+    "s2s": 2800,
+    "gp": 1500,
+    "mroutes": 1500,
+    "fib4": 7500
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": null,
+    "dims": "1.74\" H x 8.83\" D x 8.07\" W",
+    "lbs": "5.0 / 7.8",
+    "airflow": "Fanless (no airflow)",
+    "max_w": 41.3,
+    "btu_hr": 141,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-455",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 3600000000,
+   "tp_bps": 2300000000,
+   "ipsec_bps": 1800000000,
+   "cps": 56000,
+   "max_sessions": 300000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 2,
+     "media": "combo",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    }
+   ],
+   "ports_text": "1G SFP/RJ45 combo (2), 1G RJ45 (2), 1G RJ45/PoE (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400"
+   ],
+   "min_panos": "11.1",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "last_panos": "12.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one adapter; a second adapter (PWR 2) is bought separately for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "rack": {
+    "ru": null,
+    "dims": "1.7\" H x 9.4\" D x 15.4\" W",
+    "lbs": "9.8 / 14.1",
+    "airflow": null,
+    "max_w": 143.4,
+    "btu_hr": 205,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-455-5G",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 3200000000,
+   "tp_bps": 1800000000,
+   "ipsec_bps": 1600000000,
+   "cps": 48000,
+   "max_sessions": 300000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 2,
+     "media": "combo",
+     "mbps": 1000
+    },
+    {
+     "n": 6,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    }
+   ],
+   "ports_text": "Embedded 5G, 1G SFP/RJ45 combo (2), 1G RJ45 (6), 1G RJ45 PoE (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400"
+   ],
+   "min_panos": "11.2.3",
+   "cellular": true,
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "last_panos": "12.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one adapter; a second adapter (PWR 2) is bought separately for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "rack": {
+    "ru": 1,
+    "dims": "283 mm D x 303 mm W (1RU height)",
+    "lbs": null,
+    "airflow": null,
+    "max_w": 212,
+    "btu_hr": 655,
+    "mount": null,
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-460",
+   "family": "PA-400",
+   "form": "hardware",
+   "fw_bps": 4200000000,
+   "tp_bps": 3000000000,
+   "ipsec_bps": 2300000000,
+   "cps": 67000,
+   "max_sessions": 400000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (8)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "ds400",
+    "hw400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.1",
+   "vsys_note": "Adding virtual systems needs PAN-OS 11.0 or later",
+   "eos_date": "2027-03-22",
+   "eol_date": "2032-03-21",
+   "replacement": "PA-500 Series",
+   "last_panos": "12.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": 50,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Ships with one 50 W adapter; a second adapter (PWR 2) is bought separately for redundancy. The CLI does not report adapter status.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw400",
+     "ds400"
+    ]
+   },
+   "limits": {
+    "rules": 2500,
+    "nat": 3000,
+    "decrypt": 500,
+    "zones": 100,
+    "addr": 15000,
+    "addrgrp": 500,
+    "svc": 2000,
+    "ike": 2800,
+    "s2s": 2800,
+    "gp": 1500,
+    "mroutes": 1500,
+    "fib4": 10000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": null,
+    "dims": "1.74\" H x 8.83\" D x 8.07\" W",
+    "lbs": "5.0 / 7.8",
+    "airflow": "Fanless (no airflow)",
+    "max_w": 41.3,
+    "btu_hr": 141,
+    "mount": "Desktop unit",
+    "sources": [
+     "ds400"
+    ],
+    "note": null
+   },
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-410R",
+   "family": "PA-400R",
+   "form": "hardware",
+   "fw_bps": 1400000000,
+   "tp_bps": 650000000,
+   "ipsec_bps": 650000000,
+   "cps": 11400,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (4), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "11.1.3",
+   "rugged": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-410R-5G",
+   "family": "PA-400R",
+   "form": "hardware",
+   "fw_bps": 1400000000,
+   "tp_bps": 650000000,
+   "ipsec_bps": 650000000,
+   "cps": 11400,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "Integrated 5G (DSSS), 10/100/1000 (4), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "11.1.4",
+   "rugged": true,
+   "cellular": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-450R",
+   "family": "PA-400R",
+   "form": "hardware",
+   "fw_bps": 3200000000,
+   "tp_bps": 1700000000,
+   "ipsec_bps": 1300000000,
+   "cps": 48000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 6,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "combo",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (6), combo SFP or copper (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "11.1",
+   "rugged": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-450R-5G",
+   "family": "PA-400R",
+   "form": "hardware",
+   "fw_bps": 3200000000,
+   "tp_bps": 1700000000,
+   "ipsec_bps": 1300000000,
+   "cps": 48000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 6,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "combo",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "Integrated 5G DSSS, 10/100/1000 (6), 1G SFP/RJ-45 combo (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "11.1",
+   "rugged": true,
+   "cellular": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-455R-5G",
+   "family": "PA-400R",
+   "form": "hardware",
+   "fw_bps": 3200000000,
+   "tp_bps": 1800000000,
+   "ipsec_bps": 1300000000,
+   "cps": 48000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 6,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "combo",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    }
+   ],
+   "ports_text": "Integrated 5G (DSSS), 1G RJ-45 (6), 1G SFP/RJ-45 combo (2), 1G RJ45 PoE (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.1.2",
+   "rugged": true,
+   "cellular": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-501",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 800000000,
+   "tp_bps": 500000000,
+   "ipsec_bps": 240000000,
+   "cps": 5000,
+   "max_sessions": 30000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 7,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "1G RJ-45 (7)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.4-h2",
+   "psu": {
+    "base": 1,
+    "max": 1,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Single power adapter only.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-505",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 1200000000,
+   "tp_bps": 800000000,
+   "ipsec_bps": 400000000,
+   "cps": 9000,
+   "max_sessions": 62000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 7,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "1G RJ-45 (7)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.3",
+   "psu": {
+    "base": 1,
+    "max": 1,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "Single power adapter only.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-510",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 1800000000,
+   "tp_bps": 1200000000,
+   "ipsec_bps": 800000000,
+   "cps": 15000,
+   "max_sessions": 98000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "1G RJ-45 (8)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.3",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-520",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 2800000000,
+   "tp_bps": 1800000000,
+   "ipsec_bps": 1500000000,
+   "cps": 25000,
+   "max_sessions": 148000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "1G RJ-45 (8)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-520-5G",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 2600000000,
+   "tp_bps": 1600000000,
+   "ipsec_bps": 1400000000,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "Integrated 5G modem, 10/100/1000 RJ45 (8), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.10",
+   "cellular": true,
+   "note": "The summary sheet lists 148K new sessions/s and 25K max sessions for this model, which looks transposed, so both are left as not published here. Check the PA-500 datasheet.",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-540",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 3800000000,
+   "tp_bps": 2200000000,
+   "ipsec_bps": 2000000000,
+   "cps": 50000,
+   "max_sessions": 248000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "1G RJ-45 (8), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-545-POE",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 5000000000,
+   "tp_bps": 3000000000,
+   "ipsec_bps": 3000000000,
+   "cps": 55000,
+   "max_sessions": 298000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 6,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "bypass": true
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 2500,
+     "poe": true
+    },
+    {
+     "n": 4,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "1G RJ-45 (6), 1G RJ-45 bypass (2), 1G/2.5G PoE (4), 1G SFP (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-550",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 6500000000,
+   "tp_bps": 4500000000,
+   "ipsec_bps": 4000000000,
+   "cps": 70000,
+   "max_sessions": 398000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 10,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "bypass": true
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "1G RJ-45 (10), 1G RJ-45 bypass (2), 1G SFP (2), 1G/10G SFP/SFP+ (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-555-POE",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 7500000000,
+   "tp_bps": 5000000000,
+   "ipsec_bps": 4500000000,
+   "cps": 75000,
+   "max_sessions": 448000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "bypass": true
+    },
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000,
+     "poe": true
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 2500,
+     "poe": true
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "1G RJ-45 (2), 1G RJ-45 bypass (2), 1G RJ-45 PoE (4), 1G/2.5G PoE (4), 1G SFP (2), 1G/10G SFP/SFP+ (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-560",
+   "family": "PA-500",
+   "form": "hardware",
+   "fw_bps": 8500000000,
+   "tp_bps": 6000000000,
+   "ipsec_bps": 5500000000,
+   "cps": 100000,
+   "max_sessions": 598000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 16,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "1G RJ-45 (16), 1G SFP (4), 1G/10G SFP/SFP+ (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary",
+    "hw500",
+    "ds500"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "adapter",
+    "feed": "AC adapter",
+    "watts": null,
+    "cord": "External power adapter (AC in, DC out) with its own AC cord",
+    "note": "One adapter ships with the firewall; a second adapter is an optional accessory for redundancy.",
+    "cli_status": false,
+    "text": null,
+    "sources": [
+     "hw500",
+     "ds500"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-52R-5G",
+   "family": "PA-5xR",
+   "form": "hardware",
+   "fw_bps": 2000000000,
+   "tp_bps": 1000000000,
+   "ipsec_bps": 800000000,
+   "cps": 2500,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 2,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "Integrated 5G (RedCap), 10/100/1000 (8), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "rugged": true,
+   "cellular": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-54R-POE",
+   "family": "PA-5xR",
+   "form": "hardware",
+   "fw_bps": 2000000000,
+   "tp_bps": 1600000000,
+   "ipsec_bps": 1200000000,
+   "cps": 5000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 12,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (12), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "rugged": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-54R-POE-D-5G",
+   "family": "PA-5xR",
+   "form": "hardware",
+   "fw_bps": 2000000000,
+   "tp_bps": 1600000000,
+   "ipsec_bps": 1200000000,
+   "cps": 5000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 12,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "Integrated dual 5G, 10/100/1000 (12), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "rugged": true,
+   "cellular": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-56R-POE-5G",
+   "family": "PA-5xR",
+   "form": "hardware",
+   "fw_bps": 4000000000,
+   "tp_bps": 2400000000,
+   "ipsec_bps": 1900000000,
+   "cps": 5000,
+   "max_sessions": 200000,
+   "vsys_base": 1,
+   "vsys_max": 5,
+   "ports": [
+    {
+     "n": 16,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "Integrated 5G, 10/100/1000 (16), 1G SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "rugged": true,
+   "cellular": true,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-1410",
+   "family": "PA-1400",
+   "form": "hardware",
+   "fw_bps": 8500000000,
+   "tp_bps": 4500000000,
+   "ipsec_bps": 4100000000,
+   "cps": 100000,
+   "max_sessions": 945000,
+   "vsys_base": 1,
+   "vsys_max": 6,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 5000,
+     "poe": true
+    },
+    {
+     "n": 6,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "10/100/1000 (8), 1/2.5/5G (4)/PoE, 1G SFP (6), 10G SFP+ (4)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds1400",
+    "haports",
+    "hw1400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "11.0",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 450,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Series datasheet: one 450 W AC supply, second is optional and bought separately. The summary spec sheet words it as '2; one is redundant', so confirm the quote includes the second supply if you want redundancy.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds1400",
+     "hw1400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 1500,
+    "nat": 3000,
+    "decrypt": 750,
+    "zones": 50,
+    "addr": 20000,
+    "addrgrp": 2000,
+    "svc": 3000,
+    "ike": 2800,
+    "s2s": 2800,
+    "gp": 1500,
+    "mroutes": 2000,
+    "fib4": 10000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.70\" H x 14.15\" D x 17.15\" W",
+    "lbs": "15.5",
+    "airflow": "Front to back",
+    "max_w": 290,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds1400"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-1420",
+   "family": "PA-1400",
+   "form": "hardware",
+   "fw_bps": 9500000000,
+   "tp_bps": 6200000000,
+   "ipsec_bps": 5600000000,
+   "cps": 140000,
+   "max_sessions": 1400000,
+   "vsys_base": 1,
+   "vsys_max": 6,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 5000
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 5000,
+     "poe": true
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "10/100/1000 (4), 1/2.5/5G (4), 1/2.5/5G (4)/PoE, 1G SFP (2), 10G SFP+ (8)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds1400",
+    "haports",
+    "hw1400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "11.0",
+   "psu": {
+    "base": 1,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 450,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Series datasheet: one 450 W AC supply, second is optional and bought separately. The summary spec sheet words it as '2; one is redundant', so confirm the quote includes the second supply if you want redundancy.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds1400",
+     "hw1400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 1500,
+    "nat": 3000,
+    "decrypt": 750,
+    "zones": 50,
+    "addr": 20000,
+    "addrgrp": 2000,
+    "svc": 3000,
+    "ike": 2800,
+    "s2s": 2800,
+    "gp": 1500,
+    "mroutes": 2000,
+    "fib4": 10000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.70\" H x 14.15\" D x 17.15\" W",
+    "lbs": "15.5",
+    "airflow": "Front to back",
+    "max_w": 300,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds1400"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-1510",
+   "family": "PA-1500",
+   "form": "hardware",
+   "fw_bps": 15000000000,
+   "tp_bps": 9000000000,
+   "ipsec_bps": 7000000000,
+   "cps": 120000,
+   "max_sessions": 1090000,
+   "vsys_base": 1,
+   "vsys_max": 6,
+   "ports": [
+    {
+     "n": 12,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 5000
+    },
+    {
+     "n": 4,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "10/100/1000 Cu (12), 1G/2.5G/5G Cu (8), 1G SFP (4), 1G/10G SFP+ (8)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant, 1200 W, 54 V AC/DC.",
+    "cli_status": true,
+    "text": "1+1 redundant 1200W 54V AC/DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-1520",
+   "family": "PA-1500",
+   "form": "hardware",
+   "fw_bps": 25000000000,
+   "tp_bps": 18000000000,
+   "ipsec_bps": 14000000000,
+   "cps": 150000,
+   "max_sessions": 1490000,
+   "vsys_base": 1,
+   "vsys_max": 11,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 5000
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    }
+   ],
+   "ports_text": "10/100/1000 Cu (8), 1G/2.5G/5G Cu (8), 1G/2.5G/5/10G Cu (4), 1/10G SFP+ (8), 10G/25G SFP28 (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant, 1200 W, 54 V AC/DC.",
+    "cli_status": true,
+    "text": "1+1 redundant 1200W 54V AC/DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-1530",
+   "family": "PA-1500",
+   "form": "hardware",
+   "fw_bps": 35000000000,
+   "tp_bps": 27000000000,
+   "ipsec_bps": 18000000000,
+   "cps": 175000,
+   "max_sessions": 1750000,
+   "vsys_base": 1,
+   "vsys_max": 11,
+   "ports": [
+    {
+     "n": 8,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "mgig",
+     "mbps": 5000
+    },
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    }
+   ],
+   "ports_text": "10/100/1000 Cu (8), 1G/2.5G/5G Cu (4), 1G/2.5G/5/10G Cu (8), 1/10G SFP+ (8), 10G/25G SFP28 (4)",
+   "dedicated_ha": [],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant, 1200 W, 54 V AC/DC.",
+    "cli_status": true,
+    "text": "1+1 redundant 1200W 54V AC/DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3410",
+   "family": "PA-3400",
+   "form": "hardware",
+   "fw_bps": 14000000000,
+   "tp_bps": 7500000000,
+   "ipsec_bps": 6600000000,
+   "cps": 145000,
+   "max_sessions": 1400000,
+   "vsys_base": 1,
+   "vsys_max": 11,
+   "ports": [
+    {
+     "n": 12,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 10,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (12), 1G/10G SFP/SFP+ (10), 25G SFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds3400",
+    "haports",
+    "hw3400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 450,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two load-sharing supplies ship with the firewall; connect them to separate circuits. AC and DC supplies cannot be mixed.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw3400",
+     "ds3400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 10000,
+    "nat": 3000,
+    "decrypt": 750,
+    "zones": 200,
+    "addr": 30000,
+    "addrgrp": 15000,
+    "svc": 3000,
+    "ike": 3000,
+    "s2s": 5000,
+    "gp": 1800,
+    "mroutes": 2000,
+    "fib4": 10000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.70\" H x 14.15\" D x 17.15\" W",
+    "lbs": "15.5 / 25",
+    "airflow": "Front to back",
+    "max_w": 190,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "lim_mirror"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3420",
+   "family": "PA-3400",
+   "form": "hardware",
+   "fw_bps": 19000000000,
+   "tp_bps": 10000000000,
+   "ipsec_bps": 9900000000,
+   "cps": 220000,
+   "max_sessions": 2200000,
+   "vsys_base": 1,
+   "vsys_max": 11,
+   "ports": [
+    {
+     "n": 12,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 10,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (12), 1G/10G SFP/SFP+ (10), 25G SFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds3400",
+    "haports",
+    "hw3400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 450,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two load-sharing supplies ship with the firewall; connect them to separate circuits. AC and DC supplies cannot be mixed.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw3400",
+     "ds3400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 10000,
+    "nat": 3000,
+    "decrypt": 750,
+    "zones": 200,
+    "addr": 30000,
+    "addrgrp": 15000,
+    "svc": 3000,
+    "ike": 3000,
+    "s2s": 5000,
+    "gp": 1800,
+    "mroutes": 2000,
+    "fib4": 16000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.70\" H x 14.15\" D x 17.15\" W",
+    "lbs": "15.5 / 25",
+    "airflow": "Front to back",
+    "max_w": 190,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "lim_mirror"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3430",
+   "family": "PA-3400",
+   "form": "hardware",
+   "fw_bps": 29000000000,
+   "tp_bps": 15000000000,
+   "ipsec_bps": 12000000000,
+   "cps": 240000,
+   "max_sessions": 2500000,
+   "vsys_base": 1,
+   "vsys_max": 11,
+   "ports": [
+    {
+     "n": 12,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 10,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 2,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (12), 1G/10G SFP/SFP+ (10), 25G SFP28 (4), 40G/100G QSFP/QSFP28 (2)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds3400",
+    "haports",
+    "hw3400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 450,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two load-sharing supplies ship with the firewall; connect them to separate circuits. AC and DC supplies cannot be mixed.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw3400",
+     "ds3400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 10000,
+    "nat": 3000,
+    "decrypt": 1500,
+    "zones": 200,
+    "addr": 30000,
+    "addrgrp": 15000,
+    "svc": 4000,
+    "ike": 4000,
+    "s2s": 8000,
+    "gp": 2000,
+    "mroutes": 4000,
+    "fib4": 24000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.70\" H x 14.15\" D x 17.15\" W",
+    "lbs": "15.5 / 25",
+    "airflow": "Front to back",
+    "max_w": 190,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "lim_mirror"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3440",
+   "family": "PA-3400",
+   "form": "hardware",
+   "fw_bps": 35000000000,
+   "tp_bps": 20000000000,
+   "ipsec_bps": 14500000000,
+   "cps": 268000,
+   "max_sessions": 3000000,
+   "vsys_base": 1,
+   "vsys_max": 11,
+   "ports": [
+    {
+     "n": 12,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 10,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 2,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (12), 1G/10G SFP/SFP+ (10), 25G SFP28 (4), 40G/100G QSFP/QSFP28 (2)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds3400",
+    "haports",
+    "hw3400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 450,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two load-sharing supplies ship with the firewall; connect them to separate circuits. AC and DC supplies cannot be mixed.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw3400",
+     "ds3400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 10000,
+    "nat": 3000,
+    "decrypt": 1500,
+    "zones": 200,
+    "addr": 30000,
+    "addrgrp": 15000,
+    "svc": 4000,
+    "ike": 4000,
+    "s2s": 8000,
+    "gp": 2000,
+    "mroutes": 4000,
+    "fib4": 24000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.70\" H x 14.15\" D x 17.15\" W",
+    "lbs": "15.5 / 25",
+    "airflow": "Front to back",
+    "max_w": 190,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "lim_mirror"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3510",
+   "family": "PA-3500",
+   "form": "hardware",
+   "fw_bps": 30000000000,
+   "tp_bps": 15000000000,
+   "ipsec_bps": 13000000000,
+   "cps": 325000,
+   "max_sessions": 2000000,
+   "vsys_base": 5,
+   "vsys_max": 15,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 6,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 2,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10G mGig Cu (8), 1G/10G SFP+ (8), 10G/25G SFP28 (6), 40G/100G QSFP28 (2)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant for 110-220 V and DC.",
+    "cli_status": true,
+    "text": "1+1 redundant for 110-220 V and DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3520",
+   "family": "PA-3500",
+   "form": "hardware",
+   "fw_bps": 35000000000,
+   "tp_bps": 20000000000,
+   "ipsec_bps": 15000000000,
+   "cps": 350000,
+   "max_sessions": 4000000,
+   "vsys_base": 5,
+   "vsys_max": 15,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 6,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 2,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10G mGig Cu (8), 1G/10G SFP+ (8), 10G/25G SFP28 (6), 40G/100G QSFP28 (2)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant for 110-220 V and DC.",
+    "cli_status": true,
+    "text": "1+1 redundant for 110-220 V and DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3530",
+   "family": "PA-3500",
+   "form": "hardware",
+   "fw_bps": 45000000000,
+   "tp_bps": 25000000000,
+   "ipsec_bps": 22000000000,
+   "cps": 500000,
+   "max_sessions": 5000000,
+   "vsys_base": 5,
+   "vsys_max": 20,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 6,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10G mGig Cu (8), 1G/10G SFP+ (12), 10G/25G SFP28 (6), 40G/100G QSFP28 (4)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant for 110-220 V and DC.",
+    "cli_status": true,
+    "text": "1+1 redundant for 110-220 V and DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3540",
+   "family": "PA-3500",
+   "form": "hardware",
+   "fw_bps": 55000000000,
+   "tp_bps": 35000000000,
+   "ipsec_bps": 35000000000,
+   "cps": 550000,
+   "max_sessions": 6000000,
+   "vsys_base": 5,
+   "vsys_max": 20,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 6,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10G mGig Cu (8), 1G/10G SFP+ (12), 10G/25G SFP28 (6), 40G/100G QSFP28 (4)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 1+1 redundant for 110-220 V and DC.",
+    "cli_status": true,
+    "text": "1+1 redundant for 110-220 V and DC",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5410",
+   "family": "PA-5400",
+   "form": "hardware",
+   "fw_bps": 52000000000,
+   "tp_bps": 35000000000,
+   "ipsec_bps": 20000000000,
+   "cps": 270000,
+   "max_sessions": 5000000,
+   "vsys_base": 10,
+   "vsys_max": 20,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (8), 1G/10G SFP/SFP+ (12), 25G SFP28 (4), 40G/100G QSFP+/QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds5400",
+    "haports",
+    "hw5400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable load-sharing supplies; if one fails the second carries the load.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw5400",
+     "ds5400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp+",
+     "mbps": 40000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 30000,
+    "nat": 6000,
+    "decrypt": 3500,
+    "zones": 4000,
+    "addr": 80000,
+    "addrgrp": 40000,
+    "svc": 8000,
+    "ike": 4000,
+    "s2s": 10000,
+    "gp": 15000,
+    "mroutes": 4000,
+    "fib4": 100000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.45\" H x 22.5\" D x 17.34\" W",
+    "lbs": "35.2 / 48.8",
+    "airflow": "Front to back",
+    "max_w": 760,
+    "btu_hr": 1638,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5400"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5420",
+   "family": "PA-5400",
+   "form": "hardware",
+   "fw_bps": 70000000000,
+   "tp_bps": 50000000000,
+   "ipsec_bps": 28000000000,
+   "cps": 370000,
+   "max_sessions": 7000000,
+   "vsys_base": 15,
+   "vsys_max": 65,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (8), 1G/10G SFP/SFP+ (12), 25G SFP28 (4), 40G/100G QSFP+/QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds5400",
+    "haports",
+    "hw5400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable load-sharing supplies; if one fails the second carries the load.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw5400",
+     "ds5400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp+",
+     "mbps": 40000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 45000,
+    "nat": 6000,
+    "decrypt": 5000,
+    "zones": 6000,
+    "addr": 120000,
+    "addrgrp": 60000,
+    "svc": 10000,
+    "ike": 5000,
+    "s2s": 12000,
+    "gp": 22000,
+    "mroutes": 4000,
+    "fib4": 100000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.45\" H x 22.5\" D x 17.34\" W",
+    "lbs": "35.2 / 48.8",
+    "airflow": "Front to back",
+    "max_w": 760,
+    "btu_hr": 1638,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5400"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5430",
+   "family": "PA-5400",
+   "form": "hardware",
+   "fw_bps": 80000000000,
+   "tp_bps": 60000000000,
+   "ipsec_bps": 42000000000,
+   "cps": 380000,
+   "max_sessions": 9000000,
+   "vsys_base": 25,
+   "vsys_max": 125,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (8), 1G/10G SFP/SFP+ (12), 25G SFP28 (4), 40G/100G QSFP+/QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds5400",
+    "haports",
+    "hw5400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "10.2",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable load-sharing supplies; if one fails the second carries the load.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw5400",
+     "ds5400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp+",
+     "mbps": 40000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 65000,
+    "nat": 6000,
+    "decrypt": 5000,
+    "zones": 17000,
+    "addr": 160000,
+    "addrgrp": 80000,
+    "svc": 12000,
+    "ike": 5000,
+    "s2s": 12000,
+    "gp": 30000,
+    "mroutes": 4000,
+    "fib4": 100000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.45\" H x 22.5\" D x 17.34\" W",
+    "lbs": "35.2 / 48.8",
+    "airflow": "Front to back",
+    "max_w": 760,
+    "btu_hr": 1638,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5400"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5440",
+   "family": "PA-5400",
+   "form": "hardware",
+   "fw_bps": 85000000000,
+   "tp_bps": 70000000000,
+   "ipsec_bps": 58000000000,
+   "cps": 390000,
+   "max_sessions": 20000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (8), 1G/10G SFP/SFP+ (12), 25G SFP28 (4), 40G/100G QSFP+/QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds5400",
+    "haports",
+    "hw5400",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "min_panos": "11.0",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable load-sharing supplies; if one fails the second carries the load.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw5400",
+     "ds5400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp+",
+     "mbps": 40000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 65000,
+    "nat": 6000,
+    "decrypt": 5000,
+    "zones": 17000,
+    "addr": 160000,
+    "addrgrp": 80000,
+    "svc": 12000,
+    "ike": 8000,
+    "s2s": 24000,
+    "gp": 60000,
+    "mroutes": 4000,
+    "fib4": 100000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.45\" H x 22.5\" D x 17.34\" W",
+    "lbs": "35.2 / 48.8",
+    "airflow": "Front to back",
+    "max_w": 760,
+    "btu_hr": 1638,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5400"
+    ],
+    "note": null
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5445",
+   "family": "PA-5400",
+   "form": "hardware",
+   "fw_bps": 90000000000,
+   "tp_bps": 76000000000,
+   "ipsec_bps": 64000000000,
+   "cps": 449000,
+   "max_sessions": 48000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 8,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "1G/2.5G/5G/10G (8), 1G/10G SFP/SFP+ (12), 25G SFP28 (4), 40G/100G QSFP+/QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "ds5400",
+    "haports",
+    "hw5400"
+   ],
+   "min_panos": "11.1",
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1200,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable load-sharing supplies; if one fails the second carries the load.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw5400",
+     "ds5400"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp+",
+     "mbps": 40000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.45\" H x 22.5\" D x 17.34\" W",
+    "lbs": "35.2 / 48.8",
+    "airflow": "Front to back",
+    "max_w": 760,
+    "btu_hr": 1638,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5400"
+    ],
+    "note": "Series figures; PA-5445 per-model values may differ."
+   },
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5450",
+   "family": "PA-5400",
+   "form": "hardware",
+   "fw_bps": 200000000000,
+   "tp_bps": 189000000000,
+   "ipsec_bps": 85000000000,
+   "cps": 3600000,
+   "max_sessions": 100000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": null,
+   "ports_text": "Card based: 100/1000/10G Cu (up to 8), 1G/10G SFP/SFP+ (up to 24), 40G/100G QSFP28 (up to 4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "summary",
+    "hw5400",
+    "ds5400",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": "10.1",
+   "eos_date": "2026-11-22",
+   "eol_date": "2031-11-21",
+   "replacement": "PA-5500 Series",
+   "chassis": true,
+   "psu": {
+    "base": 2,
+    "max": 4,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 2200,
+    "cord": "AC inlet takes cords with C19 connectors",
+    "note": "Needs at least 2 supplies. Full redundancy means double the minimum for your cards and input voltage (see the PA-5400 power supply chart); 120 V AC with 3 or more DPCs cannot be fully redundant.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "hw5400",
+     "ds5400"
+    ]
+   },
+   "ha_ports": null,
+   "limits": {
+    "gp": 60000
+   },
+   "limits_src": [
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 5,
+    "dims": "8.75\" H x 30.25\" D x 17.38\" W",
+    "lbs": null,
+    "airflow": null,
+    "max_w": null,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "summary"
+    ],
+    "note": null
+   },
+   "last_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5510",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 65000000000,
+   "tp_bps": 45000000000,
+   "ipsec_bps": 34000000000,
+   "cps": 600000,
+   "max_sessions": 7000000,
+   "vsys_base": 10,
+   "vsys_max": 20,
+   "ports": [
+    {
+     "n": 10,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 6,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10GE Cu mGig (10), 10GE SFP+ (12), 10G/25G SFP28 (8), 40G/100G QSFP28 (6)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5520",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 75000000000,
+   "tp_bps": 55000000000,
+   "ipsec_bps": 36000000000,
+   "cps": 971000,
+   "max_sessions": 12000000,
+   "vsys_base": 15,
+   "vsys_max": 65,
+   "ports": [
+    {
+     "n": 10,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 6,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10GE Cu mGig (10), 10GE SFP+ (12), 10G/25G SFP28 (8), 40G/100G QSFP28 (6)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5530",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 100000000000,
+   "tp_bps": 65000000000,
+   "ipsec_bps": 38000000000,
+   "cps": 1010000,
+   "max_sessions": 14000000,
+   "vsys_base": 25,
+   "vsys_max": 125,
+   "ports": [
+    {
+     "n": 10,
+     "media": "mgig",
+     "mbps": 10000
+    },
+    {
+     "n": 12,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 8,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 6,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "10GE Cu mGig (10), 10GE SFP+ (12), 10G/25G SFP28 (8), 40G/100G QSFP28 (6)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5540",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 150000000000,
+   "tp_bps": 90000000000,
+   "ipsec_bps": 80000000000,
+   "cps": 1330000,
+   "max_sessions": 39000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 16,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 16,
+     "media": "qsfp28",
+     "mbps": 100000
+    },
+    {
+     "n": 4,
+     "media": "qsfp-dd",
+     "mbps": 400000
+    }
+   ],
+   "ports_text": "10G/25G SFP28 (16), 40G/100G QSFP28 (16), 100G/400G QSFP-DD (4)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5550",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 175000000000,
+   "tp_bps": 120000000000,
+   "ipsec_bps": 100000000000,
+   "cps": 1670000,
+   "max_sessions": 49000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 16,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 16,
+     "media": "qsfp28",
+     "mbps": 100000
+    },
+    {
+     "n": 4,
+     "media": "qsfp-dd",
+     "mbps": 400000
+    }
+   ],
+   "ports_text": "10G/25G SFP28 (16), 40G/100G QSFP28 (16), 100G/400G QSFP-DD (4)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5560",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 240000000000,
+   "tp_bps": 180000000000,
+   "ipsec_bps": 125000000000,
+   "cps": 2500000,
+   "max_sessions": 74000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 8,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 12,
+     "media": "qsfp28",
+     "mbps": 100000
+    },
+    {
+     "n": 8,
+     "media": "qsfp-dd",
+     "mbps": 400000
+    }
+   ],
+   "ports_text": "10G/25G SFP28 (8), 40G/100G QSFP28 (12), 100G/400G QSFP-DD (8)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5570",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 300000000000,
+   "tp_bps": 240000000000,
+   "ipsec_bps": 150000000000,
+   "cps": 3000000,
+   "max_sessions": 89000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 8,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 12,
+     "media": "qsfp28",
+     "mbps": 100000
+    },
+    {
+     "n": 8,
+     "media": "qsfp-dd",
+     "mbps": 400000
+    }
+   ],
+   "ports_text": "10G/25G SFP28 (8), 40G/100G QSFP28 (12), 100G/400G QSFP-DD (8)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5580",
+   "family": "PA-5500",
+   "form": "hardware",
+   "fw_bps": 375000000000,
+   "tp_bps": 300000000000,
+   "ipsec_bps": 170000000000,
+   "cps": 3300000,
+   "max_sessions": 99000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 8,
+     "media": "sfp28",
+     "mbps": 25000
+    },
+    {
+     "n": 12,
+     "media": "qsfp28",
+     "mbps": 100000
+    },
+    {
+     "n": 8,
+     "media": "qsfp-dd",
+     "mbps": 400000
+    }
+   ],
+   "ports_text": "10G/25G SFP28 (8), 40G/100G QSFP28 (12), 100G/400G QSFP-DD (8)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "12.1.2",
+   "psu": {
+    "base": null,
+    "max": null,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: 2+2 redundant for 220 V and DC, 3+1 redundant for 110 V. Confirm the supply count on the quote.",
+    "cli_status": true,
+    "text": "2+2 redundant for 220 V and DC; 3+1 redundant for 110 V",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-7500",
+   "family": "PA-7500",
+   "form": "hardware",
+   "fw_bps": 1500000000000,
+   "tp_bps": 1440000000000,
+   "ipsec_bps": 407000000000,
+   "cps": 7200000,
+   "max_sessions": 440000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": null,
+   "ports_text": "Card based: SFP-DD (up to 84), QSFP-DD (up to 56)",
+   "dedicated_ha": [
+    "hsci"
+   ],
+   "sources": [
+    "summary"
+   ],
+   "min_panos": "11.1",
+   "chassis": true,
+   "note": "Figures measured with 6 PA-7500-DPC-A and 2 PA-7500-NPC-A cards.",
+   "psu": {
+    "base": null,
+    "max": 10,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": null,
+    "cord": null,
+    "note": "Summary spec sheet: M+N, up to 10 supplies. Size to the card configuration.",
+    "cli_status": true,
+    "text": "M+N (up to 10 PSUs)",
+    "sources": [
+     "summary"
+    ]
+   },
+   "ha_ports": null,
+   "eos_date": null,
+   "eol_date": null,
+   "replacement": null,
+   "last_panos": null,
+   "status": "current",
+   "ports_verified": false
+  },
+  {
+   "model": "PA-220",
+   "family": "PA-220",
+   "form": "hardware",
+   "eos_date": "2023-01-31",
+   "eol_date": "2028-01-31",
+   "replacement": "PA-400 Series, PA-500 Series",
+   "last_panos": "10.2",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "vsys",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 500,
+    "gp": 250
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-220R",
+   "family": "PA-220R",
+   "form": "hardware",
+   "eos_date": "2025-01-31",
+   "eol_date": "2030-01-31",
+   "replacement": "PA-400R Series",
+   "last_panos": "10.2",
+   "fw_bps": 535000000,
+   "tp_bps": 320000000,
+   "ipsec_bps": 550000000,
+   "cps": 4200,
+   "max_sessions": 64000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 6,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 2,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (6), SFP (2)",
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "ds220r",
+    "vsys",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": null,
+    "max": 2,
+    "kind": "fixed",
+    "feed": "DC",
+    "watts": null,
+    "cord": null,
+    "note": "Optional dual redundant DC power feeds (12-48 VDC).",
+    "cli_status": true,
+    "text": "Optional: dual redundant DC power feeds",
+    "sources": [
+     "ds220r"
+    ]
+   },
+   "limits": {
+    "gp": 250
+   },
+   "limits_src": [
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-820",
+   "family": "PA-800",
+   "form": "hardware",
+   "eos_date": "2024-08-31",
+   "eol_date": "2029-08-31",
+   "replacement": "PA-1400 Series",
+   "last_panos": "11.1",
+   "fw_bps": 1500000000,
+   "tp_bps": 840000000,
+   "ipsec_bps": 1400000000,
+   "cps": 8100,
+   "max_sessions": 128000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "sfp",
+     "mbps": 1000
+    }
+   ],
+   "ports_text": "10/100/1000 (4), Gigabit SFP (8)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b"
+   ],
+   "sources": [
+    "eol",
+    "ds800",
+    "vsys",
+    "haports",
+    "hw800",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 1,
+    "max": 1,
+    "kind": "fixed",
+    "feed": "AC",
+    "watts": 200,
+    "cord": null,
+    "note": "Fixed (non-removable) 200 W AC supply; no redundant option.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds800",
+     "hw800"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1",
+     "n": 1,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "ha2",
+     "label": "HA2",
+     "n": 1,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "data"
+    }
+   ],
+   "limits": {
+    "rules": 1500,
+    "nat": 3000,
+    "decrypt": 100,
+    "zones": 30,
+    "addr": 2500,
+    "addrgrp": 250,
+    "svc": 1000,
+    "ike": 1000,
+    "s2s": 2000,
+    "gp": 1000,
+    "mroutes": 1500,
+    "fib4": 10000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.75\" H x 14\" D x 17.125\" W",
+    "lbs": "11 / 18",
+    "airflow": "Front to back",
+    "max_w": null,
+    "btu_hr": 256,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds800"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-850",
+   "family": "PA-800",
+   "form": "hardware",
+   "eos_date": "2024-08-31",
+   "eol_date": "2029-08-31",
+   "replacement": "PA-1400 Series",
+   "last_panos": "11.1",
+   "fw_bps": 1900000000,
+   "tp_bps": 1000000000,
+   "ipsec_bps": 1800000000,
+   "cps": 13100,
+   "max_sessions": 192000,
+   "vsys_base": 1,
+   "vsys_max": 1,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "10/100/1000 (4), Gigabit SFP (8) or Gigabit SFP (4) + 10G SFP+ (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b"
+   ],
+   "sources": [
+    "eol",
+    "ds800",
+    "vsys",
+    "haports",
+    "hw800",
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC",
+    "watts": 450,
+    "cord": null,
+    "note": "Two 450 W AC supplies; one is redundant.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds800",
+     "hw800"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1",
+     "n": 1,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "ha2",
+     "label": "HA2",
+     "n": 1,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "data"
+    }
+   ],
+   "limits": {
+    "rules": 1500,
+    "nat": 3000,
+    "decrypt": 150,
+    "zones": 40,
+    "addr": 3500,
+    "addrgrp": 350,
+    "svc": 1000,
+    "ike": 1000,
+    "s2s": 2000,
+    "gp": 1000,
+    "mroutes": 1500,
+    "fib4": 10000
+   },
+   "limits_src": [
+    "lim_mirror",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 1,
+    "dims": "1.75\" H x 14.5\" D x 17.125\" W",
+    "lbs": "13.5 / 21.5",
+    "airflow": "Front to back",
+    "max_w": null,
+    "btu_hr": null,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds800"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3220",
+   "family": "PA-3200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-3400 Series",
+   "last_panos": "11.1",
+   "fw_bps": 4000000000,
+   "tp_bps": 2200000000,
+   "ipsec_bps": 2400000000,
+   "cps": 46000,
+   "max_sessions": 1000000,
+   "vsys_base": 1,
+   "vsys_max": 6,
+   "ports": [
+    {
+     "n": 12,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp",
+     "mbps": 1000
+    },
+    {
+     "n": 4,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "10/100/1000 (12), 1G SFP (4), 1G/10G SFP/SFP+ (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds3200",
+    "haports",
+    "hw3200",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 650,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies; AC supplies ship by default, DC supplies are ordered separately.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds3200",
+     "hw3200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "gp": 1024
+   },
+   "limits_src": [
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.5\" H x 20.53\" D x 17.34\" W",
+    "lbs": "29 / 41.5",
+    "airflow": "Front to back",
+    "max_w": 240,
+    "btu_hr": 819,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds3200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3250",
+   "family": "PA-3200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-3400 Series",
+   "last_panos": "11.1",
+   "fw_bps": 5000000000,
+   "tp_bps": 2500000000,
+   "ipsec_bps": 2600000000,
+   "cps": 58000,
+   "max_sessions": 2000000,
+   "vsys_base": 1,
+   "vsys_max": 6,
+   "ports": [
+    {
+     "n": 12,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    }
+   ],
+   "ports_text": "10/100/1000 (12), 1G/10G SFP/SFP+ (8)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds3200",
+    "haports",
+    "hw3200",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 650,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies; AC supplies ship by default, DC supplies are ordered separately.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds3200",
+     "hw3200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "gp": 2048
+   },
+   "limits_src": [
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.5\" H x 20.53\" D x 17.34\" W",
+    "lbs": "29 / 41.5",
+    "airflow": "Front to back",
+    "max_w": 240,
+    "btu_hr": 819,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds3200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3260",
+   "family": "PA-3200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-3400 Series",
+   "last_panos": "11.1",
+   "fw_bps": 7500000000,
+   "tp_bps": 4000000000,
+   "ipsec_bps": 4400000000,
+   "cps": 84000,
+   "max_sessions": 2200000,
+   "vsys_base": 1,
+   "vsys_max": 6,
+   "ports": [
+    {
+     "n": 12,
+     "media": "rj45",
+     "mbps": 1000
+    },
+    {
+     "n": 8,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "qsfp+",
+     "mbps": 40000
+    }
+   ],
+   "ports_text": "10/100/1000 (12), 1G/10G SFP/SFP+ (8), 40G QSFP+ (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds3200",
+    "haports",
+    "hw3200",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 650,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies; AC supplies ship by default, DC supplies are ordered separately.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds3200",
+     "hw3200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "sfp+",
+     "mbps": 10000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "gp": 2048
+   },
+   "limits_src": [
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 2,
+    "dims": "3.5\" H x 20.53\" D x 17.34\" W",
+    "lbs": "29 / 41.5",
+    "airflow": "Front to back",
+    "max_w": 240,
+    "btu_hr": 819,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds3200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5220",
+   "family": "PA-5200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "11.2",
+   "fw_bps": 15000000000,
+   "tp_bps": 8800000000,
+   "ipsec_bps": 9500000000,
+   "cps": 150000,
+   "max_sessions": 4000000,
+   "vsys_base": 10,
+   "vsys_max": 20,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 10000
+    },
+    {
+     "n": 16,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "qsfp+",
+     "mbps": 40000
+    }
+   ],
+   "ports_text": "100/1000/10G Cu (4), 1G/10G SFP/SFP+ (16), 40G QSFP+ (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds5200",
+    "haports",
+    "hw5200",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1100,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies (1:1 fully redundant).",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds5200",
+     "hw5200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp+",
+     "mbps": 40000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 20000,
+    "gp": 15000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 3,
+    "dims": null,
+    "lbs": "46 / 62",
+    "airflow": null,
+    "max_w": 870,
+    "btu_hr": 2340,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5250",
+   "family": "PA-5200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "11.2",
+   "fw_bps": 35000000000,
+   "tp_bps": 19000000000,
+   "ipsec_bps": 18400000000,
+   "cps": 368000,
+   "max_sessions": 8000000,
+   "vsys_base": 25,
+   "vsys_max": 125,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 10000
+    },
+    {
+     "n": 16,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "100/1000/10G Cu (4), 1G/10G SFP/SFP+ (16), 40G/100G QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds5200",
+    "haports",
+    "hw5200",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1100,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies (1:1 fully redundant).",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds5200",
+     "hw5200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp28",
+     "mbps": 100000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 40000,
+    "gp": 30000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 3,
+    "dims": null,
+    "lbs": "46 / 62",
+    "airflow": null,
+    "max_w": 870,
+    "btu_hr": 2340,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5260",
+   "family": "PA-5200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "11.2",
+   "fw_bps": 55000000000,
+   "tp_bps": 31000000000,
+   "ipsec_bps": 25000000000,
+   "cps": 500000,
+   "max_sessions": 32000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 10000
+    },
+    {
+     "n": 16,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "100/1000/10G Cu (4), 1G/10G SFP/SFP+ (16), 40G/100G QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds5200",
+    "haports",
+    "hw5200",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1100,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies (1:1 fully redundant).",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds5200",
+     "hw5200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp28",
+     "mbps": 100000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "rules": 40000,
+    "gp": 60000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 3,
+    "dims": null,
+    "lbs": "46 / 62",
+    "airflow": null,
+    "max_w": 870,
+    "btu_hr": 2340,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5280",
+   "family": "PA-5200",
+   "form": "hardware",
+   "eos_date": "2023-08-31",
+   "eol_date": "2028-08-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "11.2",
+   "fw_bps": 55000000000,
+   "tp_bps": 31000000000,
+   "ipsec_bps": 25000000000,
+   "cps": 500000,
+   "max_sessions": 64000000,
+   "vsys_base": 25,
+   "vsys_max": 225,
+   "ports": [
+    {
+     "n": 4,
+     "media": "rj45",
+     "mbps": 10000
+    },
+    {
+     "n": 16,
+     "media": "sfp+",
+     "mbps": 10000
+    },
+    {
+     "n": 4,
+     "media": "qsfp28",
+     "mbps": 100000
+    }
+   ],
+   "ports_text": "100/1000/10G Cu (4), 1G/10G SFP/SFP+ (16), 40G/100G QSFP28 (4)",
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds5200",
+    "haports",
+    "hw5200",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "psu": {
+    "base": 2,
+    "max": 2,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 1100,
+    "cord": "AC inlet C14 (cord with C13 connector)",
+    "note": "Two hot-swappable supplies (1:1 fully redundant).",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds5200",
+     "hw5200"
+    ]
+   },
+   "ha_ports": [
+    {
+     "id": "ha1",
+     "label": "HA1-A/B",
+     "n": 2,
+     "media": "rj45",
+     "mbps": 1000,
+     "role": "control"
+    },
+    {
+     "id": "hsci",
+     "label": "HSCI",
+     "n": 1,
+     "media": "qsfp28",
+     "mbps": 100000,
+     "role": "data (HA2/HA3)"
+    }
+   ],
+   "limits": {
+    "gp": 60000
+   },
+   "limits_src": [
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 3,
+    "dims": null,
+    "lbs": "46 / 62",
+    "airflow": null,
+    "max_w": 870,
+    "btu_hr": 2340,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds5200"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-7050",
+   "family": "PA-7000",
+   "form": "hardware",
+   "eos_date": "2025-12-31",
+   "eol_date": "2030-12-31",
+   "replacement": "PA-7500, PA-5500",
+   "last_panos": "11.2",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds7000",
+    "hw7000",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "chassis": true,
+   "note": "Performance depends on the installed cards; see the PA-7000 datasheet.",
+   "psu": {
+    "base": 4,
+    "max": 4,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 2500,
+    "cord": null,
+    "note": "Four 2500 W supplies.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds7000",
+     "hw7000"
+    ]
+   },
+   "ha_ports": null,
+   "limits": {
+    "rules": 40000,
+    "gp": 40000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 9,
+    "dims": "15.75\" H x 24\" D x 19\" W",
+    "lbs": "187.4 AC / 185 DC",
+    "airflow": null,
+    "max_w": null,
+    "btu_hr": 10236,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds7000"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-7080",
+   "family": "PA-7000",
+   "form": "hardware",
+   "eos_date": "2025-12-31",
+   "eol_date": "2030-12-31",
+   "replacement": "PA-7500, PA-5500",
+   "last_panos": "11.2",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [
+    "ha1-a",
+    "ha1-b",
+    "hsci"
+   ],
+   "sources": [
+    "eol",
+    "ds7000",
+    "hw7000",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "chassis": true,
+   "note": "Performance depends on the installed cards; see the PA-7000 datasheet.",
+   "psu": {
+    "base": 4,
+    "max": 8,
+    "kind": "module",
+    "feed": "AC or DC",
+    "watts": 2500,
+    "cord": null,
+    "note": "Four 2500 W supplies as shipped, expandable to eight.",
+    "cli_status": true,
+    "text": null,
+    "sources": [
+     "ds7000",
+     "hw7000"
+    ]
+   },
+   "ha_ports": null,
+   "limits": {
+    "rules": 40000,
+    "gp": 40000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "rack": {
+    "ru": 19,
+    "dims": "32.22\" H x 24.6\" D x 19\" W",
+    "lbs": "299.3 AC / 298.3 DC",
+    "airflow": null,
+    "max_w": null,
+    "btu_hr": 20132,
+    "mount": "19-inch rack",
+    "sources": [
+     "ds7000"
+    ],
+    "note": null
+   },
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3020",
+   "family": "PA-3000",
+   "form": "hardware",
+   "eos_date": "2019-10-31",
+   "eol_date": "2024-10-31",
+   "replacement": "PA-3400 Series",
+   "last_panos": "9.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 2500,
+    "gp": 1024
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3050",
+   "family": "PA-3000",
+   "form": "hardware",
+   "eos_date": "2019-10-31",
+   "eol_date": "2024-10-31",
+   "replacement": "PA-3400 Series",
+   "last_panos": "9.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 5000,
+    "gp": 2048
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-3060",
+   "family": "PA-3000",
+   "form": "hardware",
+   "eos_date": "2019-10-31",
+   "eol_date": "2024-10-31",
+   "replacement": "PA-3400 Series",
+   "last_panos": "9.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 5000,
+    "gp": 2048
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5020",
+   "family": "PA-5000",
+   "form": "hardware",
+   "eos_date": "2019-01-31",
+   "eol_date": "2024-01-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "8.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 10000,
+    "gp": 5000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5050",
+   "family": "PA-5000",
+   "form": "hardware",
+   "eos_date": "2019-01-31",
+   "eol_date": "2024-01-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "8.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 20000,
+    "gp": 10000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-5060",
+   "family": "PA-5000",
+   "form": "hardware",
+   "eos_date": "2019-01-31",
+   "eol_date": "2024-01-31",
+   "replacement": "PA-5400 Series, PA-5500 Series",
+   "last_panos": "8.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 40000,
+    "gp": 20000
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-200",
+   "family": "PA-200",
+   "form": "hardware",
+   "eos_date": "2018-10-31",
+   "eol_date": "2023-10-31",
+   "replacement": "PA-400 Series, PA-500 Series",
+   "last_panos": "8.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-500",
+   "family": "PA-500 (2010)",
+   "form": "hardware",
+   "eos_date": "2018-10-31",
+   "eol_date": "2023-10-31",
+   "replacement": "PA-400 Series, PA-500 Series",
+   "last_panos": "8.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "note": "This is the original PA-500 appliance, not the current PA-500 Series (PA-501 to PA-560).",
+   "limits": {
+    "rules": 1000,
+    "gp": 100
+   },
+   "limits_src": [
+    "kb_rules",
+    "kb_gp",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-2020",
+   "family": "PA-2000",
+   "form": "hardware",
+   "eos_date": "2015-04-30",
+   "eol_date": "2020-04-30",
+   "replacement": "PA-1400 Series",
+   "last_panos": "7.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 2500
+   },
+   "limits_src": [
+    "kb_rules",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-2050",
+   "family": "PA-2000",
+   "form": "hardware",
+   "eos_date": "2015-04-30",
+   "eol_date": "2020-04-30",
+   "replacement": "PA-1400 Series",
+   "last_panos": "7.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol",
+    "kb_rules",
+    "pc_tool"
+   ],
+   "limits": {
+    "rules": 5000
+   },
+   "limits_src": [
+    "kb_rules",
+    "pc_tool"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-4020",
+   "family": "PA-4000",
+   "form": "hardware",
+   "eos_date": "2014-04-30",
+   "eol_date": "2019-04-30",
+   "replacement": "PA-1400 Series",
+   "last_panos": "7.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-4050",
+   "family": "PA-4000",
+   "form": "hardware",
+   "eos_date": "2014-04-30",
+   "eol_date": "2019-04-30",
+   "replacement": "PA-1400 Series",
+   "last_panos": "7.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  },
+  {
+   "model": "PA-4060",
+   "family": "PA-4000",
+   "form": "hardware",
+   "eos_date": "2014-04-30",
+   "eol_date": "2019-04-30",
+   "replacement": "PA-1400 Series",
+   "last_panos": "7.1",
+   "fw_bps": null,
+   "tp_bps": null,
+   "ipsec_bps": null,
+   "cps": null,
+   "max_sessions": null,
+   "vsys_base": null,
+   "vsys_max": null,
+   "ports": null,
+   "ports_text": null,
+   "dedicated_ha": [],
+   "sources": [
+    "eol"
+   ],
+   "min_panos": null,
+   "status": null,
+   "ports_verified": false
+  }
+ ],
+ "vm": [
+  {
+   "model": "VM-50",
+   "vcpu": [
+    2
+   ],
+   "mem_gb": 5.5,
+   "max_sessions": 50000,
+   "fw_bps": 200000000,
+   "rules": 250,
+   "zones": 15,
+   "ipsec_tunnels": 250,
+   "ssl_tunnels": 250,
+   "vsys_max": 1,
+   "form": "vm",
+   "family": "VM-Series",
+   "tp_bps": null,
+   "cps": null,
+   "vsys_base": 1,
+   "dedicated_ha": [],
+   "sources": [
+    "vm_models",
+    "vm_req",
+    "vm_ds",
+    "vm_vsys"
+   ],
+   "min_panos": "10.1",
+   "note": "Sessions and object limits are from the VM-Series Models table. App-ID throughput is the older fixed-model datasheet figure; real throughput depends on the host CPU, NICs and hypervisor. Threat Prevention throughput is not published per model."
+  },
+  {
+   "model": "VM-100",
+   "vcpu": [
+    2
+   ],
+   "mem_gb": 6.5,
+   "max_sessions": 250000,
+   "fw_bps": 2000000000,
+   "rules": 1500,
+   "zones": 40,
+   "ipsec_tunnels": 1000,
+   "ssl_tunnels": 500,
+   "vsys_max": 1,
+   "form": "vm",
+   "family": "VM-Series",
+   "tp_bps": null,
+   "cps": null,
+   "vsys_base": 1,
+   "dedicated_ha": [],
+   "sources": [
+    "vm_models",
+    "vm_req",
+    "vm_ds",
+    "vm_vsys"
+   ],
+   "min_panos": "10.1",
+   "note": "Sessions and object limits are from the VM-Series Models table. App-ID throughput is the older fixed-model datasheet figure; real throughput depends on the host CPU, NICs and hypervisor. Threat Prevention throughput is not published per model."
+  },
+  {
+   "model": "VM-300",
+   "vcpu": [
+    2,
+    4
+   ],
+   "mem_gb": 9,
+   "max_sessions": 400000,
+   "fw_bps": 4000000000,
+   "rules": 10000,
+   "zones": 40,
+   "ipsec_tunnels": 2000,
+   "ssl_tunnels": 2000,
+   "vsys_max": 1,
+   "form": "vm",
+   "family": "VM-Series",
+   "tp_bps": null,
+   "cps": null,
+   "vsys_base": 1,
+   "dedicated_ha": [],
+   "sources": [
+    "vm_models",
+    "vm_req",
+    "vm_ds",
+    "vm_vsys"
+   ],
+   "min_panos": "10.1",
+   "note": "Sessions and object limits are from the VM-Series Models table. App-ID throughput is the older fixed-model datasheet figure; real throughput depends on the host CPU, NICs and hypervisor. Threat Prevention throughput is not published per model."
+  },
+  {
+   "model": "VM-500",
+   "vcpu": [
+    2,
+    4,
+    8
+   ],
+   "mem_gb": 16,
+   "max_sessions": 2000000,
+   "fw_bps": 8000000000,
+   "rules": 10000,
+   "zones": 200,
+   "ipsec_tunnels": 4000,
+   "ssl_tunnels": 6000,
+   "vsys_max": 1,
+   "form": "vm",
+   "family": "VM-Series",
+   "tp_bps": null,
+   "cps": null,
+   "vsys_base": 1,
+   "dedicated_ha": [],
+   "sources": [
+    "vm_models",
+    "vm_req",
+    "vm_ds",
+    "vm_vsys"
+   ],
+   "min_panos": "10.1",
+   "note": "Sessions and object limits are from the VM-Series Models table. App-ID throughput is the older fixed-model datasheet figure; real throughput depends on the host CPU, NICs and hypervisor. Threat Prevention throughput is not published per model."
+  },
+  {
+   "model": "VM-700",
+   "vcpu": [
+    2,
+    4,
+    8,
+    16
+   ],
+   "mem_gb": 56,
+   "max_sessions": 10000000,
+   "fw_bps": 16000000000,
+   "rules": 20000,
+   "zones": 200,
+   "ipsec_tunnels": 8000,
+   "ssl_tunnels": 12000,
+   "vsys_max": 1,
+   "form": "vm",
+   "family": "VM-Series",
+   "tp_bps": null,
+   "cps": null,
+   "vsys_base": 1,
+   "dedicated_ha": [],
+   "sources": [
+    "vm_models",
+    "vm_req",
+    "vm_ds",
+    "vm_vsys"
+   ],
+   "min_panos": "10.1",
+   "note": "Sessions and object limits are from the VM-Series Models table. App-ID throughput is the older fixed-model datasheet figure; real throughput depends on the host CPU, NICs and hypervisor. Threat Prevention throughput is not published per model.",
+   "vsys_note": "Multi-vsys on VM-Series needs a flexible (credit) license, PAN-OS 11.1.3+, Tier 3 or 4, and at least 16 vCPUs. Tier 3 = up to 25 vsys, Tier 4 = up to 100."
+  }
+ ],
+ "vm_memory_tiers": {
+  "panos": "11.2+",
+  "columns": [
+   "mem_gb",
+   "max_sessions",
+   "default_dp_vcpu"
+  ],
+  "rows": [
+   [
+    4.5,
+    20000,
+    1
+   ],
+   [
+    5,
+    40000,
+    1
+   ],
+   [
+    5.5,
+    50000,
+    1
+   ],
+   [
+    6,
+    100000,
+    1
+   ],
+   [
+    6.5,
+    200000,
+    2
+   ],
+   [
+    7,
+    250000,
+    2
+   ],
+   [
+    8,
+    300000,
+    2
+   ],
+   [
+    9,
+    400000,
+    4
+   ],
+   [
+    10,
+    500000,
+    4
+   ],
+   [
+    12,
+    800000,
+    4
+   ],
+   [
+    14,
+    1100000,
+    4
+   ],
+   [
+    16,
+    1100000,
+    12
+   ],
+   [
+    18,
+    1200000,
+    12
+   ],
+   [
+    20,
+    1800000,
+    12
+   ],
+   [
+    24,
+    2500000,
+    12
+   ],
+   [
+    28,
+    2800000,
+    12
+   ],
+   [
+    32,
+    3500000,
+    12
+   ],
+   [
+    36,
+    4500000,
+    12
+   ],
+   [
+    40,
+    5500000,
+    12
+   ],
+   [
+    44,
+    6750000,
+    12
+   ],
+   [
+    48,
+    7000000,
+    12
+   ],
+   [
+    52,
+    8150000,
+    12
+   ],
+   [
+    56,
+    8500000,
+    24
+   ],
+   [
+    64,
+    8250000,
+    47
+   ],
+   [
+    128,
+    10000000,
+    47
+   ]
+  ],
+  "source": "vm_mem"
+ }
+}

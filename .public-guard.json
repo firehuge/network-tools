@@ -3,7 +3,8 @@
     "paat/",
     "flowmapper/",
     "tsf-reader/",
-    "gp-log-viewer/"
+    "gp-log-viewer/",
+    "pan-physical-upgrade/"
   ],
   "allow_192_168_paths": [
     "paat/tests/test_fallback_placement.py"
@@ -31,6 +32,9 @@
     "paat/NOTICE",
     "LEGAL.md",
     "README.md",
-    "paat/README.md"
+    "paat/README.md",
+    "pan-physical-upgrade/build/app.js",
+    "pan-physical-upgrade/pan-physical-upgrade.html",
+    "pan-physical-upgrade/docs/DATA_SOURCES.md"
   ]
 }

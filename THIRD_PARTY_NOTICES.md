@@ -1,7 +1,7 @@
 # Third-party notices
 
 > Companion to [LEGAL.md](LEGAL.md) and [NOTICE](NOTICE). Texts below are copied from the installed distributions of each
-> package (`pip-licenses --with-license-file --with-notice-file`) and from the npm package for `playwright-core`.
+> package (`pip-licenses --with-license-file --with-notice-file`) and from the npm packages for `playwright-core` and `@xmldom/xmldom`.
 > Copyright lines are those in the license files. Packages with identical texts are grouped. This file is not legal advice.
 
 ## 1. annotated-doc 0.0.7
@@ -3708,6 +3708,21 @@ Copyright (c) Microsoft Corporation
 
 This software contains code derived from the Puppeteer project (https://github.com/puppeteer/puppeteer),
 available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/blob/master/LICENSE).
+```
+
+## 43. @xmldom/xmldom 0.9.12 (npm, test-time only; PAN Physical Upgrade Planner)
+
+License: MIT
+
+```text
+Copyright 2019 - present Christopher J. Brody and other contributors, as listed in: https://github.com/xmldom/xmldom/graphs/contributors
+Copyright 2012 - 2017 @jindw <jindw@xidea.org> and other contributors, as listed in: https://github.com/jindw/xmldom/graphs/contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 ## Development-only packages

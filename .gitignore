@@ -35,6 +35,8 @@ paat/customers/*/
 !gp-log-viewer/samples/*.tgz
 !gp-log-viewer/samples/*.zip
 !tsf-reader/samples/*.tgz
+!pan-physical-upgrade/samples/*.tgz
+!pan-physical-upgrade/samples/running-config_*.xml
 
 # --- Build / tool output -------------------------------------------------------
 node_modules/

@@ -16,7 +16,7 @@ Only the latest release is supported.
 
 ## Handling of your data
 
-These tools are designed to run locally. The single-page tools (FlowMapper, TSF Reader, GP Log Viewer) keep everything in your
+These tools are designed to run locally. The single-page tools (FlowMapper, TSF Reader, GP Log Viewer, PAN Physical Upgrade Planner) keep everything in your
 browser and make no network requests. PAAT runs on your own server or container and stores its data (users, change sets, uploaded
 backups, audit records) under `/etc/paat` and `/var/lib/paat`; it sends nothing to the maintainers.
 

@@ -1,0 +1,56 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAN Physical Upgrade Planner</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Offline browser tool: plan a Palo Alto Networks firewall refresh from a tech-support file and convert the config to the new model or VM-Series. Nothing is uploaded.">
+<meta name="color-scheme" content="light dark">
+<style>
+</style>
+</head>
+<body>
+<header>
+  <h1>🔁 PAN Physical Upgrade Planner</h1>
+  <span class="tip">Files stay on this computer. Nothing is uploaded.</span>
+  <span id="catbadge" class="pill" title="Where the model and end-of-life data came from">Catalog: bundled</span>
+  <label class="btn" title="Load a newer catalog JSON file"><input type="file" id="catfile" accept=".json" hidden>📥 Catalog file</label>
+  <button id="btn-theme" type="button" aria-label="Switch light or dark mode">🌓 Dark</button>
+</header>
+<main>
+  <div id="drop" class="card">📂 Drop a Palo Alto tech-support file here (.tgz, .tar.gz, .zip)<br>
+    <small>or click to browse. A running-config.xml also works (conversion only, no sizing data).</small>
+    <input id="fi" type="file" hidden accept=".tgz,.tar,.gz,.tar.gz,.zip,.xml,.txt">
+  </div>
+  <div id="prow" hidden>
+    <div id="pbar" class="progress"><div></div></div>
+    <button type="button" id="btn-cancel">Cancel</button>
+    <div id="ptext" class="muted"></div>
+  </div>
+  <div id="err" class="card s-r" hidden></div>
+
+  <div id="out" hidden>
+    <nav class="tabs" aria-label="Steps">
+      <button type="button" class="on" data-tab="current">1. Current device</button>
+      <button type="button" data-tab="target">2. Pick the new firewall</button>
+      <button type="button" data-tab="hardware">3. Hardware &amp; cabling</button>
+      <button type="button" data-tab="lic">4. Licenses</button>
+      <button type="button" data-tab="convert">5. Convert config</button>
+      <button type="button" data-tab="readiness">6. Readiness checks</button>
+      <button type="button" data-tab="report">7. Report for finance / sales</button>
+    </nav>
+    <div id="tab-current" class="tabpanel"></div>
+    <div id="tab-target" class="tabpanel" hidden></div>
+    <div id="tab-hardware" class="tabpanel" hidden></div>
+    <div id="tab-lic" class="tabpanel" hidden></div>
+    <div id="tab-convert" class="tabpanel" hidden></div>
+    <div id="tab-readiness" class="tabpanel" hidden></div>
+    <div id="tab-report" class="tabpanel" hidden></div>
+  </div>
+</main>
+<!-- Native browser APIs only (DecompressionStream, DOMParser). No third-party code, no CDN. -->
+<script>
+</script>
+</body>
+</html>
