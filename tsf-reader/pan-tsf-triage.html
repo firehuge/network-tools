@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; worker-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <title>PAN Tech-Support Triage Viewer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Offline browser tool to read a Palo Alto Networks tech support file and highlight issues. Nothing is uploaded.">
@@ -78,7 +79,7 @@ h2{margin:0 0 12px;font-size:20px}
 .score{font-size:28px;font-weight:700}
 hr.sep{border:0;border-top:1px solid var(--bd);margin:16px 0}
 @media print{
-  header button,#drop,.ctl,.tree,.tabs,nav,#exportbar{display:none!important}
+  header button,#drop,.ctl,.tree,.tabs,nav,#exportbar,#help{display:none!important}
   body{background:#fff;color:#000}
   #log, #rawview{max-height:none}
   .card{break-inside:avoid}
@@ -95,6 +96,9 @@ hr.sep{border:0;border-top:1px solid var(--bd);margin:16px 0}
 #btn-loadmore{padding:6px 12px;border-radius:8px;border:1px solid var(--b,#2563eb);background:#fff;color:var(--b,#2563eb);cursor:pointer;font:inherit}
 #btn-loadmore:disabled{opacity:.6;cursor:default}
 
+#help details{margin:6px 0;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}#help summary{cursor:pointer}#help li{margin:3px 0}
+#help .ctl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
 </style>
 </head>
 <body>
@@ -107,9 +111,44 @@ hr.sep{border:0;border-top:1px solid var(--bd);margin:16px 0}
     <button id="btn-csv" type="button">📑 Export CSV</button>
     <button id="btn-print" type="button">🖨️ Report / PDF</button>
   </span>
-  <button id="btn-dark" type="button">🌓 Dark/Light</button>
+  <button id="btn-help" type="button" title="How to use this tool: plain-language and technical guide">Help</button>
+  <button id="btn-dark" type="button" title="Toggle dark mode">Dark</button>
 </header>
 <main>
+  <section id="help" class="card" hidden>
+    <div class="ctl"><h2 style="margin:0">How to use the TSF triage viewer</h2><button type="button" id="help-close">Close help</button></div>
+    <p class="tip">Each topic has <b>In plain words</b> for anyone and <b>Technical detail</b> for engineers. Everything runs in this browser; nothing is uploaded, and the page makes no network requests.</p>
+    <details open><summary><b>1. Start here: read a tech support file in four steps</b></summary>
+      <ol>
+        <li><b>Get the file.</b> On the firewall or Panorama go to <i>Device &gt; Support</i> (Panorama: <i>Panorama &gt; Support</i>), click <i>Generate Tech Support File</i>, then <i>Download Tech Support File</i>. The name looks like <code>techsupport_&lt;host&gt;_&lt;time&gt;.tgz</code>.</li>
+        <li><b>Drop it here.</b> Drag the <code>.tgz</code> (or <code>.tar</code>, <code>.zip</code>) onto the dashed box, or click to browse. Do not unpack it first; nested bundles are opened for you.</li>
+        <li><b>Read the dashboard.</b> It shows device type, model, PAN-OS version, HA, licenses, a health score and the top findings.</li>
+        <li><b>Open Findings.</b> Red cards matter now, yellow are worth a look, blue "suggestion" cards are hygiene or performance ideas. Click a card or an evidence line to jump to the log lines.</li>
+      </ol>
+      <p><b>Technical detail:</b> unpacking, parsing and checks run in a Web Worker in this tab. Large files show progress and a <i>Cancel</i> button. Core dumps are listed, never opened.</p>
+    </details>
+    <details><summary><b>2. Privacy and sharing a report</b></summary>
+      <p><b>In plain words:</b> a tech support file contains hostnames, serial numbers, IP addresses and the running config. Keep <i>Show sensitive values</i> off before you export or screenshot, so identity values stay hidden.</p>
+      <p><b>Technical detail:</b> authcodes, passwords and private keys are always redacted. Export HTML or CSV saves a local file; the page has a strict Content-Security-Policy that blocks all network access.</p>
+    </details>
+    <details><summary><b>3. Tabs: findings, logs, resources, counters, config, raw files</b></summary>
+      <ul>
+        <li><b>Logs:</b> search plain text or regex, filter by file, severity or time, and step through issue lines with Previous / Next.</li>
+        <li><b>System / Resources, Counters, Config overview:</b> the parsed tables behind the findings.</li>
+        <li><b>Raw files:</b> every file in the bundle; use <i>Load more</i> for long files.</li>
+      </ul>
+    </details>
+    <details><summary><b>4. What the checks look at</b></summary>
+      <p>CPU and memory, session table, packet buffers, drop counters, HA state, licenses, disk, failed jobs, User-ID, authentication bursts and similar. Every check works from what is in the file, and the tool never assumes a particular site, customer or serial number. Suggestions are labeled as suggestions, not certainties.</p>
+    </details>
+    <details><summary><b>5. Troubleshooting</b></summary>
+      <ul>
+        <li><b>Nothing happens on drop:</b> use a current Chrome, Edge, Firefox or Safari; very old browsers lack the built-in gzip support this page needs.</li>
+        <li><b>A value says "Hidden":</b> turn on <i>Show sensitive values</i>.</li>
+        <li><b>"Not found":</b> the file does not contain that item (a thin bundle or a different PAN-OS release).</li>
+      </ul>
+    </details>
+  </section>
   <div id="drop" class="card">📂 Drop a Palo Alto tech-support file here (.tgz, .tar.gz, .tar, .zip)<br>
     <small>or click to browse. Typical name: techsupport_*.tgz — from a firewall or Panorama. Works offline.</small>
     <input id="fi" type="file" multiple hidden accept=".tgz,.tar,.gz,.tar.gz,.zip,.txt,.xml,.log">
@@ -2935,6 +2974,8 @@ function wireUi(){
   ["#ff","#sf","#qre"].forEach(s => { const el=$(s); if(el) el.onchange = renderLogs; });
   ["#q","#tfrom","#tto"].forEach(s => { const el=$(s); if(el) el.oninput = renderLogs; });
   $("#btn-dark").onclick = () => document.body.classList.toggle("dark");
+  $("#btn-help").onclick = () => { const h = $("#help"); h.hidden = !h.hidden; if (!h.hidden) h.scrollIntoView({behavior: "smooth", block: "start"}); };
+  $("#help-close").onclick = () => { $("#help").hidden = true; };
   $("#btn-print").onclick = () => window.print();
   $("#btn-csv").onclick = () => { if(STATE) exportCSV(STATE, currentRedactor()); };
   $("#btn-html").onclick = () => { if(STATE) exportHTML(STATE, currentRedactor()); };

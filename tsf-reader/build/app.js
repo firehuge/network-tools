@@ -2721,6 +2721,8 @@ function wireUi(){
   ["#ff","#sf","#qre"].forEach(s => { const el=$(s); if(el) el.onchange = renderLogs; });
   ["#q","#tfrom","#tto"].forEach(s => { const el=$(s); if(el) el.oninput = renderLogs; });
   $("#btn-dark").onclick = () => document.body.classList.toggle("dark");
+  $("#btn-help").onclick = () => { const h = $("#help"); h.hidden = !h.hidden; if (!h.hidden) h.scrollIntoView({behavior: "smooth", block: "start"}); };
+  $("#help-close").onclick = () => { $("#help").hidden = true; };
   $("#btn-print").onclick = () => window.print();
   $("#btn-csv").onclick = () => { if(STATE) exportCSV(STATE, currentRedactor()); };
   $("#btn-html").onclick = () => { if(STATE) exportHTML(STATE, currentRedactor()); };

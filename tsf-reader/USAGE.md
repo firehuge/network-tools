@@ -11,7 +11,7 @@ Drop a `techsupport_*.tgz` onto the page (or click to browse). The tool, running
 5. Offers **performance suggestions** (logging at session start, overly broad decryption, missing zone protection, unused rules, and so on). Suggestions are labeled as suggestions, not certainties.
 6. Exports a findings report as HTML or CSV. Identity fields (hostname, serial, management IP) are hidden by default. Leave **Show sensitive values** off before you share a report or take a screenshot. Authcodes, passwords, and keys stay redacted even when that box is on.
 
-Nothing is uploaded. The page works offline. You can copy `pan-tsf-triage.html` to a USB stick or a shared folder and double-click it.
+Nothing is uploaded. The page works offline, and a strict Content-Security-Policy in the page blocks all network access. The **Help** button (top right, next to **Dark**) opens a built-in usage guide. You can copy `pan-tsf-triage.html` to a USB stick or a shared folder and double-click it.
 
 ## Privacy
 
