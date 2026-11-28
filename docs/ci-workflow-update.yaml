@@ -1,0 +1,159 @@
+# Updated .github/workflows/ci.yaml: adds a pan-physical-upgrade job and runs the GP viewer browser test.
+# Paste this over .github/workflows/ci.yaml (the automation token cannot push workflow files), then delete this file.
+# CI for the network-tools monorepo.
+#  * secret-scan: gitleaks over the full history + the public-release guard (always runs).
+#  * per-tool test jobs run only when files under that tool (or this workflow) change.
+# Review before enabling. Pin third-party actions to commit SHAs if your organization requires it.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      paat: ${{ steps.f.outputs.paat }}
+      flowmapper: ${{ steps.f.outputs.flowmapper }}
+      tsf: ${{ steps.f.outputs.tsf }}
+      gp: ${{ steps.f.outputs.gp }}
+      ppu: ${{ steps.f.outputs.ppu }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: f
+        name: Which tools changed?
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          set -eu
+          if [ -z "${BASE:-}" ] || [ "$BASE" = 0000000000000000000000000000000000000000 ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files="$(git ls-files)"            # first push or unknown base: test everything
+          else
+            files="$(git diff --name-only "$BASE" "$HEAD")"
+          fi
+          shared="$(printf '%s\n' "$files" | grep -E '^(\.github/|scripts/|\.public-guard\.json)' || true)"
+          hit() { if [ -n "$shared" ] || printf '%s\n' "$files" | grep -q -E "$1"; then echo true; else echo false; fi; }
+          # FlowMapper's engine is copied into PAAT, so a FlowMapper change also tests PAAT.
+          { echo "paat=$(hit '^(paat|flowmapper/build)/')"
+            echo "flowmapper=$(hit '^flowmapper/')"
+            echo "tsf=$(hit '^tsf-reader/')"
+            echo "gp=$(hit '^gp-log-viewer/')"
+            echo "ppu=$(hit '^pan-physical-upgrade/')"; } | tee -a "$GITHUB_OUTPUT"
+
+  test-paat:
+    needs: changes
+    if: needs.changes.outputs.paat == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: paat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[web,offsite,dev]"
+      - run: python tools/sync-flowmapper.py --check
+      - run: pytest -q
+
+  test-flowmapper:
+    needs: changes
+    if: needs.changes.outputs.flowmapper == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flowmapper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      # The tests drive the Google Chrome that ships on GitHub's ubuntu runners (CHROME_PATH overrides).
+      - run: npm test
+
+  test-tsf-reader:
+    needs: changes
+    if: needs.changes.outputs.tsf == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tsf-reader
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      # The tests drive the Google Chrome that ships on GitHub's ubuntu runners (CHROME_PATH overrides).
+      - run: npm test
+
+  test-gp-log-viewer:
+    needs: changes
+    if: needs.changes.outputs.gp == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gp-log-viewer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      # Parser tests, then a headless-Chrome check (CSP, Help, sample files) on the Chrome that ships on the runner.
+      - run: npm test
+
+  test-pan-physical-upgrade:
+    needs: changes
+    if: needs.changes.outputs.ppu == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pan-physical-upgrade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - name: Catalog and HTML are up to date
+        run: |
+          python3 tools/build_catalog.py
+          python3 build/assemble.py
+          git diff --stat --exit-code -- catalog pan-physical-upgrade.html
+      - run: node tests/test_core.mjs
+      - run: node tests/test_ui.mjs
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full history)
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar xz gitleaks
+          ./gitleaks git --log-opts="--all" --redact --no-banner .
+      - name: public-release guard (private addresses, serials, personal e-mail, customer markers)
+        env:
+          # Optional: a repository secret holding your PRIVATE customer-marker list (one word or regex per line).
+          GUARD_TERMS: ${{ secrets.PUBLIC_GUARD_TERMS }}
+        run: |
+          if [ -n "$GUARD_TERMS" ]; then printf '%s\n' "$GUARD_TERMS" > "$RUNNER_TEMP/terms"; export PUBLIC_GUARD_TERMS="$RUNNER_TEMP/terms"; fi
+          python3 scripts/public_guard.py --all
