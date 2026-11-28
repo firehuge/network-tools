@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>GlobalProtect Log Viewer</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>GlobalProtect Log Viewer</title>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -18,11 +20,33 @@ main{max-width:1300px;margin:auto;padding:20px}.card{background:var(--card);bord
 .row{display:grid;grid-template-columns:170px 140px 1fr;gap:8px;padding:2px 8px;border-bottom:1px solid var(--bd);white-space:pre-wrap;word-break:break-all}
 .row.err{background:var(--rb)}.row.warn{background:var(--yb)}.row.hit{outline:3px solid var(--b)}.row .fn{color:var(--mu)}
 .ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.ctl input{flex:1;min-width:200px}
-@media print{header button,#drop,#logcard,.ctl{display:none!important}body{background:#fff}}
+#help details{margin:6px 0;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}#help summary{cursor:pointer}#help li{margin:3px 0}#help .ctl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media print{header button,#drop,#logcard,.ctl,#help{display:none!important}body{background:#fff}}
 </style></head><body>
 <header><h1>🛡️ GlobalProtect Log Viewer</h1><span class="tip">Files stay on this computer. Nothing is uploaded.</span>
-<button onclick="document.body.classList.toggle('dark')">🌓 Dark/Light</button><button onclick="window.print()">🖨️ Report / PDF</button></header>
+<button id="btn-print" type="button">🖨️ Report / PDF</button><button id="btn-help" type="button" title="How to use this tool: plain-language and technical guide">Help</button><button id="btn-dark" type="button" title="Toggle dark mode">Dark</button></header>
 <main>
+<section id="help" class="card" hidden>
+<div class="ctl"><h2 style="margin:0">How to use the GlobalProtect Log Viewer</h2><button type="button" id="help-close">Close help</button></div>
+<p class="tip">Each topic has <b>In plain words</b> for anyone and <b>Technical detail</b> for engineers. Everything runs in this browser; nothing is uploaded, and the page makes no network requests.</p>
+<details open><summary><b>1. Start here: read a log bundle in four steps</b></summary><ol>
+<li><b>Get the logs.</b> On the user's computer, GlobalProtect <i>Settings &gt; Troubleshooting &gt; Collect Logs</i> creates <code>GlobalProtectLogs.zip</code> (Windows) or <code>.tgz</code> (Mac, Linux).</li>
+<li><b>Drop it here.</b> Drag the file onto the dashed box, or click the box to choose it. Do not unzip it first. You can also load single <code>.log</code> or <code>.txt</code> files.</li>
+<li><b>Read the summary card.</b> The coloured bar is the last VPN status found (green connected, red disconnected, yellow unclear), with user, IPs, portal, gateway, last login and last failure. "Not found in logs" means the files do not contain it.</li>
+<li><b>Read the problem cards.</b> Red is likely the cause, yellow is worth knowing. Click a card to see only its log lines, then <i>Show all lines</i> to go back.</li></ol>
+<p><b>Technical detail:</b> the card checks run over every line; the log table shows up to 5,000 lines at a time. Times are the user's computer clock with no time zone.</p></details>
+<details><summary><b>2. Filters, search and the report</b></summary><ul>
+<li><b>All files</b> narrows to one log. PanGPS.log is the service log and pan_gp_event.log is a short event history.</li>
+<li><b>All severities</b> shows errors only, or errors and warnings.</li>
+<li><b>Search</b> takes any word: a user name, <code>gateway</code>, <code>certificate</code> or a time such as <code>11:05</code>.</li>
+<li><b>Report / PDF</b> prints the summary and problem cards without the raw lines. Choose "Save as PDF" in the print window to attach it to a ticket.</li></ul></details>
+<details><summary><b>3. What the problem cards mean</b></summary>
+<p>Wrong password, single sign-on (SAML) failure, cannot reach the portal, certificate problems, missing client certificate, gateway failures, HIP (device health) check failures, IPSec falling back to SSL, MFA failures, expired or ended sessions, no internet or DNS, tunnel drops and network changes. Each card says what it means and what to try; the full table is in the engineer guide in <code>docs/ENGINEER-GUIDE.md</code>.</p></details>
+<details><summary><b>4. Limits and good to know</b></summary><ul>
+<li>Client logs almost never include the user's public IP. Look at the firewall or Panorama GlobalProtect logs for that.</li>
+<li>Supported: <code>.zip</code>, <code>.tgz</code>, <code>.tar.gz</code>, <code>.tar</code>, <code>.gz</code>, <code>.log</code>, <code>.txt</code>. Not supported: <code>.7z</code> and password-protected zips; re-save as a normal zip.</li>
+<li>Problem detection matches known wording. A new client version may word errors differently, so check the raw lines when a card looks wrong. Rules were tuned on Windows 6.2 logs; Mac and Linux logs are read but were tested less.</li></ul></details>
+</section>
 <div id="drop" class="card">📂 Drop the GlobalProtect log file here (.zip, .tgz, .tar.gz, .tar, .gz, .log, .txt)<br><small>or click to browse</small><input id="fi" type="file" multiple hidden></div>
 <div id="out" hidden>
 <div class="card"><div id="stat" class="status"></div><div class="grid" id="sum"></div><p class="tip" id="files"></p></div>
@@ -114,6 +138,7 @@ $('#cn').textContent='Showing '+Math.min(v.length,5000)+' of '+v.length+' matchi
 const fr=document.createDocumentFragment();v.slice(0,5000).forEach(l=>{const r=document.createElement('div');r.className='row '+l.sev;r.innerHTML='<span></span><span class="fn"></span><span></span>';r.children[0].textContent=fmt(l.d);r.children[1].textContent=l.f;r.children[2].textContent=l.t;fr.appendChild(r)});$('#log').replaceChildren(fr)}
 function jump(ids){HIT=new Set(ids);$('#ff').value='';$('#sf').value='';$('#q').value='';render();$('#logcard').scrollIntoView({behavior:'smooth'})}
 ['#ff','#sf'].forEach(s=>$(s).onchange=render);$('#q').oninput=render;
+$('#btn-dark').onclick=()=>document.body.classList.toggle('dark');$('#btn-print').onclick=()=>window.print();$('#btn-help').onclick=()=>{const h=$('#help');h.hidden=!h.hidden;if(!h.hidden)h.scrollIntoView({behavior:'smooth',block:'start'})};$('#help-close').onclick=()=>{$('#help').hidden=true};
 const dr=$('#drop');dr.onclick=()=>$('#fi').click();$('#fi').onchange=e=>run(e.target.files);
 dr.ondragover=e=>{e.preventDefault();dr.classList.add('over')};dr.ondragleave=()=>dr.classList.remove('over');dr.ondrop=e=>{e.preventDefault();dr.classList.remove('over');run(e.dataTransfer.files)};
 async function run(fs){try{dr.textContent='⏳ Reading…';await load([...fs]);dr.innerHTML='📂 Loaded: '+[...fs].map(f=>f.name).join(', ')+' — drop another file to replace'}catch(e){dr.textContent='❌ Could not read this file: '+e.message}}
