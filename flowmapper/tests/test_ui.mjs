@@ -30,6 +30,12 @@ async function loadFiles(files) {
   await page.waitForFunction(() => window.__FM.ready === true && window.__FM.getDevices().length > 0, null, { timeout: 60000 });
   await page.waitForFunction((n) => window.__FM.state.files.length >= n && window.__FM.ready === true, files.length, { timeout: 60000 });
 }
+// Set the filter box and fire a real input event, then wait until the app has the value. Playwright's fill("") can race the
+// picker re-render after All/None and leave the app's filter stale, so do not rely on it.
+const setFilter = async (v) => {
+  await page.locator(".ctxfilter").evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }, v);
+  await page.waitForFunction((v) => { const f = window.__FM.state.files.find((f) => f.ctxSel); return (f.ctxFilter || "") === v && document.querySelector(".ctxfilter").value === v; }, v, { timeout: 10000 });
+};
 async function trace(q) { return page.evaluate((q) => { const r = window.__FM.runTrace(q); return { status: r.status, segs: r.segments.map((s) => s.device + ":" + s.vsys), changes: r.changes.filter((c) => !c.optional).map((c) => c.kind + ":" + c.device + ":" + c.vsys), ms: r.ms }; }, q); }
 
 console.log("\n== load + multi-vsys trace ==");
@@ -60,6 +66,17 @@ const [dlRO] = await Promise.all([page.waitForEvent("download"), page.click("#ex
 const csvPath = path.join(ROOT, "tests/_out_flow.csv"); await dlRO.saveAs(csvPath);
 const csvText = fs.readFileSync(csvPath, "utf8");
 ok(/Rule order/.test(csvText) && /Places checked by security policy/.test(csvText), "CSV export carries the rule-order column and the places-checked line");
+ok(/Log at session end/.test(csvText) && /Profile group/.test(csvText), "CSV has Log at session end and Profile group columns");
+{
+  const cliText = () => page.locator("#changes pre.cli").allInnerTexts().then((a) => a.join("\n"));
+  ok(/ action allow log-end yes/.test(await cliText()) && !/profile-setting/.test(await cliText()), "new allow rules log at session end; no profile group by default");
+  await page.fill("#q-pgroup", "PG-Standard"); await page.dispatchEvent("#q-pgroup", "change");
+  await page.waitForFunction(() => /profile-setting group PG-Standard/.test(document.querySelector("#changes").innerText));
+  ok(/ log-end yes profile-setting group PG-Standard/.test(await cliText()) && /profile group PG-Standard/.test(await page.locator("#changes").innerText()), "profile group shows in the rule detail and the CLI");
+  ok(await page.evaluate(() => localStorage.getItem("pan-flowmapper-profile-group")) === "PG-Standard", "profile group is saved in the browser");
+    await page.fill("#q-pgroup", ""); await page.dispatchEvent("#q-pgroup", "change");
+  await page.waitForFunction(() => !/profile-setting/.test(document.querySelector("#changes").innerText));
+}
 
 console.log("\n== tabs ==");
 await page.click("#tabs [data-tab=config]");
@@ -90,27 +107,27 @@ ok(r.changes.filter((c) => c.startsWith("security")).length === 3, "three rules 
 await page.locator("#flowsvg").screenshot({ path: path.join(ROOT, "tests/_out/flow-panorama.png") });
 const rows = await page.locator(".ctxrow").count();
 ok(rows === 67, "device picker lists 67 devices");
-await page.fill(".ctxfilter", "dc-mv");
+await setFilter("dc-mv");
 ok(await page.locator(".ctxrow:not([hidden])").count() === 4, "device filter works");
 
 // ---- device picker: All / None follow the filter
 {
   const st = () => page.evaluate(() => { const f = window.__FM.state.files.find((f) => f.ctxSel); return { sel: f.ctxSel.size, devs: window.__FM.getDevices().filter((d) => d.kind === "panorama").length, count: document.querySelector("[id^=ctxcount-]").textContent, filter: document.querySelector(".ctxfilter").value, shown: document.querySelectorAll(".ctxrow:not([hidden])").length }; });
   const waitDevs = (n) => page.waitForFunction((n) => window.__FM.ready !== false && window.__FM.getDevices().filter((d) => d.kind === "panorama").length === n, n, { timeout: 30000 });
-  await page.fill(".ctxfilter", "");
+  await setFilter("");
   let x = await st();
   ok(x.sel === 67 && x.filter === "", "picker default: all 67 mapped devices selected, filter empty");
-  await page.fill(".ctxfilter", "dc-mv");
+  await setFilter("dc-mv");
   await page.click("[data-ctxall]"); await waitDevs(4); await page.waitForFunction(() => document.querySelector("[id^=ctxcount-]").textContent === "4");
   x = await st();
   ok(x.sel === 4 && x.devs === 4 && x.count === "4" && x.filter === "dc-mv" && x.shown === 4, "filter + All = exactly the 4 filtered devices; filter text and rows kept (" + JSON.stringify(x) + ")");
   r = await trace({ src: "10.100.7.50", dst: "10.200.32.20", proto: "tcp", port: 1433, deviceId: "" });
   ok(r.segs.every((s) => s.startsWith("dc-mv")), "trace uses only the filtered set: " + r.segs.join(" > "));
-  await page.fill(".ctxfilter", ""); await page.click("[data-ctxall]"); await waitDevs(67);
+  await setFilter(""); await page.click("[data-ctxall]"); await waitDevs(67);
   ok((await st()).sel === 67, "empty filter + All = all listed mapped devices");
-  await page.fill(".ctxfilter", "dc-mv"); await page.click("[data-ctxnone]"); await waitDevs(63);
+  await setFilter("dc-mv"); await page.click("[data-ctxnone]"); await waitDevs(63);
   x = await st(); ok(x.sel === 63 && x.filter === "dc-mv", "filter + None removes only the filtered devices (63 left)");
-  await page.fill(".ctxfilter", ""); await page.click("[data-ctxnone]");
+  await setFilter(""); await page.click("[data-ctxnone]");
   await page.waitForFunction(() => window.__FM.state.files.find((f) => f.ctxSel).ctxSel.size === 0);
   ok((await st()).sel === 0, "empty filter + None clears the trace set");
   await page.click("[data-ctxall]"); await waitDevs(67);
@@ -264,13 +281,13 @@ await loadFiles([S("panorama-ha-edge.xml")]);
   let sel = await page.evaluate(() => [...window.__FM.state.files.find((f) => f.ctxSel).ctxSel].join(" "));
   ok(!/013100000001/.test(sel) && !/013100000002/.test(sel), "one checkbox deselects both HA members");
   await inetCb.check(); await page.waitForFunction(() => window.__FM.getDevices().length === 8);
-  await page.fill(".ctxfilter", "fw-inet-b");
+  await setFilter("fw-inet-b");
   ri = await rowsInfo();
   ok(ri.filter((x) => !x.hidden).length === 1 && /fw-inet-a/.test(ri.find((x) => !x.hidden).txt), "filter on one member shows the whole pair");
   await page.click("[data-ctxall]"); await page.waitForFunction(() => window.__FM.getDevices().length === 2);
   sel = await page.evaluate(() => [...window.__FM.state.files.find((f) => f.ctxSel).ctxSel].join(" "));
   ok(/013100000001/.test(sel) && /013100000002/.test(sel) && sel.split(" ").length === 2, "All on that filter selects both members");
-  await page.fill(".ctxfilter", ""); await page.click("[data-ctxall]"); await page.waitForFunction(() => window.__FM.getDevices().length === 8);
+  await setFilter(""); await page.click("[data-ctxall]"); await page.waitForFunction(() => window.__FM.getDevices().length === 8);
   await page.waitForFunction(() => document.querySelector("[id^=ctxcount-]").textContent === "8"); await page.waitForTimeout(300);
   await page.locator(".ctxlist").screenshot({ path: path.join(ROOT, "tests/_out/device-picker-ha.png") });
 }

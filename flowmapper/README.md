@@ -26,6 +26,16 @@ npm test               # core tests and headless-browser tests (needs Chrome; se
 ```
 The engine files `build/core.js`, `build/render.js` and `build/decom.js` are shared with [PAAT](../paat/README.md) (`paat/tools/sync-flowmapper.py` copies them).
 
+## Safe defaults on generated rules (1.9.4)
+
+Every allow rule FlowMapper generates now ends with `log-end yes`, so the new traffic shows up in the traffic log.
+You can also type the name of a **security profile group** in the *Profile group for new rules* box next to Trace. It is
+added to every generated allow rule as `profile-setting group <name>`, in the on-screen CLI, the ticket HTML and the
+ticket CSV (new columns *Log at session end* and *Profile group*). The box is saved in your browser and left blank by
+default: FlowMapper never invents a group name, because a group that does not exist on the firewall or Panorama fails the
+commit. The group must already exist where the rule is created (the device group, or shared, for Panorama).
+The same setting exists in PAAT (`change_plan.rule_profile_group` in the customer profile).
+
 ## FCR import (1.9.3)
 
 Paste text, load a `.csv`, or load an `.xlsx` in the FCR box. Everything is read in the browser; nothing is uploaded.

@@ -378,6 +378,14 @@ What the plan will and will not do:
 
 Exports: CSV, Markdown, `set` commands and rollback commands. PAAT runs the same engine (`build/decom.js`) and can push the plan through
 its approval flow.
+## Safe defaults on generated rules
+
+Every allow rule FlowMapper proposes ends with `log-end yes`, so the new traffic shows up in the traffic log.
+To also attach a security profile group, type its name in **Profile group for new rules** next to *Trace*. FlowMapper adds
+`profile-setting group <name>` to every proposed allow rule, in the on-screen CLI, the ticket HTML and the ticket CSV.
+The box is saved in your browser and blank by default. FlowMapper never makes up a group name: the group must already
+exist where the rule is created (the device group, or shared, on Panorama) or the commit fails.
+
 ## Firewall change requests (FCR)
 
 Use this when you have a requested flow (source, destination, port/application) and you need to change policy once, correctly, instead of pushing a rule, discovering another vsys still denies, and pushing again.
