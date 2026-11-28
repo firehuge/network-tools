@@ -54,6 +54,10 @@ DEFAULT_TICKETS = {"ritm": r"RITM\d+", "sctask": r"SCTASK\d+", "cr": r"(?:CHG|CR
 DEFAULT_CHANGE_PLAN = {
     "log_forwarding": "LOG-FWD-DEFAULT",
     "profile_group": "PROFILE-GROUP-DEFAULT",
+    # Security profile group applied to every NEW allow rule PAAT generates or pushes. Blank = none. Unlike
+    # ``profile_group`` (a label printed in the CR text) this one is written into the rule, so it must already exist
+    # on the firewall or Panorama (device group or shared) or the commit fails.
+    "rule_profile_group": "",
     "profile_type": "Group",
     "log_at_session_start": "No",
     "log_at_session_end": "Yes",
@@ -210,6 +214,13 @@ def _override_paths(name: str) -> list[Path]:
     extra = os.environ.get("PANLAB_CUSTOMER_OVERRIDE_DIR")
     paths.append(Path(extra) / f"{name}.yaml" if extra else etc_dir() / "customers" / f"{name}.yaml")
     return paths
+
+
+def rule_profile_group(profile: "Profile | None") -> str:
+    """Profile group for new allow rules from the customer's change_plan (blank = none)."""
+    from panlab.flowmapper import clean_profile_group
+    cfg = getattr(profile, "change_plan", None) or {}
+    return clean_profile_group(cfg.get("rule_profile_group"))
 
 
 def resolve_change_plan(raw_block: dict[str, Any] | None, name: str) -> dict[str, Any]:

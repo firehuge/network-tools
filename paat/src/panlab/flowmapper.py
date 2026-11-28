@@ -166,12 +166,19 @@ def parse_link_spec(spec: str) -> dict[str, Any]:
     return {"from": frm, "to": {"device": rp[0], "iface": rp[1] if len(rp) > 1 and rp[1] else None}, "label": "panlab link"}
 
 
+def clean_profile_group(name: str | None) -> str:
+    """Same cleaning as the engine: no quotes or angle brackets, trimmed, at most 63 characters."""
+    import re as _re
+    return _re.sub(r"[\x00-\x1f\"<>&']", "", str(name or "")).strip()[:63]
+
+
 def run_trace(files: list[ConfigFile], fcr_text: str, *,
               ignore_intrazone: bool = False, timeout: int | None = None,
               route_tables: list[RouteTable] | None = None,
               links: list[dict[str, Any]] | None = None,
               pins: dict[str, dict[str, Any]] | None = None,
-              roles: dict[str, Any] | None = None, scope: str | dict[str, Any] | None = None) -> dict[str, Any]:
+              roles: dict[str, Any] | None = None, scope: str | dict[str, Any] | None = None,
+              profile_group: str | None = None) -> dict[str, Any]:
     """Load the given XML files in the engine, merge local backups, and annotate each FCR row.
 
     route_tables: actual learned routes per firewall (they win over inference).
@@ -179,6 +186,8 @@ def run_trace(files: list[ConfigFile], fcr_text: str, *,
     pins: per row ("1", "2", ... or "*" for all): {"choices": {key: devId}, "dstDevice": devId, "srcDevice": devId}.
     roles: the site-role profile (panlab.siteroles); scope: "production" | "all" | "sites=a,b" (or the parsed dict) overrides its scope.
     With neither, the engine default applies: Production only (firewalls with no role words are kept).
+    profile_group: optional security profile group added to every generated allow rule (blank or None = none).
+    Generated allow rules always log at session end.
     """
     info = verify_engine()
     if not files:
@@ -186,7 +195,7 @@ def run_trace(files: list[ConfigFile], fcr_text: str, *,
     job = {
         "files": [{"path": str(f.path), "name": f.name} for f in files],
         "fcr": fcr_text or "",
-        "options": {"ignoreIntrazoneDefault": bool(ignore_intrazone)},
+        "options": {"ignoreIntrazoneDefault": bool(ignore_intrazone), "profileGroup": clean_profile_group(profile_group)},
         "routeTables": [{"device": t.device, "text": t.text, "label": t.label} for t in (route_tables or [])],
         "links": list(links or []),
         "pins": dict(pins or {}),

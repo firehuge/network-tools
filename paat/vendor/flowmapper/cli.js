@@ -269,6 +269,8 @@ function run(job, FM, R) {
   const opts = job.options || {};
   const traceOpts = {};
   if (opts.ignoreIntrazoneDefault) traceOpts.ignoreIntrazoneDefault = true;
+  // Optional security profile group for generated allow rules (blank = none). Also set as the engine default so every re-trace agrees.
+  if (typeof opts.profileGroup === "string" && typeof FM.setRuleDefaults === "function") { traceOpts.profileGroup = opts.profileGroup; FM.setRuleDefaults({ profileGroup: opts.profileGroup }); }
   // custom next-hop links (Save as link) apply to every row; pins (Use for this trace) are per row
   // links may name firewalls by hostname, serial or id; the engine wants the device name
   const findDev = (k) => { const x = String(k || "").toLowerCase(); const d = devices.find((y) => [y.name, y.id, y.serial, y.hostname, y.panorama && y.panorama.hostname].some((v) => v && String(v).toLowerCase() === x)); return d ? d.name : k; };

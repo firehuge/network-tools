@@ -330,9 +330,10 @@ def set_commands(cs: dict[str, Any]) -> list[str]:
                     out.append(f"# ^ {r['name']} needs a human: fix NEEDS-HUMAN zones or flags before any push")
                 continue
             src_user = f" source-user {_lst(r['source_user'])}" if r["source_user"] else ""
+            pg = f" profile-setting group {_q(r['profile_group'])}" if r.get("profile_group") else ""
             out.append(f"{rb} {n} from {_lst(r['from'])} to {_lst(r['to'])} source {_lst(r['source'] or ['any'])}{src_user} "
                        f"destination {_lst(r['destination'])} application {_lst(r['application'])} service {_lst(r['service'])} "
-                       f"action {r['action']} log-end yes tag {_lst(r['tags'])} description {_q(r['description'])}")
+                       f"action {r['action']} log-end yes{pg} tag {_lst(r['tags'])} description {_q(r['description'])}")
             if g["backend"] == "panorama":
                 for t in r["target_devices"]:
                     if t.get("serial"):

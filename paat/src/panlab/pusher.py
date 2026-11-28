@@ -193,6 +193,8 @@ def _rule_element(r: dict, targets: list[dict] | None = None) -> str:
              _members("destination", r["destination"] or ["any"]), _members("source-user", r["source_user"] or ["any"]),
              _members("application", r["application"] or ["any"]), _members("service", r["service"] or ["any"]),
              f"<action>{r['action']}</action>", "<log-end>yes</log-end>"]
+    if r.get("profile_group"):
+        parts.append(f"<profile-setting><group><member>{_x(r['profile_group'])}</member></group></profile-setting>")
     if r["tags"]:
         parts.append(_members("tag", r["tags"]))
     if r.get("description"):

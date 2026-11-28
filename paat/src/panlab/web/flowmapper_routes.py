@@ -22,7 +22,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from panlab import flowmapper as fm
 from panlab import uploads
 from panlab.changeset import build_changeset
-from panlab.customers import load_profile
+from panlab.customers import load_profile, rule_profile_group
 from panlab.report import write_outputs
 from panlab.sources import fetch_live, stored_config_paths
 from panlab import liveconfig, livecheck
@@ -545,6 +545,9 @@ def flow_form(request: Request, customer: str = "") -> HTMLResponse:
     try:
         prof = load_profile(chosen)
         scope_html = flow_scope.scope_select(siteroles.load(prof))
+        _pg = rule_profile_group(prof)
+        rule_note = ('<p class=\'muted\'>New allow rules always log at session end. Security profile group: '
+                     + (f'<b>{e(_pg)}</b>' if _pg else 'none') + ' (set <code>change_plan.rule_profile_group</code> in the customer profile; blank = none).</p>')
         links_card = _links_card(chosen, _load_links(prof))
         boxes = _backup_boxes(prof, set())
         live_card = _live_card(prof, chosen)
@@ -601,6 +604,7 @@ For several firewalls in one box, start each table with a line <code># device: N
 <label><input type='checkbox' name='ignore_intrazone' value='yes'> Ignore the implicit intrazone-default allow
 (treat those hops as needing an explicit rule)</label>
 {scope_html}
+{rule_note}
 <br><button type='submit'>Trace</button>
 </form>
 {links_card}
@@ -688,7 +692,7 @@ async def do_trace(request: Request, customer: str = Form(...), fcr: str = Form(
     if pick in ("production", "all", "custom") and pick != saved_roles["scope"]["mode"]:
         saved_roles = siteroles.save(prof, siteroles.apply_form(saved_roles, {"scope_mode": pick}))
     try:
-        result = fm.run_trace(files, fcr_text, ignore_intrazone=(ignore_intrazone == "yes"),
+        result = fm.run_trace(files, fcr_text, profile_group=rule_profile_group(prof), ignore_intrazone=(ignore_intrazone == "yes"),
                               route_tables=[fm.RouteTable(**t) for t in route_tables], links=links, roles=saved_roles)
     except fm.FlowMapperError as exc:
         raise HTTPException(400, str(exc)) from exc
@@ -835,7 +839,7 @@ async def set_scope(request: Request, customer: str, stem: str) -> HTMLResponse:
     if not files:
         raise HTTPException(400, "The configuration files of this trace are gone; trace it again.")
     try:
-        result = fm.run_trace(files, payload["fcr_text"], ignore_intrazone=bool(payload.get("ignore_intrazone")),
+        result = fm.run_trace(files, payload["fcr_text"], profile_group=rule_profile_group(prof), ignore_intrazone=bool(payload.get("ignore_intrazone")),
                               route_tables=_tables(payload), links=_load_links(prof), pins=payload.get("pins") or {}, roles=roles)
     except fm.FlowMapperError as exc:
         raise HTTPException(400, str(exc)) from exc
@@ -905,7 +909,7 @@ def pin_choice(request: Request, customer: str, stem: str, row: int = Form(...),
     if not files:
         raise HTTPException(400, "The configuration files of this trace are gone; trace it again.")
     try:
-        result = fm.run_trace(files, payload["fcr_text"], ignore_intrazone=bool(payload.get("ignore_intrazone")),
+        result = fm.run_trace(files, payload["fcr_text"], profile_group=rule_profile_group(prof), ignore_intrazone=bool(payload.get("ignore_intrazone")),
                               route_tables=_tables(payload), links=_load_links(prof), pins=pins,
                               roles=payload.get("roles"))
     except fm.FlowMapperError as exc:

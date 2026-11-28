@@ -85,6 +85,7 @@ def _create_security_rule(fw, rule: PlannedRule, vsys: str) -> None:
         log_end=rule.log_end,
         description=rule.description or None,
         disabled=rule.disabled,
+        group=rule.profile_group or None,
     )
     rulebase.add(security)
     security.create()

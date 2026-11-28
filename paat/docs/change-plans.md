@@ -44,7 +44,8 @@ placeholders:
 ```yaml
 change_plan:
   log_forwarding: LOG-FWD-DEFAULT
-  profile_group: PROFILE-GROUP-DEFAULT
+  profile_group: PROFILE-GROUP-DEFAULT   # label printed in the CR text only
+  rule_profile_group: ""                 # optional: a profile group that already exists; written into every NEW allow rule
   profile_type: Group
   log_at_session_start: "No"
   log_at_session_end: "Yes"
@@ -56,6 +57,11 @@ change_plan:
   # validation_plan: ...
   # communications_plan: "{team_name} will notify stakeholders..."
 ```
+
+**Safe defaults on new rules.** Every allow rule PAAT generates (change plan, push, flow trace) is written with
+`log-end yes`. If `rule_profile_group` is set, the same rule also gets `profile-setting group <name>`; blank (the default)
+adds nothing. The group must already exist on the firewall or in the Panorama device group (or shared), otherwise the
+commit fails. The CR text then shows that group under *Group Profile*.
 
 To use real values on the PAAT server, do **not** edit the committed
 profile. Put them in a gitignored local file, either:
