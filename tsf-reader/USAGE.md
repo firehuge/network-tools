@@ -82,7 +82,7 @@ Red cards are likely to matter now. Yellow cards are worth a look. Blue cards ma
 - Crash dumps under `var/cores`
 - Process restarts / unexpected exits
 - NTP configured but not synchronized
-- Security content not installed (version 0) or stale threat / AV / URL content dates
+- Security content not installed (version 0) **when the matching subscription is licensed**; unlicensed packages (for example WildFire on a firewall that never had a WildFire license) are an informational “Not licensed” note, not a warning. If the license is expired, the expired-license finding is used instead of “content missing.” If `request license info` is absent from the TSF, a version-0 package is informational (“license status unknown”). Stale threat / AV / URL / WildFire content dates are reported only for licensed (or license-unknown) packages.
 
 **Suggestions (labeled, with a rationale, never as certainties):**
 

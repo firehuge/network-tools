@@ -7,7 +7,9 @@
 import { chromium } from "playwright-core";
 import http from "node:http";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -109,6 +111,85 @@ function titles(report) {
 }
 function hasTitle(report, re) {
   return report.findings.some((f) => re.test(f.title));
+}
+
+function barCmd(cmd) {
+  const bar = "=".repeat(80);
+  return `\n${bar}\n== ${cmd}\n${bar}\n\n`;
+}
+
+function licenseCaseCli(opts = {}) {
+  const wfVer = opts.wildfireVersion ?? "0";
+  const wfDateLine = opts.wildfireDate ? `wildfire-release-date: ${opts.wildfireDate}\n` : "";
+  const includeLicenses = opts.licenses !== false;
+  const licenseBody = opts.licenseBody || "";
+  return [
+    "Palo Alto Networks tech support (SYNTHETIC TEST DATA — not a live device)\n",
+    barCmd("show system info"),
+    `hostname: fw-example-lic
+ip-address: 192.0.2.99
+netmask: 255.255.255.0
+default-gateway: 192.0.2.1
+time: Mon Nov 10 12:00:00 2026
+uptime: 10 days, 1:00:00
+family: 400
+model: PA-440
+serial: 012345678999
+sw-version: 11.1.4
+app-version: 8990-9100
+app-release-date: 2026/11/08 16:00:00 PDT
+av-version: 4920-5510
+av-release-date: 2026/11/08 16:00:00 PDT
+threat-version: 8990-9100
+threat-release-date: 2026/11/08 16:00:00 PDT
+wildfire-version: ${wfVer}
+${wfDateLine}url-filtering-version: 20261108.40111
+url-filtering-release-date: 2026/11/08 00:00:00 PDT
+platform-family: 400
+operational-mode: normal
+system-mode: normal
+`,
+    includeLicenses ? barCmd("request license info") + licenseBody + "\n" : "",
+  ].join("");
+}
+
+const LIC_THREAT_URL = `License entry:
+Feature: Threat Prevention
+Expires: November 10, 2028
+Expired: No
+
+License entry:
+Feature: PAN-DB URL Filtering
+Expires: November 10, 2028
+Expired: No
+`;
+
+const LIC_WF_ACTIVE = `License entry:
+Feature: WildFire License
+Expires: November 10, 2028
+Expired: No
+`;
+
+const LIC_WF_EXPIRED = `License entry:
+Feature: WildFire License
+Expires: October 01, 2026
+Expired: Yes
+`;
+
+function writeMiniTsf(name, cliText) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tsf-lic-"));
+  const folder = `techsupport_${name}_20261110_120000`;
+  const cliDir = path.join(dir, folder, "tmp", "cli");
+  fs.mkdirSync(cliDir, { recursive: true });
+  fs.writeFileSync(path.join(cliDir, `techsupport_${folder}.txt`), cliText);
+  const tgz = path.join(dir, `${name}.tgz`);
+  const tar = spawnSync("tar", ["-czf", tgz, "-C", dir, folder], { encoding: "utf8" });
+  if (tar.status !== 0) throw new Error("tar failed for " + name + ": " + (tar.stderr || tar.stdout));
+  return tgz;
+}
+
+function finding(report, re) {
+  return (report.findings || []).find((f) => re.test(f.title));
 }
 
 async function main() {
@@ -264,6 +345,54 @@ async function main() {
   const pageNf = await page.locator("#sum").innerText();
   // With redaction on, "Not found in this bundle" should appear for missing fields
   assert(/Not found in this bundle/i.test(pageNf), "UI shows 'Not found in this bundle'");
+
+  // ---- 6. license-gated content (synthetic mini TSFs, not committed) ----
+  console.log("\n== license-gated WildFire content ==");
+  const unlicensedPath = writeMiniTsf("wf-unlicensed", licenseCaseCli({
+    wildfireVersion: "0",
+    licenseBody: LIC_THREAT_URL,
+  }));
+  ({ report, errors } = await loadTsf(page, unlicensedPath));
+  assert(errors.length === 0, "no JS errors on unlicensed WildFire (" + errors.join(" | ") + ")");
+  assert(report.device["Hostname"] === "fw-example-lic", "unlicensed case hostname");
+  const unlicWarn = (report.findings || []).filter((f) => (f.sev === "warning" || f.sev === "critical") && /security content is not installed|wildfire/i.test(f.title));
+  assert(unlicWarn.length === 0, "unlicensed WildFire does not raise a content warning, got " + unlicWarn.map((f) => f.sev + ":" + f.title).join(" | "));
+  assert(hasTitle(report, /not licensed:\s*WildFire/i), "unlicensed WildFire is an informational Not licensed note");
+  const unlicNote = finding(report, /not licensed:\s*WildFire/i);
+  assert(unlicNote && unlicNote.sev === "info", "Not licensed: WildFire is severity info");
+
+  const licensedMissingPath = writeMiniTsf("wf-licensed-missing", licenseCaseCli({
+    wildfireVersion: "0",
+    licenseBody: LIC_THREAT_URL + "\n" + LIC_WF_ACTIVE,
+  }));
+  ({ report, errors } = await loadTsf(page, licensedMissingPath));
+  assert(errors.length === 0, "no JS errors on licensed+missing WildFire (" + errors.join(" | ") + ")");
+  const missing = finding(report, /^Security content is not installed$/i);
+  assert(missing && missing.sev === "warning", "licensed+missing WildFire raises a content warning");
+  assert(!hasTitle(report, /not licensed:\s*WildFire/i), "licensed+missing is not described as unlicensed");
+  assert(!hasTitle(report, /license expired:.*wildfire/i), "licensed+missing is not described as expired");
+
+  const expiredPath = writeMiniTsf("wf-expired", licenseCaseCli({
+    wildfireVersion: "0",
+    licenseBody: LIC_THREAT_URL + "\n" + LIC_WF_EXPIRED,
+  }));
+  ({ report, errors } = await loadTsf(page, expiredPath));
+  assert(errors.length === 0, "no JS errors on expired WildFire (" + errors.join(" | ") + ")");
+  assert(hasTitle(report, /license expired:.*wildfire/i), "expired WildFire license is reported as expired");
+  const expiredContent = (report.findings || []).filter((f) => /security content is not installed/i.test(f.title));
+  assert(expiredContent.length === 0, "expired WildFire is not also reported as missing content, got " + expiredContent.map((f) => f.title).join(" | "));
+  assert(!hasTitle(report, /not licensed:\s*WildFire/i), "expired WildFire is not described as unlicensed");
+
+  const unknownPath = writeMiniTsf("wf-lic-unknown", licenseCaseCli({
+    wildfireVersion: "0",
+    licenses: false,
+  }));
+  ({ report, errors } = await loadTsf(page, unknownPath));
+  assert(errors.length === 0, "no JS errors on missing license section (" + errors.join(" | ") + ")");
+  const unknown = finding(report, /security content is not installed \(license status unknown\)/i);
+  assert(unknown && unknown.sev === "info", "no license section downgrades missing WildFire content to info with license status unknown");
+  assert(!report.findings.some((f) => f.sev === "warning" && /security content is not installed/i.test(f.title)), "no license section does not warn about missing content");
+  assert(!hasTitle(report, /license expired:.*wildfire/i), "no license section is not reported as an expired WildFire license");
 
   await browser.close();
   server.close();
