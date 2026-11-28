@@ -27,6 +27,7 @@ tech-support files, and read GlobalProtect logs. Each tool lives in its own fold
 | [**FlowMapper**](flowmapper/) | Offline, single-page flow tracer: load your firewall/Panorama XML configs in the browser, trace a flow hop by hop across vsys and routers, draw diagrams and plan decommissions. Nothing is uploaded. | Open one HTML file in a browser | [README](flowmapper/README.md) · [Install](flowmapper/INSTALL.md) · [Usage](flowmapper/USAGE.md) |
 | [**TSF Reader**](tsf-reader/) | Offline triage of a PAN-OS tech-support file (`.tgz`): finds problems and summarizes the device. Nothing is uploaded. | Open one HTML file in a browser | [README](tsf-reader/README.md) · [Install](tsf-reader/INSTALL.md) · [Usage](tsf-reader/USAGE.md) |
 | [**GP Log Viewer**](gp-log-viewer/) | Offline viewer for GlobalProtect client logs (`PanGPA`/`PanGPS`): timeline and problem finder. Nothing is uploaded. | Open one HTML file in a browser | [README](gp-log-viewer/README.md) · [Install](gp-log-viewer/INSTALL.md) · [Usage](gp-log-viewer/USAGE.md) |
+| [**PAN Physical Upgrade Planner**](pan-physical-upgrade/) | Offline planner for a Palo Alto firewall refresh: reads the old firewall's tech-support file, sizes the replacement, lists power, optics, cables and licenses to quote, converts the config to the new model or VM-Series, and writes a report and cutover runbook. No prices. Nothing is uploaded. | Open one HTML file in a browser | [README](pan-physical-upgrade/README.md) · [Install](pan-physical-upgrade/INSTALL.md) · [Usage](pan-physical-upgrade/USAGE.md) |
 
 <!-- To add a tool: add one row above (see CONTRIBUTING.md, "Adding a tool"). -->
 
@@ -43,6 +44,7 @@ paat/            PAAT (Python package, web app, Dockerfile, install.sh)
 flowmapper/      FlowMapper (single HTML + build + tests)
 tsf-reader/      TSF Reader (single HTML + build + tests)
 gp-log-viewer/   GP Log Viewer (single HTML + tests)
+pan-physical-upgrade/   PAN Physical Upgrade Planner (single HTML + build + tests)
 scripts/         public_guard.py: blocks private addresses, serials and customer markers
 .githooks/       pre-commit hook template (enable: git config core.hooksPath .githooks)
 .github/         CI: secret scan + guard + per-tool tests (path-filtered)

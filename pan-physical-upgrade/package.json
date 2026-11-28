@@ -1,0 +1,16 @@
+{
+  "name": "pan-physical-upgrade",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline browser tool: plan a Palo Alto firewall hardware refresh from a tech-support file and convert the config to the new model or VM-Series",
+  "author": "PAAT maintainers <noreply@example.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "python3 tools/build_catalog.py && python3 build/assemble.py",
+    "test": "node tests/test_core.mjs && node tests/test_ui.mjs"
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "^0.9.8",
+    "playwright-core": "^1.56.0"
+  }
+}

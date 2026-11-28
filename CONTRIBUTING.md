@@ -22,6 +22,7 @@ git config core.hooksPath .githooks     # enables the pre-commit guard
 # FlowMapper:      cd flowmapper && npm ci && npm test     (needs Google Chrome or Chromium; set CHROME_PATH if needed)
 # TSF Reader:      cd tsf-reader && npm ci && npm test
 # GP Log Viewer:   cd gp-log-viewer && node tests/test_viewer.mjs
+# Physical Upgrade Planner: cd pan-physical-upgrade && npm ci && npm test
 ```
 
 The pre-commit hook runs `scripts/public_guard.py`, which blocks private addresses (192.168.x.x), serial-like numbers, personal e-mail addresses and any customer words listed in your private `~/.public-guard-terms` file (one word or regex per line; keep that file out of the repository).
