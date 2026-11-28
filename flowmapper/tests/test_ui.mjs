@@ -27,8 +27,10 @@ const url = srv.url("/pan-flowmapper.html");
 async function loadFiles(files) {
   await page.evaluate(() => (window.__FM.ready = false));
   await page.locator("#fi").setInputFiles(files);
-  await page.waitForFunction(() => window.__FM.ready === true && window.__FM.getDevices().length > 0, null, { timeout: 60000 });
-  await page.waitForFunction((n) => window.__FM.state.files.length >= n && window.__FM.ready === true, files.length, { timeout: 60000 });
+  await page.waitForFunction(() => window.__FM.ready === true && window.__FM.getDevices().length > 0, null, { timeout: 120000 });
+  // Wait for these exact files, not a count: files from earlier tests stay loaded, so a count can be met after the first file of the batch.
+  const names = files.map((f) => path.basename(f));
+  await page.waitForFunction((names) => window.__FM.ready === true && names.every((n) => window.__FM.state.files.some((f) => f.name === n)), names, { timeout: 120000 });
 }
 // Set the filter box and fire a real input event, then wait until the app has the value. Playwright's fill("") can race the
 // picker re-render after All/None and leave the app's filter stale, so do not rely on it.
@@ -97,7 +99,15 @@ ok(raw.includes("SYNTHETICPSK"), "toggle shows raw secrets");
 await page.check("#raw-mask");
 
 console.log("\n== multiple firewalls ==");
-await loadFiles([S("fw-single-vsys.xml"), S("fw-core-peer.xml")]);
+{ // Slow-runner regression: with the CPU throttled, the app must not report ready between the files of one pick.
+  const cdp = await ctx.newCDPSession(page);
+  await page.evaluate(() => { window.__readyEarly = false; window.__FM.ready = false; window.__readyWatch = setInterval(() => { if (window.__FM.ready && !window.__FM.state.files.some((f) => f.name === "fw-core-peer.xml")) window.__readyEarly = true; }, 1); });
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 8 });
+  await page.locator("#fi").setInputFiles([S("fw-single-vsys.xml"), S("fw-core-peer.xml")]);
+  await page.waitForFunction(() => window.__FM.ready === true && window.__FM.state.files.some((f) => f.name === "fw-core-peer.xml"), null, { timeout: 120000 });
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 }); await cdp.detach();
+  ok(await page.evaluate(() => { clearInterval(window.__readyWatch); return !window.__readyEarly; }), "a multi-file pick reports ready only after the last file (slow CPU)");
+}
 r = await trace({ src: "10.10.0.50", dst: "10.50.10.7", proto: "tcp", port: 443 });
 ok(r.segs.join() === "branch-fw1:vsys1,core-fw1:vsys1", "cross-device trace");
 
@@ -749,8 +759,9 @@ console.log("\n== site roles, Production only scope, DR copy advice, Panorama HA
   async function loadFiles(files) {
     await page.evaluate(() => (window.__FM.ready = false));
     await page.locator("#fi").setInputFiles(files);
-    await page.waitForFunction(() => window.__FM.ready === true && window.__FM.getDevices().length > 0, null, { timeout: 60000 });
-    await page.waitForFunction((n) => window.__FM.state.files.length >= n && window.__FM.ready === true, files.length, { timeout: 60000 });
+    await page.waitForFunction(() => window.__FM.ready === true && window.__FM.getDevices().length > 0, null, { timeout: 120000 });
+    const names = files.map((f) => path.basename(f));
+    await page.waitForFunction((names) => window.__FM.ready === true && names.every((n) => window.__FM.state.files.some((f) => f.name === n)), names, { timeout: 120000 });
   }
   async function trace(q) { return page.evaluate((q) => { const r = window.__FM.runTrace(q); return { status: r.status, segs: r.segments.map((s) => s.device + ":" + s.vsys), changes: r.changes.filter((c) => !c.optional).map((c) => c.kind + ":" + c.device + ":" + c.vsys), ms: r.ms }; }, q); }
   await page.goto(url);

@@ -6995,13 +6995,18 @@ $("#btn-diag").addEventListener("click", () => {
   download("flowmapper-diagnostics-redacted-" + stamp() + ".json", new Blob([JSON.stringify(d, null, 1)], { type: "application/json" }));
 });
 
+// ready stays false until the whole batch is in: loadText must not report ready between the files of one drop or pick.
+let loadBatch = 0;
 async function loadFiles(list) {
+  loadBatch++;
   window.__FM.ready = false;
-  for (const f of Array.from(list || [])) {
-    try { await loadText(f.name, await f.text()); }
-    catch (e) { flash("Could not load " + f.name + ": " + e.message); }
-  }
-  window.__FM.ready = true;
+  try {
+    for (const f of Array.from(list || [])) {
+      try { await loadText(f.name, await f.text()); }
+      catch (e) { flash("Could not load " + f.name + ": " + e.message); }
+    }
+  } finally { loadBatch--; }
+  if (!loadBatch) window.__FM.ready = true;
 }
 function flash(msg) { const r = $("#result"); r.insertAdjacentHTML("afterbegin", '<div class="note error">' + esc(msg) + "</div>"); showTab("trace"); }
 async function loadText(name, text) {
@@ -7011,7 +7016,7 @@ async function loadText(name, text) {
   const t0 = performance.now();
   let loaded;
   try { loaded = await FM.loadConfigAsync(text, name, (f) => { drop.innerHTML = "Reading " + esc(name) + "... " + Math.round(f * 100) + "%"; }); }
-  catch (e) { resetDrop(); flash(name + ": " + e.message); window.__FM.ready = true; throw e; }
+  catch (e) { resetDrop(); flash(name + ": " + e.message); if (!loadBatch) window.__FM.ready = true; throw e; }
   const entry = { name, loaded, enabled: true, ctxSel: null, dgOverride: {}, ms: 0, showUnmapped: false };
   if (loaded.kind === "panorama") { const cs = loaded.panorama.contexts, mapped = cs.filter((c) => c.mapped); entry.ctxSel = new Set((mapped.length ? mapped : cs).map((c) => c.id)); }
   state.files = state.files.filter((f) => f.name !== name).concat([entry]);
@@ -7019,7 +7024,7 @@ async function loadText(name, text) {
   entry.ms = Math.round(performance.now() - t0);
   resetDrop(); renderFiles(); refreshSelectors();
   $("#tabs").hidden = false; if ($$(".tab").every((t) => t.hidden)) showTab("trace");
-  window.__FM.ready = true;
+  if (!loadBatch) window.__FM.ready = true;
   return loaded;
 }
 function resetDrop() { drop.classList.add("small"); drop.innerHTML = "Drop more config XML files here to trace across firewalls, or click to browse. <span class='muted'>Nothing is uploaded.</span>"; }
