@@ -85,7 +85,7 @@ const os=G([/^\s*OS Name:\s*(.+)/i],sys);const osv=G([/^\s*OS Version:\s*(.+)/i]
 const S={
 'Username':G([/<user-name>([^<]+)<\/user-name>/i,/and user ([\w.%@-]+@[\w.-]+|[\w.%-]+%40[\w.-]+)/i,/(?:user ?name|login user|username)\s*[:=]\s*['"]?([\w.\\@%-]+)/i]),
 'Local (client) IP':G([new RegExp('IPv4 Address[ .]*:\\s*'+IP,'i')],sys)||G([new RegExp('client IP:\\s*'+IP,'i'),new RegExp('(?:local ip|local address|interface ip)\\D{0,15}'+IP,'i')]),
-'Public IP':G([new RegExp('(?:public ip|external ip|public address)\\D{0,15}'+IP,'i')]),
+'Public IP':G([new RegExp('(?:public[- _]?ip|external[- _]?ip|public[- _]?address)\\D{0,15}'+IP,'i')]),
 'VPN tunnel IP':G([new RegExp('use virtual IP '+IP,'i'),new RegExp('(?:tunnel ip|assigned (?:vpn )?ip|ip assigned)\\D{0,15}'+IP,'i')]),
 'Portal':G([new RegExp('portal login completed with address '+HOST,'i'),new RegExp('<portal>'+HOST,'i'),new RegExp('portal(?: address| url| name)?\\s*(?:is|[:=])\\s*[\'"]?(?:https?://)?'+HOST,'i')]),
 'Gateway':G([new RegExp('gateway login finished with address '+HOST,'i'),new RegExp('create tunnel with gateway '+HOST,'i'),new RegExp('(?:connected to gateway|gateway(?: address| name)?\\s*(?:is|[:=]))\\s*[\'"]?(?:https?://)?'+HOST,'i')]),
@@ -99,7 +99,7 @@ let st='y',stt='⚠️ Connection status unclear from logs';if(lastConn){if(/dis
 if(!lastConn&&succ&&(!fail||succ.d>=fail.d)){st='g';stt='🟢 Last sign-in succeeded'}
 $('#stat').className='status s-'+st;$('#stat').textContent=stt;
 const rows=Object.entries(S);rows.push(['Last successful login',succ?fmt(succ.d):null]);rows.push(['Last failure',fail?fmt(fail.d)+' — '+(RULES.find(r=>r[4].test(fail.t))||['','Error'])[1]:null]);
-$('#sum').innerHTML='';rows.forEach(([k,v])=>{const d=document.createElement('div');d.className='f';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=k;const sp=d.querySelector('span');if(v)sp.textContent=v;else{sp.textContent='Not found in logs';sp.className='nf'}
+$('#sum').innerHTML='';rows.forEach(([k,v])=>{const d=document.createElement('div');d.className='f';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=k;const sp=d.querySelector('span');if(v)sp.textContent=v;else{sp.textContent=k==='Public IP'?'Not recorded in client logs — check the firewall GlobalProtect logs':'Not found in logs';sp.className='nf'}
 if(k==='Last failure'&&fail){sp.style.color='var(--r)';d.style.cursor='pointer';d.onclick=()=>jump([fail.id])}if(k==='Last successful login'&&succ){sp.style.color='var(--g)';d.style.cursor='pointer';d.onclick=()=>jump([succ.id])}$('#sum').appendChild(d)});
 $('#files').textContent='Files read ('+FILES.length+'): '+FILES.join(', ')+' — '+L.length+' log lines.';
 const ib=$('#issues');ib.innerHTML='';if(!iss.length)ib.innerHTML='<div class="issue g"><h3>✅ No known problems detected</h3><div class="tip">Look at the log lines below if the user still has trouble.</div></div>';
