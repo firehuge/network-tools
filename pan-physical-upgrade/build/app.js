@@ -3,6 +3,7 @@
 "use strict";
 const WORKER_JS = "@@WORKER_JS@@";
 const BUNDLED_CATALOG = "@@CATALOG_JSON@@";
+const ONLINE = window.__PPU_ONLINE === true;
 const ONLINE_CATALOG_URL = "https://raw.githubusercontent.com/firehuge/network-tools/main/pan-physical-upgrade/catalog/models.json";
 const U = PPU.util;
 const $ = s => document.querySelector(s);
@@ -44,11 +45,11 @@ function storedTheme() { try { return localStorage.getItem(THEME_KEY); } catch (
 function applyTheme(t) {
   const dark = t === "dark" || (!t && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
   document.body.classList.toggle("dark", dark);
-  const b = $("#btn-theme"); if (b) b.textContent = dark ? "☀️ Light" : "🌙 Dark";
+  const b = $("#btn-dark"); if (b) b.textContent = dark ? "Light" : "Dark";
 }
 applyTheme(storedTheme());
 if (window.matchMedia) { try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (!storedTheme()) applyTheme(null); }); } catch (e) {} }
-$("#btn-theme").onclick = () => {
+$("#btn-dark").onclick = () => {
   const next = document.body.classList.contains("dark") ? "light" : "dark";
   try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
   applyTheme(next);
@@ -62,17 +63,29 @@ function setCatalog(cat, source) {
   if (ST.A) refreshAll();
 }
 $("#catbadge").textContent = "Catalog: bundled (data as of " + (BUNDLED_CATALOG.data_as_of || "?") + ")";
-(async function tryOnline() {
-  const url = new URLSearchParams(location.search).get("catalog") || ONLINE_CATALOG_URL;
-  if (new URLSearchParams(location.search).has("offline")) return;
+/* Online catalog check is opt-in. The page starts offline (CSP: no network). The button reloads it with ?online, where the CSP
+   allows raw.githubusercontent.com only, and the check then runs once automatically. */
+$("#nettip").textContent = ONLINE
+  ? "Online mode: the only network request is the catalog check to raw.githubusercontent.com. Files stay on this computer. Nothing is uploaded."
+  : $("#nettip").textContent;
+async function checkCatalog() {
+  const badge = $("#catbadge"), bundled = String(BUNDLED_CATALOG.data_as_of || "");
+  badge.textContent = "Catalog: checking online...";
   try {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 5000);
-    const r = await fetch(url, { signal: ctl.signal, cache: "no-store" }); clearTimeout(t);
-    if (!r.ok) return;
+    const r = await fetch(ONLINE_CATALOG_URL, { signal: ctl.signal, cache: "no-store" }); clearTimeout(t);
+    if (!r.ok) throw new Error("HTTP " + r.status);
     const cat = await r.json();
-    if (cat.schema === 1 && String(cat.data_as_of || "") >= String(BUNDLED_CATALOG.data_as_of || "")) setCatalog(cat, "online");
-  } catch (e) { /* offline or blocked: keep bundled */ }
-})();
+    if (cat.schema === 1 && String(cat.data_as_of || "") >= bundled) setCatalog(cat, "online");
+    else badge.textContent = "Catalog: bundled is current (data as of " + (bundled || "?") + ")";
+  } catch (e) { badge.textContent = "Catalog check failed (offline or blocked); using bundled (data as of " + (bundled || "?") + ")"; }
+}
+$("#btn-catcheck").onclick = () => {
+  if (ONLINE) { checkCatalog(); return; }
+  if (ST.A && !confirm("Checking for a newer catalog reloads the page in online mode, which clears the loaded file. Continue?")) return;
+  location.href = location.pathname + "?online";
+};
+if (ONLINE) checkCatalog();
 $("#catfile").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try { setCatalog(JSON.parse(await f.text()), "file " + f.name); } catch (err) { showErr("Catalog file: " + err.message); }
@@ -106,6 +119,8 @@ function unpack(file) {
     worker.postMessage({ type: "start", file, budget: 512 * 1024 * 1024 });
   });
 }
+$("#btn-help").onclick = () => { const h = $("#help"); h.hidden = !h.hidden; if (!h.hidden) h.scrollIntoView({ behavior: "smooth", block: "start" }); };
+$("#help-close").onclick = () => { $("#help").hidden = true; };
 $("#btn-cancel").onclick = () => { if (worker) worker.postMessage({ type: "cancel" }); };
 async function loadFile(file) {
   showErr(""); ST.fileName = file.name;

@@ -29,17 +29,19 @@ Full URLs are in the `sources` block of `catalog/models.json`.
   the page from the dates against today's date, so it stays right without a rebuild.
 - **Port lists** are in datasheet order. Only the PA-440 numbering has been checked on hardware.
 
-## Live update
+## Live update (opt-in)
 
-When online, the page tries to fetch a newer catalog from:
+The page is **offline by default**: a strict Content-Security-Policy blocks every network request, and the catalog inside
+the page is used. To look for a newer catalog, click **Check for newer catalog** in the header. That reloads the page in
+online mode (`?online`), where the policy allows `raw.githubusercontent.com` and nothing else, and fetches:
 
 ```
 https://raw.githubusercontent.com/firehuge/network-tools/main/pan-physical-upgrade/catalog/models.json
 ```
 
-It uses that copy only if its `data_as_of` date is the same or newer than the bundled one.
-Override the URL with `?catalog=<url>`, or skip the check with `?offline`.
-You can also load a JSON file with **Catalog file** in the header.
+It uses that copy only if its `data_as_of` date is the same or newer than the bundled one. Reloading clears a file that
+is already loaded, so check for the catalog first. `?offline` always wins over `?online`.
+You can also load a JSON file with **Catalog file** in the header; that never touches the network.
 
 ## Refreshing the data
 

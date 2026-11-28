@@ -3,6 +3,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* Content Security Policy, chosen once at load. Offline (default): no network at all. "?online" (set by the Check for newer
+   catalog button): connect-src allows raw.githubusercontent.com and nothing else. A meta policy cannot be loosened after load. */
+(function () {
+  var on = /[?&]online(=|&|$)/.test(location.search) && !/[?&]offline(=|&|$)/.test(location.search);
+  var m = document.createElement("meta"); m.httpEquiv = "Content-Security-Policy";
+  m.content = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; worker-src blob:; connect-src " +
+    (on ? "https://raw.githubusercontent.com" : "'none'") + "; form-action 'none'; base-uri 'none'";
+  document.head.appendChild(m);
+  window.__PPU_ONLINE = on;
+})();
+</script>
 <title>PAN Physical Upgrade Planner</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Offline browser tool: plan a Palo Alto Networks firewall refresh from a tech-support file and convert the config to the new model or VM-Series. Nothing is uploaded.">
@@ -13,12 +25,37 @@
 <body>
 <header>
   <h1>🔁 PAN Physical Upgrade Planner</h1>
-  <span class="tip">Files stay on this computer. Nothing is uploaded.</span>
+  <span class="tip" id="nettip">Files stay on this computer. Nothing is uploaded. Offline by default: the model catalog is bundled, and nothing is fetched unless you click Check for newer catalog.</span>
   <span id="catbadge" class="pill" title="Where the model and end-of-life data came from">Catalog: bundled</span>
   <label class="btn" title="Load a newer catalog JSON file"><input type="file" id="catfile" accept=".json" hidden>📥 Catalog file</label>
-  <button id="btn-theme" type="button" aria-label="Switch light or dark mode">🌓 Dark</button>
+  <button id="btn-catcheck" type="button" title="Optional: fetch a newer model catalog from raw.githubusercontent.com. This is the only network request the page can make, and only after you click.">Check for newer catalog</button>
+  <button id="btn-help" type="button" title="How to use this tool: plain-language and technical guide">Help</button>
+  <button id="btn-dark" type="button" aria-label="Switch light or dark mode" title="Toggle dark mode">Dark</button>
 </header>
 <main>
+  <section id="help" class="card" hidden>
+    <div class="ctl"><h2 style="margin:0">How to use the Physical Upgrade Planner</h2><button type="button" id="help-close">Close help</button></div>
+    <p class="tip">Each topic has <b>In plain words</b> for anyone and <b>Technical detail</b> for engineers. Everything runs in this browser and nothing is uploaded. The page is offline by default.</p>
+    <details open><summary><b>1. Start here: plan a firewall refresh in four steps</b></summary><ol>
+      <li><b>Get the old firewall's tech-support file.</b> Device &gt; Support &gt; <i>Generate Tech Support File</i>, then download it. For an HA pair use the <b>active</b> unit. A tech-support file is sensitive: do not post or e-mail it.</li>
+      <li><b>Drop it on the page.</b> (<code>.tgz</code>, <code>.tar.gz</code> or <code>.zip</code>; a <code>running-config.xml</code> also works but has no usage data for sizing.)</li>
+      <li><b>Walk the tabs left to right.</b> Current device, Pick the new firewall, Hardware &amp; cabling, Licenses, Convert, Report and runbook. A value that is not in the file says <b>not in file</b>; the tool never guesses.</li>
+      <li><b>Convert and export.</b> On Convert, load a real (non-sanitized) config export, convert, and download the XML and change log. Export the report and cutover runbook.</li></ol></details>
+    <details><summary><b>2. Why a second file for the conversion</b></summary>
+      <p><b>In plain words:</b> the tech-support file hides passwords and keys, and PAN-OS will not load a config in that state. To get a config you can load, export <code>running-config.xml</code> as a superuser (Device &gt; Setup &gt; Operations &gt; Export named configuration snapshot).</p>
+      <p><b>Technical detail:</b> without it the tool still sizes and converts, but encrypted values stay as placeholders, so the converted file is for checking structure and references only.</p></details>
+    <details><summary><b>3. The model catalog: offline by default</b></summary>
+      <p><b>In plain words:</b> the list of Palo Alto models and end-of-life dates is built into this page, so it works with no internet. The badge in the header shows where the list came from. If you want to look for a newer list, click <b>Check for newer catalog</b>.</p>
+      <p><b>Technical detail:</b> a strict Content-Security-Policy blocks all network access. Clicking <i>Check for newer catalog</i> reloads the page in online mode (<code>?online</code>), where the policy allows <code>raw.githubusercontent.com</code> only, then fetches one JSON file. The newer list is used only if its <code>data_as_of</code> is the same or newer. You can also load a catalog JSON yourself with <b>Catalog file</b>; that never touches the network.</p></details>
+    <details><summary><b>4. Sizing rules worth knowing</b></summary><ul>
+      <li>Sizing uses measured peak plus headroom (30% by default); type a number in any box to override it.</li>
+      <li>Panorama must run the same or a newer PAN-OS than the firewalls it manages. Upgrade Panorama first if the new model needs a newer release.</li>
+      <li>Tick <b>Hide serial numbers</b> before you share screens or the report.</li></ul></details>
+    <details><summary><b>5. Troubleshooting</b></summary><ul>
+      <li><b>"Check for newer catalog" says it failed:</b> the page is offline or the network blocks <code>raw.githubusercontent.com</code>. The bundled catalog is still in use.</li>
+      <li><b>The reload cleared my file:</b> switching to online mode reloads the page. Check for the catalog first, then load your file.</li>
+      <li><b>PAN-OS rejects the converted file:</b> you converted from a sanitized tech-support config. Load a real export on the Convert tab.</li></ul></details>
+  </section>
   <div id="drop" class="card">📂 Drop a Palo Alto tech-support file here (.tgz, .tar.gz, .zip)<br>
     <small>or click to browse. A running-config.xml also works (conversion only, no sizing data).</small>
     <input id="fi" type="file" hidden accept=".tgz,.tar,.gz,.tar.gz,.zip,.xml,.txt">

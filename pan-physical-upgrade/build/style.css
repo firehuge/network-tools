@@ -101,3 +101,7 @@ td.num input,td input[type=number]{padding:4px 6px}
 }
 
 .ci{border-top:1px solid var(--bd);padding:8px 0}.ci:first-of-type{border-top:0}.ci p{margin:4px 0}
+
+#help details{margin:6px 0;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}#help summary{cursor:pointer}#help li{margin:3px 0}
+#help .ctl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media print{#help{display:none!important}}

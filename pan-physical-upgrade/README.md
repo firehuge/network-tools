@@ -4,7 +4,7 @@
 
 A single HTML page for Palo Alto Networks firewall refreshes. Drop in the **tech-support file (TSF)** from the old firewall and it
 sizes a replacement, lists the hardware and licenses to quote, converts the config to the new model, and writes a report and a
-cutover runbook. It runs only in your browser and works offline. No prices, by design.
+cutover runbook. It runs only in your browser and works offline. A strict Content-Security-Policy blocks all network access unless you click **Check for newer catalog**. No prices, by design.
 
 ## What it does
 

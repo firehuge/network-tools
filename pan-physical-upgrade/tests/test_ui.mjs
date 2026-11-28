@@ -24,7 +24,7 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(fp).pipe(res);
 });
 await new Promise(r => server.listen(PORT, "127.0.0.1", r));
-const URL0 = `http://127.0.0.1:${PORT}/?offline`;
+const URL0 = `http://127.0.0.1:${PORT}/`;
 const chrome = process.env.CHROME_PATH || ["/usr/bin/google-chrome-stable", "/usr/bin/google-chrome", "/usr/bin/chromium"].find(p => fs.existsSync(p));
 if (!chrome) { console.log("No Chrome found; skipping UI tests."); server.close(); process.exit(0); }
 
@@ -54,7 +54,7 @@ console.log("-- theme");
 {
   const page = await newPage("dark");
   ok(await page.evaluate(() => document.body.classList.contains("dark")), "follows OS dark preference");
-  await page.click("#btn-theme");
+  await page.click("#btn-dark");
   ok(!(await page.evaluate(() => document.body.classList.contains("dark"))), "toggle switches to light");
   await page.reload();
   ok(!(await page.evaluate(() => document.body.classList.contains("dark"))), "choice is remembered after reload");
@@ -97,9 +97,9 @@ console.log("-- PA-3220 HA bundle (dark mode)");
   ok(/Optics and cables to quote/.test(hw) && /HA cabling/.test(hw), "optics/cables and HA cabling sections");
   ok(/copper\/fiber change|port type change/.test(hw), "speed/media/port-type change summary");
   await page.screenshot({ path: path.join(SHOTS, "6-hardware-dark.png"), fullPage: true });
-  await page.click("#btn-theme");
+  await page.click("#btn-dark");
   await page.screenshot({ path: path.join(SHOTS, "6-hardware-light.png"), fullPage: true });
-  await page.click("#btn-theme");
+  await page.click("#btn-dark");
   const qty0 = await page.$$eval(".hw-qty", e => e.map(x => x.value));
   ok(qty0.length > 0, "BOM has editable quantities");
 
@@ -282,6 +282,63 @@ if (process.env.PPU_REAL_TSF && fs.existsSync(process.env.PPU_REAL_TSF)) {
   if (await page.$("#b-conv")) { await page.click("#b-conv"); await page.waitForSelector("#convout .status, #convout .note", { timeout: 60000 }); ok(/Converted/.test(await text(page, "#convout")), "real config converts"); }
   await tab(page, "report");
   await page.context().close();
+}
+
+console.log("-- offline by default, opt-in catalog check, Help, header buttons");
+{
+  const RAW = "https://raw.githubusercontent.com/**/pan-physical-upgrade/catalog/models.json"; // route glob; the page itself uses its built-in URL
+  const RAW_PROBE = "https://raw.githubusercontent.com/example/example/main/probe.json";
+  const cat = JSON.parse(fs.readFileSync(path.join(ROOT, "catalog", "models.json"), "utf8"));
+  const newer = { ...cat, data_as_of: "2099-01-01" };
+  const mk = async (url, route) => {
+    const ctx = await browser.newContext({ viewport: { width: 1360, height: 1000 } });
+    const page = await ctx.newPage();
+    const net = [], viol = [];
+    page.on("request", r => { if (!/^(http:\/\/127\.0\.0\.1|blob:|data:)/.test(r.url())) net.push(r.url()); });
+    page.on("console", m => { if (/Content Security Policy/i.test(m.text())) viol.push(m.text()); });
+    // Always intercept the catalog URL before the page loads, so tests never reach the real network.
+    await page.route(RAW, route === "fail" ? (r => r.abort()) : (r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(newer) })));
+    await page.goto(url);
+    return { ctx, page, net, viol };
+  };
+  const base = `http://127.0.0.1:${PORT}/`;
+  // 1) default load: offline, nothing fetched, CSP has no connect-src allowance
+  let s = await mk(base, true);
+  await s.page.waitForTimeout(800);
+  const csp0 = await s.page.evaluate(() => document.querySelector('meta[http-equiv="Content-Security-Policy"]').content);
+  ok(/connect-src 'none'/.test(csp0) && /default-src 'none'/.test(csp0) && !/githubusercontent/.test(csp0), "default CSP: connect-src 'none'");
+  ok(s.net.length === 0, "default load makes no network request");
+  ok(/Offline by default/.test(await text(s.page, "#nettip")) && /bundled/.test(await text(s.page, "#catbadge")), "header says offline by default; catalog is bundled");
+  const hdr = await s.page.evaluate(() => [...document.querySelectorAll("header > button")].map(b => b.id));
+  ok(hdr.slice(-2).join() === "btn-help,btn-dark", "Help then Dark are the last two header buttons (" + hdr.join() + ")");
+  ok(await s.page.evaluate(() => document.querySelector("#help").hidden), "help panel starts closed");
+  await s.page.click("#btn-help");
+  ok(await s.page.evaluate(() => !document.querySelector("#help").hidden && document.querySelectorAll("#help details").length >= 4), "Help button opens the usage guide");
+  await s.page.click("#help-close");
+  ok(await s.page.evaluate(() => document.querySelector("#help").hidden), "Close help hides it");
+  const blocked = await s.page.evaluate(async RAW_PROBE => { try { await fetch(RAW_PROBE); return "allowed"; } catch (e) { return "blocked"; } }, RAW_PROBE);
+  ok(blocked === "blocked", "a fetch attempt in offline mode is blocked by the CSP");
+  // 2) clicking the button switches to online mode and the check works
+  await s.page.click("#btn-catcheck");
+  await s.page.waitForURL(/\?online/);
+  s.viol.length = 0; // the deliberate offline fetch above logged one violation
+  await s.page.waitForFunction(() => /Catalog: online/.test(document.querySelector("#catbadge").textContent), null, { timeout: 15000 });
+  const cspOn = await s.page.evaluate(() => document.querySelector('meta[http-equiv="Content-Security-Policy"]').content);
+  ok(/connect-src https:\/\/raw\.githubusercontent\.com;/.test(cspOn), "online CSP allows raw.githubusercontent.com only");
+  ok(/Catalog: online \(data as of 2099-01-01\)/.test(await text(s.page, "#catbadge")), "online catalog check works and is applied");
+  ok(s.viol.length === 0, "no CSP violations in online mode: " + s.viol.slice(0, 1).join("|"));
+  const other = await s.page.evaluate(async () => { try { await fetch("https://example.com/"); return "allowed"; } catch (e) { return "blocked"; } });
+  ok(other === "blocked", "online mode still blocks every other host");
+  await s.ctx.close();
+  // 3) ?offline wins even if ?online is present; a failed check keeps the bundled catalog
+  s = await mk(base + "?online&offline", true);
+  await s.page.waitForTimeout(500);
+  ok(s.net.length === 0 && /connect-src 'none'/.test(await s.page.evaluate(() => document.querySelector('meta[http-equiv="Content-Security-Policy"]').content)), "?offline overrides ?online");
+  await s.ctx.close();
+  s = await mk(base + "?online", "fail");
+  await s.page.waitForFunction(() => /check failed/.test(document.querySelector("#catbadge").textContent), null, { timeout: 15000 });
+  ok(true, "a failed online check reports it and keeps the bundled catalog");
+  await s.ctx.close();
 }
 
 ok(errors.length === 0, "no page errors" + (errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""));
