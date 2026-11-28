@@ -435,6 +435,33 @@ Expired: No
   const privMissing = finding(report, /^Security content is not installed$/i);
   assert(privMissing && privMissing.sev === "warning", "licensed+missing WildFire private cloud raises a content warning");
 
+  // --- offline hygiene: CSP, Help, Dark/Help placement ---------------------------------------------------------------
+  {
+    console.log("\n== offline hygiene ==");
+    const hp = await browser.newPage();
+    const viol = [];
+    const external = [];
+    hp.on("console", (m) => { if (m.type() === "error" && /Content Security Policy/i.test(m.text())) viol.push(m.text()); });
+    hp.on("request", (r) => { if (!/^(http:\/\/127\.0\.0\.1|blob:|data:)/.test(r.url())) external.push(r.url()); });
+    await hp.goto(`http://127.0.0.1:${PORT}/pan-tsf-triage.html`, { waitUntil: "load" });
+    const csp = await hp.evaluate(() => (document.querySelector('meta[http-equiv="Content-Security-Policy"]') || {}).content || "");
+    assert(/default-src 'none'/.test(csp) && /connect-src 'none'/.test(csp) && /worker-src blob:/.test(csp), "strict CSP meta (no network, blob workers only)");
+    const hdr = await hp.evaluate(() => [...document.querySelectorAll("header > button")].map((b) => b.id));
+    assert(hdr.slice(-2).join() === "btn-help,btn-dark", "Help then Dark are the last two header buttons (" + hdr.join() + ")");
+    assert(await hp.evaluate(() => document.querySelector("#help").hidden === true), "help panel starts closed");
+    await hp.click("#btn-help");
+    assert(await hp.evaluate(() => !document.querySelector("#help").hidden && document.querySelectorAll("#help details").length >= 4), "Help button opens the usage guide");
+    await hp.click("#help-close");
+    assert(await hp.evaluate(() => document.querySelector("#help").hidden === true), "Close help hides it");
+    await hp.click("#btn-dark");
+    assert(await hp.evaluate(() => document.body.classList.contains("dark")), "Dark toggle works");
+    await hp.setInputFiles("#fi", path.join(ROOT, "samples", "techsupport_fw-clean.tgz"));
+    await hp.waitForFunction(() => window.__TSF && window.__TSF.ready === true, null, { timeout: 120000 });
+    assert(viol.length === 0, "no CSP violations while loading a bundle (blob worker still works): " + viol.slice(0, 1).join("|"));
+    assert(external.length === 0, "no network requests outside the local page: " + external.slice(0, 1).join("|"));
+    await hp.close();
+  }
+
   await browser.close();
   server.close();
   console.log(failed ? `\n${failed} test(s) failed` : "\nAll tests passed");
