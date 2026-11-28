@@ -340,6 +340,8 @@ async function main() {
   assert(hasTitle(report, /crash dump/i), "pano core");
   assert(hasTitle(report, /license expired/i), "logging service expired");
   assert(hasTitle(report, /disk usage high/i), "pano disk");
+  assert(!hasTitle(report, /^Not licensed:/i), "Panorama: no 'Not licensed' content note (Panorama has no security subscriptions)");
+  assert(!hasTitle(report, /^Zone protection profile is missing on some zones$/i), "Panorama: zone suggestion, if any, says template zones");
 
   // ---- 4. nested tgz ----
   console.log("\n== nested tgz ==");

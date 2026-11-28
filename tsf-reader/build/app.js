@@ -1291,6 +1291,9 @@ function runTriage(ctx){
     // content (Threat, AV, public WildFire, URL) still gets an info note so
     // a version-0 package is explained rather than warned.
     if (st === "unlicensed"){
+      // Panorama has no security subscriptions of its own (it only stores content to push), so a version-0 AV,
+      // WildFire, URL or Threat package there is normal and not worth a note.
+      if (dtype === "Panorama") continue;
       if (pack.key === "threat" || pack.key === "av" || pack.key === "wildfire" || pack.key === "url"){
         unlicensedMissing.push(pack);
       }
@@ -1609,8 +1612,9 @@ function runTriage(ctx){
       const listed = (untrustLike.length ? untrustLike : zppMissing).slice(0,8);
       finding(F, {
         sev: "info", suggestion: true,
-        title: "Zone protection profile is missing on some zones",
-        explain: `These zones have no zone-protection-profile in running-config.xml: ${listed.map(z=>z.name).join(", ")}. Zone protection can help with flood and reconnaissance traffic. This is a suggestion — attach a profile only after you understand the thresholds, or you can drop legitimate traffic.`,
+        title: dtype === "Panorama" ? "Zone protection profile is missing on some template zones" : "Zone protection profile is missing on some zones",
+        explain: (dtype === "Panorama" ? "This is a Panorama, so these zones come from its templates and apply to the firewalls the templates are pushed to. " : "") +
+          `These zones have no zone-protection-profile in running-config.xml: ${listed.map(z=>z.name).join(", ")}. Zone protection can help with flood and reconnaissance traffic. This is a suggestion — attach a profile only after you understand the thresholds, or you can drop legitimate traffic.`,
         action: "Start with the default or a conservative zone protection profile on untrust-side zones, and monitor drop counters.",
         source: "running-config.xml (zone-protection-profile)",
         evidence: listed.map(z => evLine("running-config.xml", 1, `zone ${z.name}: no zone-protection-profile`))
