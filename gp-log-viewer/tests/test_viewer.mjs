@@ -92,7 +92,7 @@ ok(summaryMap()["Public IP"] === "192.0.2.30", "parses <public-ip> XML");
 const noPublic = [
   "(T1) 11/02/26 08:00:00:000 Debug( 1): public key Algorithm: 1.2.840.113549.1.1.1, length=270",
   "(T1) 11/02/26 08:00:01:000 Debug( 1): <server-ip>198.51.100.40</server-ip>",
-  "(T1) 11/02/26 08:00:02:000 Debug( 1): Gateway: gw1.example.com, client IP: 192.168.1.10",
+  "(T1) 11/02/26 08:00:02:000 Debug( 1): Gateway: gw1.example.com, client IP: 10.20.30.40",
   "(T1) 11/02/26 08:00:03:000 Debug( 1): use virtual IP 172.16.0.8",
   "(T1) 11/02/26 08:00:04:000 Debug( 1): portal login completed with address vpn.example.com",
 ].join("\n") + "\n";
@@ -100,8 +100,8 @@ await loadLog("PanGPS.log", noPublic);
 const s = summaryMap();
 ok(s["Public IP"] === PUBLIC_MISSING, "empty public IP explains that client logs do not record it");
 ok(!String(s["Public IP"]).includes("198.51.100.40"), "does not treat <server-ip> as the public IP");
-ok(!String(s["Public IP"]).includes("192.168.1.10"), "does not treat local client IP as the public IP");
-ok(s["Local (client) IP"] === "192.168.1.10", "still parses local client IP");
+ok(!String(s["Public IP"]).includes("10.20.30.40"), "does not treat local client IP as the public IP");
+ok(s["Local (client) IP"] === "10.20.30.40", "still parses local client IP");
 ok(s["VPN tunnel IP"] === "172.16.0.8", "still parses tunnel IP");
 ok(s["Portal"] === "vpn.example.com", "still parses portal");
 
