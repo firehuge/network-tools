@@ -1499,8 +1499,18 @@ function runTriage(ctx){
   for (const pack of missingPacks){
     const st = contentLicenseStatus(licenses, licAvail, pack.key, now);
     if (st === "expired") continue; // expired license finding already covers this
-    if (st === "unlicensed") unlicensedMissing.push(pack);
-    else if (st === "unknown") unknownMissing.push(pack);
+    // Unlicensed default-zero packages such as WildFire private cloud or the
+    // GlobalProtect data file are normal on devices that never used those
+    // products — do not emit a "Not licensed" note for them. Core security
+    // content (Threat, AV, public WildFire, URL) still gets an info note so
+    // a version-0 package is explained rather than warned.
+    if (st === "unlicensed"){
+      if (pack.key === "threat" || pack.key === "av" || pack.key === "wildfire" || pack.key === "url"){
+        unlicensedMissing.push(pack);
+      }
+      continue;
+    }
+    if (st === "unknown") unknownMissing.push(pack);
     else licensedMissing.push(pack);
   }
   if (licensedMissing.length){
@@ -1927,7 +1937,15 @@ function buildRedactor(ctx){
     o = o.replace(email, "[EMAIL]");
     o = o.replace(mac, "[MAC]");
     o = o.replace(ip4, "[IP]");
-    o = o.replace(fqdn, m => keepHost.test(m.split(".")[0]) && m.split(".").length===1 ? m : (keepHost.test(m) ? m : "[HOST]"));
+    const fileExt = /^(xml|log|txt|conf|cfg|csv|json|html|htm|pcap|pcapng|tgz|gz|tar|zip|cer|crt|csr|pem|key|out|err|debug|trace|ini|yml|yaml|md|png|jpg)$/i;
+    o = o.replace(fqdn, m => {
+      const parts = m.split(".");
+      const ext = parts[parts.length - 1];
+      if (fileExt.test(ext)) return m;
+      if (keepHost.test(parts[0]) && parts.length === 1) return m;
+      if (keepHost.test(m)) return m;
+      return "[HOST]";
+    });
     if (ctx.info && ctx.info.serial) o = o.split(ctx.info.serial).join("[SERIAL]");
     return o;
   };
