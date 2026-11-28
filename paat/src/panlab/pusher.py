@@ -80,6 +80,13 @@ class DeviceAPI(Protocol):
     def move(self, xpath: str, where: str, dst: str | None = None) -> None: ...
 
 
+def journal_has_admin_changes(journal: ET.Element | None) -> bool:
+    """``show config list changes`` result: any journal entry (an xpath an admin touched) counts as pending."""
+    if journal is None:
+        return True
+    return any((e.findtext("xpath") or "").strip() for e in journal.iter("entry"))
+
+
 class XapiDevice:
     """pan-os-python / pan-python XML API. Secrets stay inside the Firewall object."""
 
@@ -112,8 +119,21 @@ class XapiDevice:
         return self.fw.xapi.element_result
 
     def pending_changes(self) -> bool:
+        """True when an administrator has uncommitted changes.
+
+        ``check pending-changes`` also says yes for system-generated candidate changes nobody made (for example Panorama's
+        ``shared/content-preview`` after a content update, or regenerated local password hashes). Those never appear in the
+        change journal, so a yes is confirmed against ``show config list changes``: no journal entries means nothing an
+        admin did is pending. If the journal cannot be read, stay safe and report pending.
+        """
         res = self._op("<check><pending-changes></pending-changes></check>")
-        return (("".join(res.itertext()) if res is not None else "").strip().lower() == "yes")
+        if ("".join(res.itertext()) if res is not None else "").strip().lower() != "yes":
+            return False
+        try:
+            journal = self._op("<show><config><list><changes></changes></list></config></show>")
+        except Exception:  # older PAN-OS or no permission: keep the conservative answer
+            return True
+        return journal_has_admin_changes(journal)
 
     def revert(self) -> None:
         self._op("<revert><config></config></revert>")
