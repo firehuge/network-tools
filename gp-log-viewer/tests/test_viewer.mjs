@@ -62,5 +62,48 @@ for (const sample of ["GlobalProtectLogs.tgz", "GlobalProtectLogs.zip"]) {
 await vm.runInContext("load([{name:'x.log',arrayBuffer:async()=>new TextEncoder().encode('(T1) 11/02/26 08:00:00:000 Debug( 1): hello\\n').buffer}])", ctx);
 ok(root.querySelector("#issues").innerHTML.includes("No known problems"), "clean log shows no problems");
 
+
+const PUBLIC_MISSING = "Not recorded in client logs — check the firewall GlobalProtect logs";
+
+function summaryMap() {
+  const m = {};
+  for (const c of root.querySelector("#sum").children) {
+    m[c.querySelector("b").textContent] = c.querySelector("span").textContent;
+  }
+  return m;
+}
+
+// vm does not see these locals; pass via ctx
+async function loadLog(name, body) {
+  ctx.__n = name;
+  ctx.__b = body;
+  await vm.runInContext("load([{name:__n,arrayBuffer:async()=>new TextEncoder().encode(__b).buffer}])", ctx);
+}
+
+await loadLog("PanGPS.log", "(T1) 11/02/26 08:00:00:000 Debug( 1): public ip: 203.0.113.10\n");
+ok(summaryMap()["Public IP"] === "203.0.113.10", "parses 'public ip: <addr>'");
+
+await loadLog("PanGPS.log", "(T1) 11/02/26 08:00:00:000 Debug( 1): external ip 198.51.100.20\n");
+ok(summaryMap()["Public IP"] === "198.51.100.20", "parses 'external ip <addr>'");
+
+await loadLog("PanGPS.log", "(T1) 11/02/26 08:00:00:000 Debug( 1): <public-ip>192.0.2.30</public-ip>\n");
+ok(summaryMap()["Public IP"] === "192.0.2.30", "parses <public-ip> XML");
+
+const noPublic = [
+  "(T1) 11/02/26 08:00:00:000 Debug( 1): public key Algorithm: 1.2.840.113549.1.1.1, length=270",
+  "(T1) 11/02/26 08:00:01:000 Debug( 1): <server-ip>198.51.100.40</server-ip>",
+  "(T1) 11/02/26 08:00:02:000 Debug( 1): Gateway: gw1.example.com, client IP: 192.168.1.10",
+  "(T1) 11/02/26 08:00:03:000 Debug( 1): use virtual IP 172.16.0.8",
+  "(T1) 11/02/26 08:00:04:000 Debug( 1): portal login completed with address vpn.example.com",
+].join("\n") + "\n";
+await loadLog("PanGPS.log", noPublic);
+const s = summaryMap();
+ok(s["Public IP"] === PUBLIC_MISSING, "empty public IP explains that client logs do not record it");
+ok(!String(s["Public IP"]).includes("198.51.100.40"), "does not treat <server-ip> as the public IP");
+ok(!String(s["Public IP"]).includes("192.168.1.10"), "does not treat local client IP as the public IP");
+ok(s["Local (client) IP"] === "192.168.1.10", "still parses local client IP");
+ok(s["VPN tunnel IP"] === "172.16.0.8", "still parses tunnel IP");
+ok(s["Portal"] === "vpn.example.com", "still parses portal");
+
 console.log(failed ? `${failed} FAILED` : "all passed");
 process.exit(failed ? 1 : 0);

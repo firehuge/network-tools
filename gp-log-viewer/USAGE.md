@@ -18,7 +18,7 @@ The colored bar at the top shows the **last VPN status** found in the logs:
 |---|---|
 | Username | Who signed in |
 | Local (client) IP | The computer's own network address, for example on home Wi-Fi |
-| Public IP | The internet address. This usually is **not** in the logs. |
+| Public IP | The client's internet address, only when the client logs happen to include it. They usually do **not**. When it's missing, the tool tells you to check the firewall GlobalProtect logs. |
 | VPN tunnel IP | The address the VPN gave the computer |
 | Portal | The VPN address the user connects to |
 | Gateway | The VPN server they actually connected through |
@@ -26,7 +26,7 @@ The colored bar at the top shows the **last VPN status** found in the logs:
 | Last failure | The last real error, with its reason. Click it to see the log line. |
 | Version, OS, Computer name | Useful for tickets |
 
-If a field shows **"Not found in logs"**, the log files don't contain that information.
+If a field shows **"Not found in logs"**, the log files don't contain that information. Public IP is called out separately as **"Not recorded in client logs — check the firewall GlobalProtect logs"**, because the client bundle almost never has that address — the firewall does.
 
 ## 4. Problem cards
 🔴 Red cards are likely to be the cause of the problem. 🟡 Yellow cards are worth knowing about but are often normal. Each card shows how many log lines matched, the time of the last match, and an example line.
@@ -64,7 +64,7 @@ Above the log lines:
 Click **🖨️ Report / PDF**. The printout contains the summary and the problem cards, without the raw log lines. To make a PDF, choose "Save as PDF" in the print window, then attach it to the ticket.
 
 ## 7. Limitations
-- **No public IP:** GlobalProtect usually doesn't log the user's public internet address.
+- **No public IP:** GlobalProtect client logs almost never include the user's public internet address. That address is what the gateway/firewall sees as the source of the VPN tunnel. Look it up in the firewall or Panorama GlobalProtect logs (source address), not in this bundle.
 - **Times are the user's computer clock**, exactly as written in the logs. They have no time zone.
 - **The log view shows up to 5,000 lines at a time.** Use the filters, search, or a problem card to narrow it down. The problem cards always check every line.
 - **Problem detection matches known wording** in the logs. A new GlobalProtect version may word errors differently, so if the cards look wrong, check the raw lines.
