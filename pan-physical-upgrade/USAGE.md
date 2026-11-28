@@ -49,8 +49,10 @@ Open `pan-physical-upgrade.html` and drop the old firewall's tech-support file o
 (`.tgz`, `.tar.gz` or `.zip`). For an HA pair, use the TSF from the **active** unit.
 A `running-config.xml` also works, but then there is no usage data for sizing.
 
-The badge in the header shows which model catalog is in use: **bundled** (inside the page),
-**online** (a newer copy was found), or a file you loaded with **Catalog file**.
+The page is **offline by default** and never contacts the network on its own. The badge in the header shows which model
+catalog is in use: **bundled** (inside the page), **online** (a newer copy, only after you click **Check for newer
+catalog**; this reloads the page in online mode), or a file you loaded with **Catalog file**. The **Help** button
+(next to **Dark**) opens a built-in guide.
 
 ## Tab 1: Current device
 
