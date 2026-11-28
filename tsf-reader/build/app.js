@@ -351,6 +351,10 @@ function parseSystemInfo(text){
     urlVersion: g("url-filtering-version"),
     urlDate: g("url-filtering-release-date"),
     gpVersion: g("global-protect-client-package-version"),
+    gpDatafileVersion: g("global-protect-datafile-version"),
+    gpDatafileDate: g("global-protect-datafile-release-date"),
+    wfPrivateVersion: g("wf-private-version"),
+    wfPrivateDate: g("wf-private-release-date"),
     deviceCert: g("device-certificate-status"),
     raw: kv
   };
@@ -727,6 +731,64 @@ function parseLicenses(text){
     list.push({feature: feature||"(unnamed)", expires: expires||"", expired, date: parseLooseDate(expires), serial});
   }
   return list;
+}
+
+function licenseIsExpired(lic, now){
+  return !!(lic && (lic.expired || (lic.date && now && lic.date < now)));
+}
+
+function licenseInfoAvailable(sections, licenses){
+  if (licenses && licenses.length) return true;
+  const txt = sectionText(sections, "request license info", "show license");
+  if (!txt || !String(txt).trim()) return false;
+  if (/License entry\s*:/i.test(txt) || /^\s*Feature\s*:/im.test(txt)) return true;
+  if (/no licenses?\s+(installed|found|available)|there are no licenses|license info(?:rmation)?\s+(is\s+)?(not|un)available/i.test(txt)) return true;
+  return false;
+}
+
+function licenseFeatureMatches(feature, key){
+  const f = String(feature || "");
+  if (key === "wildfire"){
+    if (/private\s*cloud|wf-?private|private\s*wildfire/i.test(f)) return false;
+    return /wildfire/i.test(f);
+  }
+  if (key === "wfPrivate"){
+    return /wf-?private|wildfire[^.\n]{0,60}private|private[^.\n]{0,60}wildfire/i.test(f);
+  }
+  if (key === "threat"){
+    return /threat\s*prevention/i.test(f) || /advanced\s*threat/i.test(f);
+  }
+  if (key === "av"){
+    return /threat\s*prevention/i.test(f) || /advanced\s*threat/i.test(f) || /anti-?vir/i.test(f);
+  }
+  if (key === "url"){
+    return /url\s*filter/i.test(f) || /pan-?db/i.test(f) || /advanced\s*url/i.test(f);
+  }
+  if (key === "gpDatafile"){
+    return /global-?protect/i.test(f);
+  }
+  if (key === "dns"){
+    return /dns\s*security/i.test(f);
+  }
+  if (key === "iot"){
+    return /\biot(\s*security)?\b/i.test(f);
+  }
+  return false;
+}
+
+function contentLicenseStatus(licenses, available, key, now){
+  if (!available) return "unknown";
+  const matches = (licenses || []).filter(l => licenseFeatureMatches(l.feature, key));
+  if (!matches.length) return "unlicensed";
+  if (matches.some(l => !licenseIsExpired(l, now))) return "active";
+  return "expired";
+}
+
+function zeroContentVer(v){
+  if (v == null || String(v).trim() === "") return false;
+  const s = String(v).trim();
+  if (/^(unknown|none|n\/a|null)$/i.test(s)) return true;
+  return /^0+([.\-_]0+)*$/.test(s) || s === "0000.00.00.000" || /^0+(\.0+)+$/.test(s);
 }
 
 function parseDevices(text){
@@ -1205,35 +1267,73 @@ function runTriage(ctx){
       });
     }
   }
-  const zeroVer = v => {
-    if (v == null || String(v).trim() === "") return false;
-    const s = String(v).trim();
-    return /^0+([.\-_]0+)*$/.test(s) || s === "0000.00.00.000" || /^0+(\.0+)+$/.test(s);
-  };
-  const missingContent = [];
-  if (zeroVer(info.threatVersion) && zeroVer(info.appVersion)) missingContent.push("Threat / App-ID");
-  else if (zeroVer(info.threatVersion)) missingContent.push("Threat");
-  if (zeroVer(info.avVersion)) missingContent.push("Antivirus");
-  if (zeroVer(info.wildfireVersion)) missingContent.push("WildFire");
-  if (zeroVer(info.urlVersion)) missingContent.push("URL filtering");
-  if (missingContent.length){
+  const zeroVer = zeroContentVer;
+  const licAvail = licenseInfoAvailable(sections, licenses);
+  const missingPacks = [];
+  if (zeroVer(info.threatVersion) && zeroVer(info.appVersion)) missingPacks.push({label:"Threat / App-ID", key:"threat"});
+  else if (zeroVer(info.threatVersion)) missingPacks.push({label:"Threat", key:"threat"});
+  if (zeroVer(info.avVersion)) missingPacks.push({label:"Antivirus", key:"av"});
+  if (zeroVer(info.wildfireVersion)) missingPacks.push({label:"WildFire", key:"wildfire"});
+  if (zeroVer(info.urlVersion)) missingPacks.push({label:"URL filtering", key:"url"});
+  if (zeroVer(info.gpDatafileVersion)) missingPacks.push({label:"GlobalProtect data file", key:"gpDatafile"});
+  if (zeroVer(info.wfPrivateVersion)) missingPacks.push({label:"WildFire private cloud", key:"wfPrivate"});
+
+  const evContent = evFromText(cliName, sectionText(sections, "show system info"), /threat-version|av-version|wildfire-version|url-filtering-version|app-version|global-protect-datafile-version|wf-private-version/i);
+  const licensedMissing = [];
+  const unlicensedMissing = [];
+  const unknownMissing = [];
+  for (const pack of missingPacks){
+    const st = contentLicenseStatus(licenses, licAvail, pack.key, now);
+    if (st === "expired") continue; // expired license finding already covers this
+    if (st === "unlicensed") unlicensedMissing.push(pack);
+    else if (st === "unknown") unknownMissing.push(pack);
+    else licensedMissing.push(pack);
+  }
+  if (licensedMissing.length){
+    const labels = licensedMissing.map(p => p.label).join(", ");
     finding(F, {
       sev: "warning",
       title: "Security content is not installed",
-      explain: `show system info reports version 0 (or an empty package) for ${missingContent.join(", ")}. That usually means the corresponding license is expired or the device has not downloaded dynamic updates, so App-ID, threat, AV, WildFire, or URL lookup may be missing or outdated.`,
-      action: "Renew the licenses if they are expired, then check Device > Dynamic Updates (or request content upgrade check) and connectivity to the update servers.",
+      explain: `show system info reports version 0 (or an empty package) for ${labels}. Those subscriptions are licensed, so this usually means the device has not downloaded dynamic updates (or a download failed), and App-ID, threat, AV, WildFire, or URL lookup may be missing or outdated.`,
+      action: "Check Device > Dynamic Updates (or request content upgrade check) and connectivity to the update servers.",
       source: fileHint(sections, "show system info"),
-      evidence: evFromText(cliName, sectionText(sections, "show system info"), /threat-version|av-version|wildfire-version|url-filtering-version|app-version/i)
+      evidence: evContent
+    });
+  }
+  if (unlicensedMissing.length){
+    const labels = unlicensedMissing.map(p => p.label).join(", ");
+    finding(F, {
+      sev: "info",
+      title: `Not licensed: ${labels}`,
+      explain: `show system info reports no installed package for ${labels}, and request license info has no license for those features. This is expected when the subscription was never purchased, not a content-update failure.`,
+      action: "No action needed unless you intended to use this subscription. If you did, add or refresh the license and then download the content.",
+      source: fileHint(sections, "request license info", "show system info"),
+      evidence: evContent.concat(evFromText(cliName, sectionText(sections, "request license info", "show license"), /Feature:|License entry:/i))
+    });
+  }
+  if (unknownMissing.length){
+    const labels = unknownMissing.map(p => p.label).join(", ");
+    finding(F, {
+      sev: "info",
+      title: "Security content is not installed (license status unknown)",
+      explain: `show system info reports version 0 (or an empty package) for ${labels}, but this tech-support file has no usable “request license info” or “show license” output. Until license status is known, this is informational rather than a confirmed content-update failure.`,
+      action: "Re-run request license info on the device (or include that command in the tech-support file). If the feature is licensed, check Device > Dynamic Updates; if it was never licensed, this can be ignored.",
+      source: fileHint(sections, "show system info"),
+      evidence: evContent
     });
   }
   const contentDates = [
-    ["Threat / App-ID content", (!zeroVer(info.threatVersion) && info.threatDate) || (!zeroVer(info.appVersion) && info.appDate)],
-    ["Antivirus content", !zeroVer(info.avVersion) && info.avDate],
-    ["URL filtering content", !zeroVer(info.urlVersion) && info.urlDate],
-    ["WildFire content", !zeroVer(info.wildfireVersion) && info.wildfireDate]
+    ["Threat / App-ID content", "threat", (!zeroVer(info.threatVersion) && info.threatDate) || (!zeroVer(info.appVersion) && info.appDate)],
+    ["Antivirus content", "av", !zeroVer(info.avVersion) && info.avDate],
+    ["URL filtering content", "url", !zeroVer(info.urlVersion) && info.urlDate],
+    ["WildFire content", "wildfire", !zeroVer(info.wildfireVersion) && info.wildfireDate],
+    ["GlobalProtect data file", "gpDatafile", !zeroVer(info.gpDatafileVersion) && info.gpDatafileDate],
+    ["WildFire private cloud content", "wfPrivate", !zeroVer(info.wfPrivateVersion) && info.wfPrivateDate]
   ];
-  for (const [label, raw] of contentDates){
+  for (const [label, key, raw] of contentDates){
     if (!raw) continue;
+    const st = contentLicenseStatus(licenses, licAvail, key, now);
+    if (st === "unlicensed" || st === "expired") continue;
     const d = parseLooseDate(raw);
     if (!d) continue;
     const age = daysBetween(d, now);
