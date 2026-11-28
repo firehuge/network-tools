@@ -33,8 +33,13 @@ async function loadFiles(files) {
 // Set the filter box and fire a real input event, then wait until the app has the value. Playwright's fill("") can race the
 // picker re-render after All/None and leave the app's filter stale, so do not rely on it.
 const setFilter = async (v) => {
-  await page.locator(".ctxfilter").evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }, v);
-  await page.waitForFunction((v) => { const f = window.__FM.state.files.find((f) => f.ctxSel); return (f.ctxFilter || "") === v && document.querySelector(".ctxfilter").value === v; }, v, { timeout: 10000 });
+  // Re-apply on every poll: the picker can re-render (replacing the input) right after All/None, which would drop a one-shot set.
+  await page.waitForFunction((v) => {
+    const el = document.querySelector(".ctxfilter"); if (!el) return false;
+    if (el.value !== v) { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }
+    const f = window.__FM.state.files.find((f) => f.ctxSel);
+    return (f.ctxFilter || "") === v && el.value === v;
+  }, v, { timeout: 10000 });
 };
 async function trace(q) { return page.evaluate((q) => { const r = window.__FM.runTrace(q); return { status: r.status, segs: r.segments.map((s) => s.device + ":" + s.vsys), changes: r.changes.filter((c) => !c.optional).map((c) => c.kind + ":" + c.device + ":" + c.vsys), ms: r.ms }; }, q); }
 
