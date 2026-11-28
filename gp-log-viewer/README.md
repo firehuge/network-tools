@@ -11,7 +11,7 @@ A single web page that reads the log bundle from the Palo Alto Networks **Global
 - **Report:** print or save the summary as PDF.
 
 ## Privacy
-It runs entirely in your browser. It works offline, has no server and uploads nothing.
+It runs entirely in your browser. It works offline, has no server and uploads nothing. A strict Content-Security-Policy in the page blocks all network access. The **Help** button (top right, next to **Dark**) opens a built-in usage guide.
 
 ## Quick start
 1. Open `gp-log-viewer.html` in Chrome, Edge, Firefox or Safari (double-click it).
@@ -27,6 +27,7 @@ To try it, load `samples/GlobalProtectLogs.tgz` (synthetic data).
 
 ## Development
 ```
-node tests/test_viewer.mjs          # tests, Node 18+, no dependencies
+node tests/test_viewer.mjs          # parser tests, Node 18+, no dependencies
+npm ci && npm test                  # parser tests plus a headless-Chrome check (CSP, Help, sample files)
 python3 scripts/make_samples.py     # regenerate the synthetic samples
 ```

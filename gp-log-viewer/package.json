@@ -1,0 +1,13 @@
+{
+  "name": "gp-log-viewer",
+  "version": "1.0.0",
+  "description": "Tests for the offline GlobalProtect log viewer HTML page",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/test_viewer.mjs && node tests/test_ui.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.65.0"
+  }
+}
