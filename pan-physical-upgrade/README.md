@@ -57,6 +57,7 @@ snapshot) and load it under **Real exported config** on the Convert tab to get a
 - [docs/COLLECT_TSF.md](docs/COLLECT_TSF.md): how to get a tech-support file, and what the planner reads from it
 - [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md): where model, end-of-life and capacity data come from, and how to refresh it
 - [docs/VALIDATION.md](docs/VALIDATION.md): how converted configs were checked on real PAN-OS
+- [docs/github-actions-ci.yml](docs/github-actions-ci.yml): the CI job to add to `.github/workflows/ci.yaml`
 - [docs/KNOWN_GAPS.md](docs/KNOWN_GAPS.md): what it does not do yet
 - [docs/EXPEDITION_NOTES.md](docs/EXPEDITION_NOTES.md): notes on Palo Alto Expedition
 

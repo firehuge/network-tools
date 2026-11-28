@@ -1,0 +1,88 @@
+# CI change for the PAN Physical Upgrade Planner (not active yet).
+#
+# The token that added this tool could not push files under .github/workflows/. To turn CI on, apply the three
+# edits below to .github/workflows/ci.yaml (or save the unified diff below, without the leading '# ', and run git apply).
+#
+# 1) In the `changes` job, add an output next to `gp:`
+#      ppu: ${{ steps.f.outputs.ppu }}
+# 2) In the "Which tools changed?" step, replace the last echo (the one ending with `; } | tee ...`) with:
+#            echo "gp=$(hit '^gp-log-viewer/')"
+#            echo "ppu=$(hit '^pan-physical-upgrade/')"; } | tee -a "$GITHUB_OUTPUT"
+# 3) Add this job before `secret-scan:`
+#
+# Unified diff of exactly this change:
+# diff --git a/.github/workflows/ci.yaml b/.github/workflows/ci.yaml
+# index 8b6c66c..8516a80 100644
+# --- a/.github/workflows/ci.yaml
+# +++ b/.github/workflows/ci.yaml
+# @@ -18,6 +18,7 @@ jobs:
+#        flowmapper: ${{ steps.f.outputs.flowmapper }}
+#        tsf: ${{ steps.f.outputs.tsf }}
+#        gp: ${{ steps.f.outputs.gp }}
+# +      ppu: ${{ steps.f.outputs.ppu }}
+#      steps:
+#        - uses: actions/checkout@v4
+#          with:
+# @@ -40,7 +41,8 @@ jobs:
+#            { echo "paat=$(hit '^(paat|flowmapper/build)/')"
+#              echo "flowmapper=$(hit '^flowmapper/')"
+#              echo "tsf=$(hit '^tsf-reader/')"
+# -            echo "gp=$(hit '^gp-log-viewer/')"; } | tee -a "$GITHUB_OUTPUT"
+# +            echo "gp=$(hit '^gp-log-viewer/')"
+# +            echo "ppu=$(hit '^pan-physical-upgrade/')"; } | tee -a "$GITHUB_OUTPUT"
+#  
+#    test-paat:
+#      needs: changes
+# @@ -110,6 +112,28 @@ jobs:
+#            node-version: "22"
+#        - run: node tests/test_viewer.mjs
+#  
+# +  test-pan-physical-upgrade:
+# +    needs: changes
+# +    if: needs.changes.outputs.ppu == 'true'
+# +    runs-on: ubuntu-latest
+# +    defaults:
+# +      run:
+# +        working-directory: pan-physical-upgrade
+# +    steps:
+# +      - uses: actions/checkout@v4
+# +      - uses: actions/setup-node@v4
+# +        with:
+# +          node-version: "22"
+# +      - uses: actions/setup-python@v5
+# +        with:
+# +          python-version: "3.12"
+# +      - run: npm ci
+# +      # Rebuild the page from source and fail if the committed pan-physical-upgrade.html is stale.
+# +      - run: npm run build
+# +      - run: git diff --exit-code -- pan-physical-upgrade.html catalog/models.json
+# +      # The tests drive the Google Chrome that ships on GitHub's ubuntu runners (CHROME_PATH overrides).
+# +      - run: npm test
+# +
+#    secret-scan:
+#      runs-on: ubuntu-latest
+#      steps:
+
+# ---- the job (reference copy) ----
+jobs:
+  test-pan-physical-upgrade:
+    needs: changes
+    if: needs.changes.outputs.ppu == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pan-physical-upgrade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      # Rebuild the page from source and fail if the committed pan-physical-upgrade.html is stale.
+      - run: npm run build
+      - run: git diff --exit-code -- pan-physical-upgrade.html catalog/models.json
+      # The tests drive the Google Chrome that ships on GitHub's ubuntu runners (CHROME_PATH overrides).
+      - run: npm test

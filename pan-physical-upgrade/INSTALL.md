@@ -22,3 +22,6 @@ npm test         # needs Chrome or Chromium for the UI tests (CHROME_PATH)
 ```
 `build/assemble.py` splices `build/template.html`, `style.css`, `core.js`, `app.js`, `unpack-worker.js` and `catalog/models.json`
 into `pan-physical-upgrade.html`.
+
+## CI
+The repository workflow does not test this tool yet. Copy the job in [docs/github-actions-ci.yml](docs/github-actions-ci.yml) into `.github/workflows/ci.yaml` (a maintainer with the `workflow` scope has to do this).
