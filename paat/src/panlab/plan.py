@@ -38,6 +38,7 @@ class PlannedRule:
     log_start: bool = False
     log_end: bool = True
     disabled: bool = False
+    profile_group: str = ""  # optional security profile group (blank = none)
 
 
 @dataclass
@@ -162,6 +163,7 @@ def _planned_rule(rule: dict[str, Any], config: ParsedConfig | None) -> PlannedR
         log_start=bool(rule.get("log_start", False)),
         log_end=bool(rule.get("log_end", True)),
         disabled=bool(rule.get("disabled", False)),
+        profile_group=str(rule.get("profile_group") or "").strip(),
     )
 
 
@@ -257,6 +259,8 @@ def render_plan(plan: Plan) -> str:
         lines.append(f"      service:     {', '.join(rule.services)}")
         lines.append(f"      action:      {rule.rule_action}")
         lines.append(f"      log_end:     {rule.log_end}")
+        if rule.profile_group:
+            lines.append(f"      profile group: {rule.profile_group}")
         if rule.description:
             lines.append(f"      description: {rule.description}")
         lines.append("")
@@ -298,6 +302,8 @@ def _rule_xml_snippet(rule: PlannedRule) -> str:
     ]
     if rule.log_start:
         lines.append("    <log-start>yes</log-start>")
+    if rule.profile_group:
+        lines.append(f"    <profile-setting><group><member>{_escape(rule.profile_group)}</member></group></profile-setting>")
     if rule.description:
         lines.append(f"    <description>{_escape(rule.description)}</description>")
     if rule.disabled:

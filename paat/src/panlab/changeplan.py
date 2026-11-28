@@ -255,10 +255,10 @@ def _add_policy_block(g: dict, r: dict, cfg: dict, audit: str) -> list[str]:
         "#### Actions",
         f"- Action: {action.capitalize()}",
         f"- Log at Session Start: {cfg.get('log_at_session_start', 'No')}",
-        f"- Log at Session End: {cfg.get('log_at_session_end', 'Yes')}",
+        "- Log at Session End: Yes",
         f"- Log Forwarding: `{cfg.get('log_forwarding', 'LOG-FWD-DEFAULT')}`",
         f"- Profile Type: {cfg.get('profile_type', 'Group')}",
-        f"- Group Profile: `{cfg.get('profile_group', 'PROFILE-GROUP-DEFAULT')}`",
+        f"- Group Profile: `{r.get('profile_group') or cfg.get('profile_group', 'PROFILE-GROUP-DEFAULT')}`",
         "",
     ]
     if g["backend"] == "panorama":

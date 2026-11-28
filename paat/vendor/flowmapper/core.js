@@ -1094,6 +1094,12 @@ function svcMatch(rule, scopes, q, uid) {
   if (m !== "no" && !anyApp) { appDep = true; reasons.push("only if App-ID identifies " + rule.application.join(", ")); }
   return { m, reasons, appDep };
 }
+/* Defaults applied to every generated allow rule. Log at session end is always on. profileGroup is an optional, user-set
+   security profile group name (blank = none); it never defaults to a made-up name because a missing group fails the commit. */
+let RULE_DEFAULTS = { profileGroup: "" };
+function cleanGroupName(s) { return String(s == null ? "" : s).replace(/[\u0000-\u001f"<>&']/g, "").trim().slice(0, 63); }
+function setRuleDefaults(o) { o = o || {}; if (o.profileGroup !== undefined) RULE_DEFAULTS = Object.assign({}, RULE_DEFAULTS, { profileGroup: cleanGroupName(o.profileGroup) }); return Object.assign({}, RULE_DEFAULTS); }
+function getRuleDefaults() { return Object.assign({}, RULE_DEFAULTS); }
 let IGNORE_INTRA = false; // opts.ignoreIntrazoneDefault for the current trace(): the predefined intrazone allow counts as "no rule"
 function evalSecurity(ctx, fromZ, toZ, srcQ, dstQ, svcQ) {
   const out = { decision: null, maybes: [], evaluated: 0 };
@@ -3431,8 +3437,9 @@ function circuitReturnOk(res, devices) {
 }
 function trace(devices, query, opts) {
   opts = opts || {};
-  const prevIgnore = IGNORE_INTRA;
+  const prevIgnore = IGNORE_INTRA, prevDefaults = RULE_DEFAULTS;
   IGNORE_INTRA = !!opts.ignoreIntrazoneDefault;
+  if (opts.profileGroup !== undefined) RULE_DEFAULTS = Object.assign({}, RULE_DEFAULTS, { profileGroup: cleanGroupName(opts.profileGroup) });
   try {
     const res = traceOuter(devices, query, opts);
     const ig = (res.checks || []).filter((c) => c.ignoredDefault);
@@ -3441,7 +3448,7 @@ function trace(devices, query, opts) {
       res.notes.push({ level: "info", text: "Ignoring intrazone-default: " + ig.map((c) => c.device + " " + c.vsys + " zone " + c.fromZone).join(", ") + " would be allowed by the predefined intrazone-default rule; shown as needing an explicit rule instead." });
     }
     return res;
-  } finally { IGNORE_INTRA = prevIgnore; }
+  } finally { IGNORE_INTRA = prevIgnore; RULE_DEFAULTS = prevDefaults; }
 }
 function traceOuter(devices, query, opts) {
   let res = traceInner(devices, query, opts);
@@ -4026,7 +4033,7 @@ function securityChange(dev, ctx, fromZ, toZ, srcP, dstP, svc, sec) {
     if (!service) { service = svc.proto + "-" + svc.port; cli.push(objPre + "service " + service + " protocol " + svc.proto + " port " + svc.port); }
   }
   const name = ("FM-" + fromZ + "-to-" + toZ + "-" + (svc.port != null ? svc.proto + svc.port : svc.proto)).replace(/[^A-Za-z0-9_.-]/g, "_").slice(0, 63);
-  cli.push(rulePre + q(name) + " from " + q(fromZ) + " to " + q(toZ) + " source " + q(srcName) + " destination " + q(dstName) + " application " + app + " service " + q(service) + " action allow");
+  cli.push(rulePre + q(name) + " from " + q(fromZ) + " to " + q(toZ) + " source " + q(srcName) + " destination " + q(dstName) + " application " + app + " service " + q(service) + " action allow log-end yes" + (RULE_DEFAULTS.profileGroup ? " profile-setting group " + q(RULE_DEFAULTS.profileGroup) : ""));
   if (dev.kind === "panorama" && dev.serial) cli.push(rulePre + q(name) + " target devices " + dev.serial + (dev.multiVsys ? " vsys " + ctx.name : ""));
   if (blocking && !/post-rulebase/.test(blocking.scope || "")) cli.push(movePre + q(name) + " before " + q(blocking.name));
   let why;
@@ -4038,7 +4045,7 @@ function securityChange(dev, ctx, fromZ, toZ, srcP, dstP, svc, sec) {
   const modify = optional ? null : nearMissRule(dev, ctx, fromZ, toZ, srcP, dstP, svc, sec, { src: srcName, dst: dstName, service, cli: cli.filter((l) => / service /.test(l) && / protocol /.test(l)) });
   return { kind: "security", device: dev.name, vsys: ctx.name, display: ctx.display, dg: ctx.dg || null, where, modify,
     summary: (optional ? "Verify or add" : "Add") + " security rule in " + where + (dev.kind === "panorama" ? " for " + ctx.name : "") + ": " + fromZ + " -> " + toZ + ", " + srcName + " -> " + dstName + " " + svcText(svc),
-    why, optional, order: ruleOrderAdvice(dr, blocking, optional), rule: { name, from: fromZ, to: toZ, source: srcName, destination: dstName, application: app, service, action: "allow", placeBefore: blocking && !/post-rulebase/.test(blocking.scope || "") ? blocking.name : null }, cli };
+    why, optional, order: ruleOrderAdvice(dr, blocking, optional), rule: { name, from: fromZ, to: toZ, source: srcName, destination: dstName, application: app, service, action: "allow", logEnd: true, profileGroup: RULE_DEFAULTS.profileGroup || null, placeBefore: blocking && !/post-rulebase/.test(blocking.scope || "") ? blocking.name : null }, cli };
 }
 function checkReturnPath(res, devices, addChange) {
   for (const seg of res.segments) {
@@ -5550,7 +5557,7 @@ function panoramaPair(pano, profile) {
   return out;
 }
 /* SCOPE:END */
-const FM = { ROLE_DEFS, ROLE_TOKENS, ROLE_WEAK_TOKENS, defaultProfile, normalizeProfile, parseScopeArg, roleModel, roleOf, roleHits, RULE_FIELDS, ruleFieldText, ruleApplies, firstRoleRule, rulePreview, ruleDescribe, scopeDevices, traceScoped, attachScope, hiddenPathCheck, scopeConflictCheck, drMirror, readPanoramaHa, panoramaPair, multiPlace, ruleOrderAdvice, bulkAcceptSuggestions, suggestionConflicts, conflictEntry, haGroups, pathStatus, devLabel, devParts, publicSpaceSuggestions, providerStatics, circuitLookup, noRuleInExport, inferDynamicRoutes, zoneOfAddr, zoneFindings, environment, envLayout, panoramaView, panoLayout, drawioXml, siteToken, vsysMap, vsysMapLayout, prepare: (devices, links) => getGraph(devices, links), parseRouteTable, applyRouteTables, invalidateCaches, overlapReport, sharedIpChoices, bgpSummary, bgpFilterAllows, prefixListPermits, siteOfDev, parseXml, parseXmlAsync, loadConfig, loadConfigAsync, buildPanoramaDevice, buildDevice, trace, parsePrefix, prefixStr, n2ip, ip2n, coverage, resolveAddrs, maskSecrets, deviceSummary, addressNames, listPanoramaContexts, dgChain, lookupRoute, mergeNodes, evalTagFilter, buildGraph, getGraph, findPaths, ownersOf, topology, diagnostics, replayCases, inboundDnatCases, dnatEntries, replayCase, replaySummary, ruleCase, internetZones, mergeLocalBackups, serialFromFilename, inferDgVsysJoin, parseFcr, parseFcrTable, csvRecords, csvText, fcrHeaderKey, fcrClassifyApp, fcrRuleName, applyFcrExtras, readFcrXlsx, explainVsysHops, annotateFcr, trafficLogFilters, prePushChecklist, combinedChangePlan, NO_NET_MSG, version: "1.9.3" };
+const FM = { setRuleDefaults, getRuleDefaults, ROLE_DEFS, ROLE_TOKENS, ROLE_WEAK_TOKENS, defaultProfile, normalizeProfile, parseScopeArg, roleModel, roleOf, roleHits, RULE_FIELDS, ruleFieldText, ruleApplies, firstRoleRule, rulePreview, ruleDescribe, scopeDevices, traceScoped, attachScope, hiddenPathCheck, scopeConflictCheck, drMirror, readPanoramaHa, panoramaPair, multiPlace, ruleOrderAdvice, bulkAcceptSuggestions, suggestionConflicts, conflictEntry, haGroups, pathStatus, devLabel, devParts, publicSpaceSuggestions, providerStatics, circuitLookup, noRuleInExport, inferDynamicRoutes, zoneOfAddr, zoneFindings, environment, envLayout, panoramaView, panoLayout, drawioXml, siteToken, vsysMap, vsysMapLayout, prepare: (devices, links) => getGraph(devices, links), parseRouteTable, applyRouteTables, invalidateCaches, overlapReport, sharedIpChoices, bgpSummary, bgpFilterAllows, prefixListPermits, siteOfDev, parseXml, parseXmlAsync, loadConfig, loadConfigAsync, buildPanoramaDevice, buildDevice, trace, parsePrefix, prefixStr, n2ip, ip2n, coverage, resolveAddrs, maskSecrets, deviceSummary, addressNames, listPanoramaContexts, dgChain, lookupRoute, mergeNodes, evalTagFilter, buildGraph, getGraph, findPaths, ownersOf, topology, diagnostics, replayCases, inboundDnatCases, dnatEntries, replayCase, replaySummary, ruleCase, internetZones, mergeLocalBackups, serialFromFilename, inferDgVsysJoin, parseFcr, parseFcrTable, csvRecords, csvText, fcrHeaderKey, fcrClassifyApp, fcrRuleName, applyFcrExtras, readFcrXlsx, explainVsysHops, annotateFcr, trafficLogFilters, prePushChecklist, combinedChangePlan, NO_NET_MSG, version: "1.9.4" };
 /* Rule-matching helpers for the decommission engine (build/decom.js). */
 Object.assign(FM, { addrMatch, svcMatch, zoneOk, normAction, resolveServices });
 if (typeof module !== "undefined" && module.exports) module.exports = FM;

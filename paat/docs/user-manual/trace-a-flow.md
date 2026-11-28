@@ -319,3 +319,11 @@ addresses).
 | Needs your choice | Pick the firewall (**Use for this trace**) or **Save as link** if it is always the same one. |
 | Route table: "no router named X" | The table's virtual/logical router name does not match the config. Check the `VIRTUAL ROUTER:` / `logical-router` line. |
 | Node.js is required | The PAAT server needs the `nodejs` package. `deploy/install-web.sh` installs it. |
+
+
+## Safe defaults on generated rules
+
+Every allow rule the trace proposes is written with `log-end yes`, so the new traffic shows in the traffic log. If your
+administrator set `change_plan.rule_profile_group` in the customer profile (see [change plans](../change-plans.md)), the same
+rule also gets `profile-setting group <name>`. The Trace page shows the current setting under the form. The group must
+already exist on the firewall or in the Panorama device group (or shared); PAAT never makes up a group name.

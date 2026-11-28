@@ -12,6 +12,7 @@ from pathlib import Path
 from panlab import __version__, brand
 from panlab.backup import backup_running_config
 from panlab.check import check_connection
+from panlab.customers import rule_profile_group
 from panlab.paths import backups_dir
 from panlab.plan import build_plan, render_plan
 from panlab.push import push_request
@@ -646,11 +647,11 @@ def _cmd_flowtrace(args: argparse.Namespace) -> int:
     try:
         tables = [fm.parse_route_spec(x) for x in (args.routes or [])]
         links = [fm.parse_link_spec(x) for x in (args.link or [])]
-        result = fm.run_trace(files, text, ignore_intrazone=args.ignore_intrazone,
+        result = fm.run_trace(files, text, profile_group=rule_profile_group(prof), ignore_intrazone=args.ignore_intrazone,
                               route_tables=tables, links=links, roles=roles, scope=scope)
         if args.pick:
             pins = fm.pins_from_picks(result, args.pick)
-            result = fm.run_trace(files, text, ignore_intrazone=args.ignore_intrazone,
+            result = fm.run_trace(files, text, profile_group=rule_profile_group(prof), ignore_intrazone=args.ignore_intrazone,
                                   route_tables=tables, links=links, pins=pins, roles=roles, scope=scope)
     except fm.FlowMapperError as exc:
         print(f"error: {exc}", file=sys.stderr)

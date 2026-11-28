@@ -22,6 +22,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from panlab import permitted
+from panlab.customers import rule_profile_group
 from panlab.customers import Profile
 from panlab.apps import app_flags, split_app_ids
 from panlab.fcr import Endpoint, Flag, PortSpec, RuleRequest, Tickets
@@ -401,6 +402,7 @@ def build_changeset(profile: Profile, envs: list[Environment], requests: list[Ru
                 rule = {"name": None, "request": rid, "from": [fz], "to": [tz], "source": [], "source_user": [],
                         "destination": [], "application": [], "service": [], "action": "allow",
                         "description": "", "tags": [], "target_devices": [], "confidence": p.confidence,
+                        "log_end": True, "profile_group": rule_profile_group(profile),
                         "needs_human": p.needs_human, "flags": [], "reason": [], "origins": r.origins}
                 rules_by_slot[slot] = rule
                 g["rules"].append(rule)
